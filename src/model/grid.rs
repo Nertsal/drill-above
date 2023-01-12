@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Grid {
     pub cell_size: Vec2<Coord>,
     pub offset: Vec2<Coord>,

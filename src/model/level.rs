@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Level {
     pub grid: Grid,
     pub size: Vec2<usize>,

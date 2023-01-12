@@ -20,6 +20,7 @@ pub struct Sprites {
 pub struct TileSprites {
     pub air: ugli::Texture,
     pub grass: ugli::Texture,
+    pub stone: ugli::Texture,
 }
 
 impl TileSprites {
@@ -27,6 +28,7 @@ impl TileSprites {
         match tile {
             Tile::Air => &self.air,
             Tile::Grass => &self.grass,
+            Tile::Stone => &self.stone,
         }
     }
 }

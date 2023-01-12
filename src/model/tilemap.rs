@@ -10,12 +10,13 @@ pub struct TileMap {
 pub enum Tile {
     Air,
     Grass,
+    Stone,
 }
 
 impl Tile {
-    pub fn all() -> Vec<Self> {
+    pub fn all() -> [Self; 3] {
         use Tile::*;
-        vec![Air, Grass]
+        [Air, Grass, Stone]
     }
 }
 

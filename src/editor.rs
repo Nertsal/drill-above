@@ -13,11 +13,12 @@ pub struct Editor {
     cursor_pos: Vec2<f64>,
     cursor_world_pos: Vec2<Coord>,
     selected_tile: Tile,
+    dragging: bool,
 }
 
 impl Editor {
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
-        Self {
+        let mut editor = Self {
             geng: geng.clone(),
             assets: assets.clone(),
             render: Render::new(geng, assets),
@@ -32,7 +33,13 @@ impl Editor {
             cursor_pos: Vec2::ZERO,
             cursor_world_pos: Vec2::ZERO,
             selected_tile: Tile::Grass,
-        }
+            dragging: false,
+        };
+        util::report_err(
+            editor.load_level(run_dir().join("level.json")),
+            "Failed to load level",
+        );
+        editor
     }
 
     fn place_tile(&mut self, pos: Vec2<Coord>, tile: Tile) {
@@ -57,17 +64,44 @@ impl Editor {
                 cursor_pos.map(|x| x as f32),
             )
             .map(Coord::new);
+
+        if self.dragging {
+            self.place_tile(self.cursor_world_pos, self.selected_tile);
+        }
     }
 
     fn click(&mut self, position: Vec2<f64>, button: geng::MouseButton) {
         self.update_cursor(position);
+        self.dragging = true;
 
         if let geng::MouseButton::Left = button {
             self.place_tile(self.cursor_world_pos, self.selected_tile);
         }
     }
 
-    fn release(&mut self, _button: geng::MouseButton) {}
+    fn release(&mut self, _button: geng::MouseButton) {
+        self.dragging = false;
+    }
+
+    fn save_level(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let file = std::fs::File::create(path)?;
+            let writer = std::io::BufWriter::new(file);
+            serde_json::to_writer_pretty(writer, &self.level)?;
+        }
+        Ok(())
+    }
+
+    fn load_level(&mut self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let file = std::fs::File::open(path)?;
+            let reader = std::io::BufReader::new(file);
+            self.level = serde_json::from_reader(reader)?;
+        }
+        Ok(())
+    }
 }
 
 impl geng::State for Editor {
@@ -98,6 +132,14 @@ impl geng::State for Editor {
             }
             geng::Event::Wheel { delta } => {
                 self.scroll_selected_tile(delta.signum() as isize);
+            }
+            geng::Event::KeyDown { key: geng::Key::S }
+                if self.geng.window().is_key_pressed(geng::Key::LCtrl) =>
+            {
+                util::report_err(
+                    self.save_level(run_dir().join("level.json")),
+                    "Failed to save level",
+                );
             }
             _ => {}
         }
