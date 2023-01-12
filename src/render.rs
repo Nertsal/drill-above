@@ -54,4 +54,35 @@ impl Render {
             ugli::DrawParameters::default(),
         )
     }
+
+    pub fn draw_level(
+        &self,
+        level: &Level,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        self.draw_tiles(level, &level.tiles, camera, framebuffer);
+    }
+
+    pub fn draw_tiles(
+        &self,
+        level: &Level,
+        tiles: &TileMap,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for (i, tile) in tiles.tiles().iter().enumerate() {
+            let pos = index_to_pos(i, level.size.x);
+            let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
+            let pos = AABB::point(pos)
+                .extend_positive(level.grid.cell_size)
+                .map(Coord::as_f32);
+            let texture = self.assets.sprites.tiles.get_texture(tile);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(pos, texture),
+            );
+        }
+    }
 }

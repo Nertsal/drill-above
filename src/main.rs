@@ -5,6 +5,7 @@ mod editor;
 mod game;
 mod model;
 mod render;
+mod ui;
 
 use assets::*;
 use model::*;
