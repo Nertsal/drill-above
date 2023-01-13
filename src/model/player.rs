@@ -1,9 +1,5 @@
 use super::*;
 
-const NORMAL_JUMP: f32 = 5.0;
-const WALL_JUMP: f32 = 5.0;
-const WALL_JUMP_ANGLE: f32 = f32::PI / 4.0;
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct PlayerControl {
     pub jump: bool,
@@ -16,6 +12,7 @@ pub struct Player {
     pub collider: Collider,
     pub velocity: Vec2<Coord>,
     pub state: PlayerState,
+    pub control_timeout: Option<Time>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -36,17 +33,18 @@ impl Player {
             )),
             velocity: Vec2::ZERO,
             state: PlayerState::Airborn,
+            control_timeout: None,
         }
     }
 }
 
 impl PlayerState {
-    pub fn jump_velocity(&self) -> Option<Vec2<Coord>> {
+    pub fn jump_velocity(&self, rules: &Rules) -> Option<Vec2<Coord>> {
         match self {
-            PlayerState::Grounded => Some(vec2(0.0, NORMAL_JUMP).map(Coord::new)),
+            PlayerState::Grounded => Some(vec2(Coord::ZERO, rules.normal_jump_strength)),
             PlayerState::WallSliding { wall_normal } => {
-                let angle = Coord::new(WALL_JUMP_ANGLE) * wall_normal.x.signum();
-                Some(wall_normal.rotate(angle) * Coord::new(WALL_JUMP))
+                let angle = rules.wall_jump_angle * wall_normal.x.signum();
+                Some(wall_normal.rotate(angle) * rules.wall_jump_strength)
             }
             PlayerState::Airborn => None,
         }

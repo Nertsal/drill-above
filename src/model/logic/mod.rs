@@ -1,7 +1,5 @@
 use super::*;
 
-const MOVE_SPEED: f32 = 5.0;
-
 struct Logic<'a> {
     world: &'a mut World,
     player_control: PlayerControl,
@@ -26,13 +24,24 @@ impl Logic<'_> {
     }
 
     fn process_player(&mut self) {
-        self.world.player.velocity += GRAVITY.map(Coord::new) * self.delta_time;
+        self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
-        self.world.player.velocity.x = self.player_control.move_dir.x * Coord::new(MOVE_SPEED);
+        if let Some(time) = &mut self.world.player.control_timeout {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.control_timeout = None;
+            }
+        } else {
+            let target_velocity = self.player_control.move_dir.x * self.world.rules.move_speed;
+            self.world.player.velocity.x = target_velocity;
+        }
 
         if self.player_control.jump {
-            if let Some(jump_vel) = self.world.player.state.jump_velocity() {
-                self.world.player.velocity += jump_vel;
+            if let Some(jump_vel) = self.world.player.state.jump_velocity(&self.world.rules) {
+                if let PlayerState::WallSliding { .. } = self.world.player.state {
+                    self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
+                }
+                self.world.player.velocity = jump_vel;
                 self.world.player.state = PlayerState::Airborn;
             }
         }
@@ -46,7 +55,7 @@ impl Logic<'_> {
     fn process_collisions(&mut self) {
         // Player-tiles
         let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
-        if let Some(collision) = (player_aabb.x_min..=player_aabb.x_max)
+        let collisions = (player_aabb.x_min..=player_aabb.x_max)
             .flat_map(move |x| (player_aabb.y_min..=player_aabb.y_max).map(move |y| vec2(x, y)))
             .filter(|&pos| {
                 self.world
@@ -62,9 +71,8 @@ impl Logic<'_> {
                         .extend_positive(self.world.level.grid.cell_size),
                 );
                 self.world.player.collider.check(&collider)
-            })
-            .max_by_key(|collision| collision.penetration)
-        {
+            });
+        if let Some(collision) = collisions.max_by_key(|collision| collision.penetration) {
             self.world
                 .player
                 .collider

@@ -4,6 +4,7 @@ use super::*;
 pub struct Assets {
     pub shaders: Shaders,
     pub sprites: Sprites,
+    pub rules: Rules,
 }
 
 #[derive(geng::Assets)]

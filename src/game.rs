@@ -19,7 +19,7 @@ impl Game {
         Self {
             geng: geng.clone(),
             render: Render::new(geng, assets),
-            world: World::load_level(level),
+            world: World::new(assets.rules.clone(), level),
             control: PlayerControl::default(),
             controls: Controls {
                 left: vec![geng::Key::Left],

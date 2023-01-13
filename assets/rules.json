@@ -1,0 +1,11 @@
+{
+  "gravity": {
+    "x": 0.0,
+    "y": -10.0
+  },
+  "move_speed": 5.0,
+  "normal_jump_strength": 10.0,
+  "wall_jump_strength": 10.0,
+  "wall_jump_angle": 0.8,
+  "wall_jump_timeout": 0.2
+}
