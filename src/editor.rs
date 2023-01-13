@@ -10,7 +10,7 @@ pub struct Editor {
     draw_grid: bool,
     cursor_pos: Vec2<f64>,
     cursor_world_pos: Vec2<Coord>,
-    dragging: bool,
+    dragging: Option<geng::MouseButton>,
     block_options: Vec<Block>,
     selected_block: usize,
 }
@@ -38,7 +38,7 @@ impl Editor {
             draw_grid: true,
             cursor_pos: Vec2::ZERO,
             cursor_world_pos: Vec2::ZERO,
-            dragging: false,
+            dragging: None,
             block_options: itertools::chain![
                 Tile::all().map(|tile| Block::Tile(tile)),
                 HazardType::all().map(|hazard| Block::Hazard(hazard)),
@@ -67,6 +67,23 @@ impl Editor {
         }
     }
 
+    fn remove_block(&mut self) {
+        // Try hazards first
+        if let Some(i) = self
+            .level
+            .hazards
+            .iter()
+            .position(|hazard| hazard.collider.contains(self.cursor_world_pos))
+        {
+            self.level.hazards.swap_remove(i);
+            return;
+        }
+
+        // Try tiles
+        let pos = self.level.grid.world_to_grid(self.cursor_world_pos).0;
+        self.level.tiles.set_tile_isize(pos, Tile::Air);
+    }
+
     fn update_cursor(&mut self, cursor_pos: Vec2<f64>) {
         self.cursor_pos = cursor_pos;
         self.cursor_world_pos = self
@@ -77,22 +94,36 @@ impl Editor {
             )
             .map(Coord::new);
 
-        if self.dragging {
-            self.place_block();
+        if let Some(button) = self.dragging {
+            match button {
+                geng::MouseButton::Left => {
+                    self.place_block();
+                }
+                geng::MouseButton::Right => {
+                    self.remove_block();
+                }
+                geng::MouseButton::Middle => {}
+            }
         }
     }
 
     fn click(&mut self, position: Vec2<f64>, button: geng::MouseButton) {
         self.update_cursor(position);
-        self.dragging = true;
+        self.dragging = Some(button);
 
-        if let geng::MouseButton::Left = button {
-            self.place_block();
+        match button {
+            geng::MouseButton::Left => {
+                self.place_block();
+            }
+            geng::MouseButton::Right => {
+                self.remove_block();
+            }
+            _ => (),
         }
     }
 
     fn release(&mut self, _button: geng::MouseButton) {
-        self.dragging = false;
+        self.dragging = None;
     }
 
     fn save_level(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {

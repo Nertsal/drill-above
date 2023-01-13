@@ -44,6 +44,10 @@ impl Collider {
         self.0 = self.0.translate(delta);
     }
 
+    pub fn contains(&self, pos: Vec2<Coord>) -> bool {
+        self.check(&Collider::new(AABB::point(pos))).is_some()
+    }
+
     pub fn check(&self, other: &Self) -> Option<Collision> {
         let dx_right = self.0.x_max - other.0.x_min;
         let dx_left = other.0.x_max - self.0.x_min;
