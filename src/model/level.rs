@@ -52,7 +52,7 @@ impl Level {
         }
         #[cfg(target_arch = "wasm32")]
         {
-            Err("unimplemented")
+            anyhow::bail!("unimplemented")
         }
     }
 
