@@ -26,22 +26,18 @@ impl Grid {
     pub fn world_to_grid(&self, world_pos: Vec2<Coord>) -> (Vec2<isize>, Vec2<Coord>) {
         let grid_pos = self.matrix() * world_pos.extend(Coord::ONE);
         let mut offset = grid_pos.xy() / grid_pos.z;
-        let mut cell_pos = Vec2::ZERO;
-        while offset.x < Coord::ZERO {
+        let mut cell_pos = vec2(
+            offset.x.as_f32().trunc() as _,
+            offset.y.as_f32().trunc() as _,
+        );
+        offset = vec2(offset.x.as_f32().fract(), offset.y.as_f32().fract()).map(Coord::new);
+        if offset.x < Coord::ZERO {
             offset.x += Coord::ONE;
             cell_pos.x -= 1;
         }
-        while offset.x >= Coord::ONE {
-            offset.x -= Coord::ONE;
-            cell_pos.x += 1;
-        }
-        while offset.y < Coord::ZERO {
+        if offset.y < Coord::ZERO {
             offset.y += Coord::ONE;
             cell_pos.y -= 1;
-        }
-        while offset.y >= Coord::ONE {
-            offset.y -= Coord::ONE;
-            cell_pos.y += 1;
         }
         (cell_pos, offset)
     }
