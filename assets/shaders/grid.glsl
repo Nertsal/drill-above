@@ -27,22 +27,15 @@ void main() {
     vec3 world_pos = u_grid_matrix * inv_camera * vec3(v_quad_pos, 1.0);
     vec2 pos = world_pos.xy / world_pos.z;
 
-    ivec2 cell_pos = ivec2(0);
-    while (pos.x < 0.0) {
+    ivec2 cell_pos = ivec2(floor(pos.x), floor(pos.y));
+    pos = vec2(fract(pos.x), fract(pos.y));
+    if (pos.x < 0.0) {
         pos.x += 1.0;
         cell_pos.x -= 1;
     }
-    while (pos.x >= 1.0) {
-        pos.x -= 1.0;
-        cell_pos.x += 1;
-    }
-    while (pos.y < 0.0) {
+    if (pos.y < 0.0) {
         pos.y += 1.0;
         cell_pos.y -= 1;
-    }
-    while (pos.y >= 1.0) {
-        pos.y -= 1.0;
-        cell_pos.y += 1;
     }
 
     if (0.5 - abs(pos.x - 0.5) > u_grid_width.x && 0.5 - abs(pos.y - 0.5) > u_grid_width.y) {
