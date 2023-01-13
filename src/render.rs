@@ -55,8 +55,13 @@ impl Render {
         )
     }
 
-    pub fn draw_world(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
-        self.draw_level(&world.level, &world.camera, framebuffer);
+    pub fn draw_world(
+        &self,
+        world: &World,
+        draw_hitboxes: bool,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
 
         // Player
         if let PlayerState::Respawning { time } = world.player.state {
@@ -72,20 +77,22 @@ impl Render {
     pub fn draw_level(
         &self,
         level: &Level,
+        draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
         self.draw_tiles(level, &level.tiles, camera, framebuffer);
-        self.draw_hazards(&level.hazards, camera, framebuffer);
+        self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
     }
 
     pub fn draw_level_editor(
         &self,
         level: &Level,
+        draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        self.draw_level(level, camera, framebuffer);
+        self.draw_level(level, draw_hitboxes, camera, framebuffer);
 
         // Spawnpoint
         self.geng.draw_2d(
@@ -126,6 +133,7 @@ impl Render {
     pub fn draw_hazards(
         &self,
         hazards: &[Hazard],
+        draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -137,6 +145,13 @@ impl Render {
                 camera,
                 &draw_2d::TexturedQuad::new(aabb, texture),
             );
+            if draw_hitboxes {
+                self.geng.draw_2d(
+                    framebuffer,
+                    camera,
+                    &draw_2d::Quad::new(aabb, Rgba::new(1.0, 0.0, 0.0, 0.5)),
+                );
+            }
         }
     }
 }

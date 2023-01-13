@@ -40,8 +40,8 @@ impl Editor {
             cursor_world_pos: Vec2::ZERO,
             dragging: None,
             block_options: itertools::chain![
-                Tile::all().map(|tile| Block::Tile(tile)),
-                HazardType::all().map(|hazard| Block::Hazard(hazard)),
+                Tile::all().map(Block::Tile),
+                HazardType::all().map(Block::Hazard),
             ]
             .collect(),
             selected_block: 0,
@@ -144,7 +144,7 @@ impl geng::State for Editor {
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
         self.render
-            .draw_level_editor(&self.level, &self.camera, framebuffer);
+            .draw_level_editor(&self.level, true, &self.camera, framebuffer);
 
         if self.draw_grid {
             self.render
@@ -160,8 +160,8 @@ impl geng::State for Editor {
             geng::Event::MouseMove { position, .. } => {
                 self.update_cursor(position);
             }
-            geng::Event::MouseUp { position, button } => {
-                self.update_cursor(position);
+            geng::Event::MouseUp { button, .. } => {
+                // self.update_cursor(position);
                 self.release(button);
             }
             geng::Event::Wheel { delta } => {
@@ -184,7 +184,7 @@ impl geng::State for Editor {
         }
     }
 
-    fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
+    fn ui<'a>(&'a mut self, _cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         use geng::ui::*;
 
         let framebuffer_size = self.framebuffer_size.map(|x| x as f32);

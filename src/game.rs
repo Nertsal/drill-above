@@ -4,6 +4,7 @@ pub struct Game {
     geng: Geng,
     render: Render,
     world: World,
+    draw_hitboxes: bool,
     controls: Controls,
     control: PlayerControl,
 }
@@ -20,6 +21,7 @@ impl Game {
             geng: geng.clone(),
             render: Render::new(geng, assets),
             world: World::new(assets.rules.clone(), level),
+            draw_hitboxes: false,
             control: PlayerControl::default(),
             controls: Controls {
                 left: vec![geng::Key::Left],
@@ -56,7 +58,8 @@ impl geng::State for Game {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
-        self.render.draw_world(&self.world, framebuffer);
+        self.render
+            .draw_world(&self.world, self.draw_hitboxes, framebuffer);
     }
 
     fn update(&mut self, delta_time: f64) {
@@ -70,6 +73,8 @@ impl geng::State for Game {
         if let geng::Event::KeyDown { key } = event {
             if self.controls.jump.contains(&key) {
                 self.control.jump = true;
+            } else if let geng::Key::F1 = key {
+                self.draw_hitboxes = !self.draw_hitboxes;
             }
         }
     }
