@@ -23,7 +23,24 @@ impl Logic<'_> {
         self.process_collisions();
     }
 
+    fn kill_player(&mut self) {
+        self.world.player.velocity = Vec2::ZERO;
+        self.world.player.state = PlayerState::Respawning { time: Time::ONE };
+    }
+
     fn process_player(&mut self) {
+        if let PlayerState::Respawning { time } = &mut self.world.player.state {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.state = PlayerState::Airborn;
+                self.world
+                    .player
+                    .collider
+                    .teleport(self.world.level.spawn_point);
+            }
+            return;
+        }
+
         self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
         if self.world.player.velocity.y < Coord::ZERO {
@@ -63,6 +80,10 @@ impl Logic<'_> {
     }
 
     fn process_collisions(&mut self) {
+        if let PlayerState::Respawning { .. } = self.world.player.state {
+            return;
+        }
+
         // Player-tiles
         let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
         let collisions = (player_aabb.x_min..=player_aabb.x_max)
@@ -95,6 +116,20 @@ impl Logic<'_> {
                 self.world.player.state = PlayerState::WallSliding {
                     wall_normal: -collision.normal,
                 };
+            }
+        }
+
+        // Screen edge
+        if self.world.player.collider.feet().y < self.world.level.grid.grid_to_world(vec2(0, 0)).y {
+            self.kill_player();
+            return;
+        }
+
+        // Player-hazards
+        for hazard in &self.world.level.hazards {
+            if self.world.player.collider.check(&hazard.collider).is_some() {
+                self.kill_player();
+                break;
             }
         }
     }

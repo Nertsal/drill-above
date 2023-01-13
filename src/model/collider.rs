@@ -35,6 +35,11 @@ impl Collider {
         AABB::from_corners(a, b)
     }
 
+    pub fn teleport(&mut self, position: Vec2<Coord>) {
+        let delta = position - self.feet();
+        self.translate(delta);
+    }
+
     pub fn translate(&mut self, delta: Vec2<Coord>) {
         self.0 = self.0.translate(delta);
     }

@@ -10,8 +10,15 @@ pub struct Editor {
     draw_grid: bool,
     cursor_pos: Vec2<f64>,
     cursor_world_pos: Vec2<Coord>,
-    selected_tile: Tile,
     dragging: bool,
+    block_options: Vec<Block>,
+    selected_block: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Block {
+    Tile(Tile),
+    Hazard(HazardType),
 }
 
 impl Editor {
@@ -31,22 +38,33 @@ impl Editor {
             draw_grid: true,
             cursor_pos: Vec2::ZERO,
             cursor_world_pos: Vec2::ZERO,
-            selected_tile: Tile::Grass,
             dragging: false,
+            block_options: itertools::chain![
+                Tile::all().map(|tile| Block::Tile(tile)),
+                HazardType::all().map(|hazard| Block::Hazard(hazard)),
+            ]
+            .collect(),
+            selected_block: 0,
         }
     }
 
-    fn place_tile(&mut self, pos: Vec2<Coord>, tile: Tile) {
-        let pos = self.level.grid.world_to_grid(pos).0;
-        self.level.tiles.set_tile_isize(pos, tile);
+    fn scroll_selected_tile(&mut self, delta: isize) {
+        let current = self.selected_block as isize;
+        let target = current + delta;
+        self.selected_block = target.rem_euclid(self.block_options.len() as isize) as usize;
     }
 
-    fn scroll_selected_tile(&mut self, delta: isize) {
-        let current = self.selected_tile as isize;
-        let target = current + delta;
-        let all_tiles = Tile::all();
-        let tile = target.rem_euclid(all_tiles.len() as isize) as usize;
-        self.selected_tile = all_tiles[tile];
+    fn place_block(&mut self) {
+        let pos = self.level.grid.world_to_grid(self.cursor_world_pos).0;
+        let block = self.block_options[self.selected_block];
+        match block {
+            Block::Tile(tile) => {
+                self.level.tiles.set_tile_isize(pos, tile);
+            }
+            Block::Hazard(hazard) => {
+                self.level.place_hazard(pos, hazard);
+            }
+        }
     }
 
     fn update_cursor(&mut self, cursor_pos: Vec2<f64>) {
@@ -60,7 +78,7 @@ impl Editor {
             .map(Coord::new);
 
         if self.dragging {
-            self.place_tile(self.cursor_world_pos, self.selected_tile);
+            self.place_block();
         }
     }
 
@@ -69,7 +87,7 @@ impl Editor {
         self.dragging = true;
 
         if let geng::MouseButton::Left = button {
-            self.place_tile(self.cursor_world_pos, self.selected_tile);
+            self.place_block();
         }
     }
 
@@ -151,7 +169,10 @@ impl geng::State for Editor {
             Rgba::WHITE,
         );
 
-        let texture = self.assets.sprites.tiles.get_texture(&self.selected_tile);
+        let texture = match &self.block_options[self.selected_block] {
+            Block::Tile(tile) => self.assets.sprites.tiles.get_texture(tile),
+            Block::Hazard(hazard) => self.assets.sprites.hazards.get_texture(hazard),
+        };
         let selected_tile = ui::TextureBox::new(texture).fixed_size(
             vec2(framebuffer_size.y * 0.05, framebuffer_size.y * 0.05).map(|x| x as f64),
         );

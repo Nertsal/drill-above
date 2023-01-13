@@ -59,11 +59,14 @@ impl Render {
         self.draw_level(&world.level, &world.camera, framebuffer);
 
         // Player
-        self.geng.draw_2d(
-            framebuffer,
-            &world.camera,
-            &draw_2d::Quad::new(world.player.collider.raw().map(Coord::as_f32), Rgba::GREEN),
-        );
+        if let PlayerState::Respawning { time } = world.player.state {
+        } else {
+            self.geng.draw_2d(
+                framebuffer,
+                &world.camera,
+                &draw_2d::Quad::new(world.player.collider.raw().map(Coord::as_f32), Rgba::GREEN),
+            );
+        }
     }
 
     pub fn draw_level(
@@ -73,6 +76,7 @@ impl Render {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         self.draw_tiles(level, &level.tiles, camera, framebuffer);
+        self.draw_hazards(&level.hazards, camera, framebuffer);
     }
 
     pub fn draw_level_editor(
@@ -81,7 +85,7 @@ impl Render {
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        self.draw_tiles(level, &level.tiles, camera, framebuffer);
+        self.draw_level(level, camera, framebuffer);
 
         // Spawnpoint
         self.geng.draw_2d(
@@ -115,6 +119,23 @@ impl Render {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(pos, texture),
+            );
+        }
+    }
+
+    pub fn draw_hazards(
+        &self,
+        hazards: &[Hazard],
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for hazard in hazards {
+            let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
+            let aabb = hazard.collider.raw().map(Coord::as_f32);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(aabb, texture),
             );
         }
     }

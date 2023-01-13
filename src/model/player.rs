@@ -20,6 +20,7 @@ pub enum PlayerState {
     Grounded,
     WallSliding { wall_normal: Vec2<Coord> },
     Airborn,
+    Respawning { time: Time },
 }
 
 impl Player {
@@ -47,6 +48,7 @@ impl PlayerState {
                 Some(wall_normal.rotate(angle) * rules.wall_jump_strength)
             }
             PlayerState::Airborn => None,
+            PlayerState::Respawning { .. } => None,
         }
     }
 }

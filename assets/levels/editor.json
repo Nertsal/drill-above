@@ -13,6 +13,10 @@
     "x": 40,
     "y": 23
   },
+  "spawn_point": {
+    "x": -11.979561,
+    "y": 0.47581652
+  },
   "tiles": {
     "size": {
       "x": 40,
@@ -941,8 +945,177 @@
       "Air"
     ]
   },
-  "spawn_point": {
-    "x": -11.979561,
-    "y": 0.47581652
-  }
+  "hazards": [
+    {
+      "collider": {
+        "x_min": -7.0,
+        "x_max": -6.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -7.0,
+        "x_max": -6.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -8.0,
+        "x_max": -7.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -8.0,
+        "x_max": -7.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -8.0,
+        "x_max": -7.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -8.0,
+        "x_max": -7.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -8.0,
+        "x_max": -7.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -8.0,
+        "x_max": -7.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -6.0,
+        "x_max": -5.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -6.0,
+        "x_max": -5.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -6.0,
+        "x_max": -5.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -6.0,
+        "x_max": -5.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -6.0,
+        "x_max": -5.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -6.0,
+        "x_max": -5.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -5.0,
+        "x_max": -4.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -5.0,
+        "x_max": -4.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -5.0,
+        "x_max": -4.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -5.0,
+        "x_max": -4.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "collider": {
+        "x_min": -5.0,
+        "x_max": -4.0,
+        "y_min": -2.5,
+        "y_max": -1.5
+      },
+      "hazard_type": "Spikes"
+    }
+  ]
 }
