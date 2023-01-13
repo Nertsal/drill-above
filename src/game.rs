@@ -2,6 +2,7 @@ use super::*;
 
 pub struct Game {
     geng: Geng,
+    assets: Rc<Assets>,
     render: Render,
     framebuffer_size: Vec2<usize>,
     pixel_texture: ugli::Texture,
@@ -21,6 +22,7 @@ impl Game {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, level: Level) -> Self {
         Self {
             geng: geng.clone(),
+            assets: assets.clone(),
             render: Render::new(geng, assets),
             framebuffer_size: vec2(1, 1),
             pixel_texture: {
@@ -66,29 +68,40 @@ impl Game {
 impl geng::State for Game {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.framebuffer_size = framebuffer.size();
+        ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
+        // Render the game onto the texture
         let mut pixel_framebuffer = ugli::Framebuffer::new_color(
             self.geng.ugli(),
             ugli::ColorAttachment::Texture(&mut self.pixel_texture),
         );
-        ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
         ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
-
         self.render
             .draw_world(&self.world, self.draw_hitboxes, &mut pixel_framebuffer);
 
-        let ratio =
-            framebuffer.size().map(|x| x as f32) / pixel_framebuffer.size().map(|x| x as f32);
+        // Render background
+        let reference_size = vec2(16.0, 9.0);
+        let ratio = framebuffer.size().map(|x| x as f32) / reference_size;
         let ratio = ratio.x.min(ratio.y);
-        let target_size = pixel_framebuffer.size().map(|x| x as f32) * ratio;
+        let target_size = reference_size * ratio;
+        let screen = AABB::point(framebuffer.size().map(|x| x as f32) / 2.0)
+            .extend_symmetric(target_size / 2.0);
         self.geng.draw_2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(
-                AABB::point(framebuffer.size().map(|x| x as f32) / 2.0)
-                    .extend_symmetric(target_size / 2.0),
-                &self.pixel_texture,
-            ),
+            &draw_2d::TexturedQuad::new(screen, &self.assets.sprites.room),
+        );
+
+        // Render the texture onto the screen
+        let target = AABB::from_corners(
+            screen.size() * vec2(50.0, 180.0 - 111.0) / vec2(320.0, 180.0),
+            screen.size() * vec2(163.0, 180.0 - 47.0) / vec2(320.0, 180.0),
+        )
+        .translate(screen.bottom_left());
+        self.geng.draw_2d(
+            framebuffer,
+            &geng::PixelPerfectCamera,
+            &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
     }
 

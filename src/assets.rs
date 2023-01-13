@@ -16,6 +16,8 @@ pub struct Shaders {
 pub struct Sprites {
     pub tiles: TileSprites,
     pub hazards: HazardSprites,
+    #[asset(postprocess = "pixel")]
+    pub room: ugli::Texture,
 }
 
 #[derive(geng::Assets)]
