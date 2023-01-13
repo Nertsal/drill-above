@@ -3,6 +3,8 @@ use super::*;
 pub struct Game {
     geng: Geng,
     render: Render,
+    framebuffer_size: Vec2<usize>,
+    pixel_texture: ugli::Texture,
     world: World,
     draw_hitboxes: bool,
     controls: Controls,
@@ -20,6 +22,13 @@ impl Game {
         Self {
             geng: geng.clone(),
             render: Render::new(geng, assets),
+            framebuffer_size: vec2(1, 1),
+            pixel_texture: {
+                let mut texture =
+                    ugli::Texture::new_with(geng.ugli(), vec2(320, 180), |_| Rgba::BLACK);
+                texture.set_filter(ugli::Filter::Nearest);
+                texture
+            },
             world: World::new(assets.rules.clone(), level),
             draw_hitboxes: false,
             control: PlayerControl::default(),
@@ -56,10 +65,31 @@ impl Game {
 
 impl geng::State for Game {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
+        self.framebuffer_size = framebuffer.size();
+
+        let mut pixel_framebuffer = ugli::Framebuffer::new_color(
+            self.geng.ugli(),
+            ugli::ColorAttachment::Texture(&mut self.pixel_texture),
+        );
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
+        ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
 
         self.render
-            .draw_world(&self.world, self.draw_hitboxes, framebuffer);
+            .draw_world(&self.world, self.draw_hitboxes, &mut pixel_framebuffer);
+
+        let ratio =
+            framebuffer.size().map(|x| x as f32) / pixel_framebuffer.size().map(|x| x as f32);
+        let ratio = ratio.x.min(ratio.y);
+        let target_size = pixel_framebuffer.size().map(|x| x as f32) * ratio;
+        self.geng.draw_2d(
+            framebuffer,
+            &geng::PixelPerfectCamera,
+            &draw_2d::TexturedQuad::new(
+                AABB::point(framebuffer.size().map(|x| x as f32) / 2.0)
+                    .extend_symmetric(target_size / 2.0),
+                &self.pixel_texture,
+            ),
+        );
     }
 
     fn update(&mut self, delta_time: f64) {
