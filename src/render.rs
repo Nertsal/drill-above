@@ -55,6 +55,17 @@ impl Render {
         )
     }
 
+    pub fn draw_world(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
+        self.draw_level(&world.level, &world.camera, framebuffer);
+
+        // Player
+        self.geng.draw_2d(
+            framebuffer,
+            &world.camera,
+            &draw_2d::Quad::new(world.player.collider.raw().map(Coord::as_f32), Rgba::GREEN),
+        );
+    }
+
     pub fn draw_level(
         &self,
         level: &Level,
@@ -62,6 +73,28 @@ impl Render {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         self.draw_tiles(level, &level.tiles, camera, framebuffer);
+    }
+
+    pub fn draw_level_editor(
+        &self,
+        level: &Level,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        self.draw_tiles(level, &level.tiles, camera, framebuffer);
+
+        // Spawnpoint
+        self.geng.draw_2d(
+            framebuffer,
+            camera,
+            &draw_2d::Quad::new(
+                Player::new(level.spawn_point)
+                    .collider
+                    .raw()
+                    .map(Coord::as_f32),
+                Rgba::new(0.0, 1.0, 0.0, 0.5),
+            ),
+        );
     }
 
     pub fn draw_tiles(

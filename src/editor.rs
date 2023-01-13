@@ -1,5 +1,3 @@
-use geng::Camera2d;
-
 use super::*;
 
 pub struct Editor {
@@ -18,28 +16,24 @@ pub struct Editor {
 
 impl Editor {
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
-        let mut editor = Self {
+        Self {
             geng: geng.clone(),
             assets: assets.clone(),
             render: Render::new(geng, assets),
             camera: Camera2d {
-                center: Vec2::ZERO,
+                center: vec2(0.0, 0.25),
                 rotation: 0.0,
                 fov: 22.5,
             },
             framebuffer_size: vec2(1, 1),
-            level: Level::default(),
+            level: util::report_err(Level::load("editor.json"), "Failed to load level")
+                .unwrap_or_default(),
             draw_grid: true,
             cursor_pos: Vec2::ZERO,
             cursor_world_pos: Vec2::ZERO,
             selected_tile: Tile::Grass,
             dragging: false,
-        };
-        util::report_err(
-            editor.load_level(run_dir().join("level.json")),
-            "Failed to load level",
-        );
-        editor
+        }
     }
 
     fn place_tile(&mut self, pos: Vec2<Coord>, tile: Tile) {
@@ -84,21 +78,12 @@ impl Editor {
     }
 
     fn save_level(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let path = run_dir().join("assets").join("levels").join(path);
         #[cfg(not(target_arch = "wasm32"))]
         {
             let file = std::fs::File::create(path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, &self.level)?;
-        }
-        Ok(())
-    }
-
-    fn load_level(&mut self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let file = std::fs::File::open(path)?;
-            let reader = std::io::BufReader::new(file);
-            self.level = serde_json::from_reader(reader)?;
         }
         Ok(())
     }
@@ -110,7 +95,7 @@ impl geng::State for Editor {
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
         self.render
-            .draw_level(&self.level, &self.camera, framebuffer);
+            .draw_level_editor(&self.level, &self.camera, framebuffer);
 
         if self.draw_grid {
             self.render
@@ -133,14 +118,19 @@ impl geng::State for Editor {
             geng::Event::Wheel { delta } => {
                 self.scroll_selected_tile(delta.signum() as isize);
             }
-            geng::Event::KeyDown { key: geng::Key::S }
-                if self.geng.window().is_key_pressed(geng::Key::LCtrl) =>
-            {
-                util::report_err(
-                    self.save_level(run_dir().join("level.json")),
-                    "Failed to save level",
-                );
-            }
+            geng::Event::KeyDown { key } => match key {
+                geng::Key::S if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
+                    if let Ok(()) =
+                        util::report_err(self.save_level("editor.json"), "Failed to save level")
+                    {
+                        info!("Saved the level");
+                    }
+                }
+                geng::Key::R => {
+                    self.level.spawn_point = self.cursor_world_pos;
+                }
+                _ => {}
+            },
             _ => {}
         }
     }

@@ -1,4 +1,5 @@
 use geng::prelude::*;
+use geng::Camera2d;
 
 mod assets;
 mod editor;
@@ -16,6 +17,8 @@ use render::*;
 struct Opt {
     #[clap(long)]
     editor: bool,
+    #[clap(long)]
+    level: Option<String>,
 }
 
 fn main() {
@@ -31,6 +34,7 @@ fn main() {
     if opt.editor {
         geng::run(&geng, editor::run(&geng))
     } else {
-        geng::run(&geng, game::run(&geng))
+        let level = opt.level.unwrap_or("editor.json".to_string());
+        geng::run(&geng, game::run(&geng, level))
     }
 }
