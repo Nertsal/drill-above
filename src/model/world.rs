@@ -9,6 +9,8 @@ pub struct Rules {
     pub wall_jump_strength: Coord,
     pub wall_jump_angle: R32,
     pub wall_jump_timeout: Time,
+    pub fall_multiplier: Coord,
+    pub low_jump_multiplier: Coord,
 }
 
 pub struct World {

@@ -26,6 +26,16 @@ impl Logic<'_> {
     fn process_player(&mut self) {
         self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
+        if self.world.player.velocity.y < Coord::ZERO {
+            self.world.player.velocity.y += self.world.rules.gravity.y
+                * (self.world.rules.fall_multiplier - Coord::ONE)
+                * self.delta_time;
+        } else if self.world.player.velocity.y > Coord::ZERO && !self.player_control.hold_jump {
+            self.world.player.velocity.y += self.world.rules.gravity.y
+                * (self.world.rules.low_jump_multiplier - Coord::ONE)
+                * self.delta_time;
+        }
+
         if let Some(time) = &mut self.world.player.control_timeout {
             *time -= self.delta_time;
             if *time <= Time::ZERO {
