@@ -200,13 +200,23 @@ impl geng::State for Editor {
             Rgba::WHITE,
         );
 
-        let texture = match &self.block_options[self.selected_block] {
-            Block::Tile(tile) => self.assets.sprites.tiles.get_texture(tile),
-            Block::Hazard(hazard) => self.assets.sprites.hazards.get_texture(hazard),
+        let (texture, geometry) = match &self.block_options[self.selected_block] {
+            Block::Tile(tile) => {
+                let set = self.assets.sprites.tiles.get_tile_set(tile);
+                (
+                    set.texture(),
+                    set.get_tile_connected([false, false, false, false]),
+                )
+            }
+            Block::Hazard(hazard) => (
+                self.assets.sprites.hazards.get_texture(hazard),
+                [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)].map(|(x, y)| vec2(x, y)),
+            ),
         };
-        let selected_tile = ui::TextureBox::new(texture).fixed_size(
-            vec2(framebuffer_size.y * 0.05, framebuffer_size.y * 0.05).map(|x| x as f64),
-        );
+        let selected_tile = ui::TextureBox::new(&self.geng, &self.assets, texture, geometry)
+            .fixed_size(
+                vec2(framebuffer_size.y * 0.05, framebuffer_size.y * 0.05).map(|x| x as f64),
+            );
 
         let ui = geng::ui::stack![
             cell_pos.align(vec2(1.0, 1.0)),

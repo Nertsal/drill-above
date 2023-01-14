@@ -110,7 +110,7 @@ impl Logic<'_> {
                     self.world.player.collider.check(&collider)
                 })
                 .filter(|collision| {
-                    Vec2::dot(collision.normal, self.world.player.velocity) > Coord::ZERO
+                    Vec2::dot(collision.normal, self.world.player.velocity) >= Coord::ZERO
                 });
             if let Some(collision) = collisions.max_by_key(|collision| collision.penetration) {
                 // for collision in collisions.collect::<Vec<_>>() {

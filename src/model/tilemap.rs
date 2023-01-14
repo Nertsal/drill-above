@@ -6,7 +6,7 @@ pub struct TileMap {
     tiles: Vec<Tile>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Tile {
     Air,
     Grass,
@@ -65,6 +65,20 @@ impl TileMap {
             let index = pos_to_index(pos, self.size.x);
             self.tiles.get(index).copied()
         }
+    }
+
+    pub fn get_tile_connections(&self, tile: usize) -> [bool; 4] {
+        let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
+        let Some(center) = self.get_tile_isize(pos) else {
+            return [false; 4];
+        };
+        let deltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+        let neighbours = deltas.map(|(x, y)| pos + vec2(x, y));
+        neighbours.map(|pos| {
+            self.get_tile_isize(pos)
+                .filter(|tile| *tile == center)
+                .is_some()
+        })
     }
 }
 

@@ -1,5 +1,11 @@
 use super::*;
 
+#[derive(ugli::Vertex, Debug, Clone, Copy)]
+struct Vertex {
+    a_pos: Vec2<f32>,
+    a_uv: Vec2<f32>,
+}
+
 pub struct Render {
     geng: Geng,
     assets: Rc<Assets>,
@@ -115,17 +121,58 @@ impl Render {
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
+        let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
         for (i, tile) in tiles.tiles().iter().enumerate() {
+            let connections = tiles.get_tile_connections(i);
             let pos = index_to_pos(i, level.size.x);
             let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
             let pos = AABB::point(pos)
                 .extend_positive(level.grid.cell_size)
                 .map(Coord::as_f32);
-            let texture = self.assets.sprites.tiles.get_texture(tile);
-            self.geng.draw_2d(
+            let set = self.assets.sprites.tiles.get_tile_set(tile);
+            let geometry = set.get_tile_connected(connections);
+            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+            let vertices = [0, 1, 2, 3].map(|i| Vertex {
+                a_pos: vec2(vertices[i].0, vertices[i].1),
+                a_uv: geometry[i],
+            });
+            let geometry = [
+                vertices[0],
+                vertices[1],
+                vertices[2],
+                vertices[0],
+                vertices[2],
+                vertices[3],
+            ];
+            let matrix = Mat3::translate(pos.bottom_left()) * Mat3::scale(pos.size());
+            tiles_geometry
+                .entry(*tile)
+                .or_default()
+                .extend(geometry.into_iter().map(|vertex| {
+                    let pos = matrix * vertex.a_pos.extend(1.0);
+                    Vertex {
+                        a_pos: pos.xy() / pos.z,
+                        ..vertex
+                    }
+                }));
+        }
+        for (tile, geometry) in tiles_geometry {
+            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let texture = set.texture();
+            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
+            ugli::draw(
                 framebuffer,
-                camera,
-                &draw_2d::TexturedQuad::new(pos, texture),
+                &self.assets.shaders.texture,
+                ugli::DrawMode::Triangles,
+                &geometry,
+                (
+                    ugli::uniforms! {
+                        u_model_matrix: Mat3::identity(),
+                        u_texture: texture,
+                    },
+                    geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
+                ),
+                ugli::DrawParameters::default(),
             );
         }
     }
