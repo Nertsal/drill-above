@@ -89,6 +89,7 @@ impl Logic<'_> {
             return;
         }
 
+        self.world.player.state = PlayerState::Airborn;
         for _ in 0..2 {
             // Player-tiles
             let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
