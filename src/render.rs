@@ -70,7 +70,7 @@ impl Render {
         self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
 
         // Player
-        if let PlayerState::Respawning { time } = world.player.state {
+        if let PlayerState::Respawning { .. } = world.player.state {
         } else {
             self.geng.draw_2d(
                 framebuffer,
