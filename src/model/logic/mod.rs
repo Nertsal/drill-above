@@ -84,38 +84,46 @@ impl Logic<'_> {
             return;
         }
 
-        // Player-tiles
-        let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
-        let collisions = (player_aabb.x_min..=player_aabb.x_max)
-            .flat_map(move |x| (player_aabb.y_min..=player_aabb.y_max).map(move |y| vec2(x, y)))
-            .filter(|&pos| {
+        for _ in 0..2 {
+            // Player-tiles
+            let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
+            let collisions = (player_aabb.x_min..=player_aabb.x_max)
+                .flat_map(move |x| (player_aabb.y_min..=player_aabb.y_max).map(move |y| vec2(x, y)))
+                .filter(|&pos| {
+                    self.world
+                        .level
+                        .tiles
+                        .get_tile_isize(pos)
+                        .filter(|tile| !matches!(tile, Tile::Air))
+                        .is_some()
+                })
+                .filter_map(|pos| {
+                    let collider = Collider::new(
+                        AABB::point(self.world.level.grid.grid_to_world(pos))
+                            .extend_positive(self.world.level.grid.cell_size),
+                    );
+                    self.world.player.collider.check(&collider)
+                })
+                .filter(|collision| {
+                    Vec2::dot(collision.normal, self.world.player.velocity) > Coord::ZERO
+                });
+            if let Some(collision) = collisions.max_by_key(|collision| collision.penetration) {
+                // for collision in collisions.collect::<Vec<_>>() {
                 self.world
-                    .level
-                    .tiles
-                    .get_tile_isize(pos)
-                    .filter(|tile| !matches!(tile, Tile::Air))
-                    .is_some()
-            })
-            .filter_map(|pos| {
-                let collider = Collider::new(
-                    AABB::point(self.world.level.grid.grid_to_world(pos))
-                        .extend_positive(self.world.level.grid.cell_size),
-                );
-                self.world.player.collider.check(&collider)
-            });
-        if let Some(collision) = collisions.max_by_key(|collision| collision.penetration) {
-            self.world
-                .player
-                .collider
-                .translate(-collision.normal * collision.penetration);
-            self.world.player.velocity -=
-                collision.normal * Vec2::dot(self.world.player.velocity, collision.normal);
-            if collision.normal.x.approx_eq(&Coord::ZERO) {
-                self.world.player.state = PlayerState::Grounded;
-            } else if collision.normal.y.approx_eq(&Coord::ZERO) {
-                self.world.player.state = PlayerState::WallSliding {
-                    wall_normal: -collision.normal,
-                };
+                    .player
+                    .collider
+                    .translate(-collision.normal * collision.penetration);
+                self.world.player.velocity -=
+                    collision.normal * Vec2::dot(self.world.player.velocity, collision.normal);
+                if collision.normal.x.approx_eq(&Coord::ZERO) {
+                    self.world.player.state = PlayerState::Grounded;
+                } else if collision.normal.y.approx_eq(&Coord::ZERO)
+                    && !matches!(self.world.player.state, PlayerState::Grounded)
+                {
+                    self.world.player.state = PlayerState::WallSliding {
+                        wall_normal: -collision.normal,
+                    };
+                }
             }
         }
 
