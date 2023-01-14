@@ -9,5 +9,7 @@
   "wall_jump_angle": 1.0,
   "wall_jump_timeout": 0.2,
   "fall_multiplier": 2.0,
-  "low_jump_multiplier": 5.0
+  "low_jump_multiplier": 5.0,
+  "free_fall_speed": 15.0,
+  "wall_slide_speed": 5.0
 }
