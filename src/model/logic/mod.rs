@@ -41,6 +41,28 @@ impl Logic<'_> {
             return;
         }
 
+        if self.player_control.drill {
+            if let Some(drill_dir) = match self.world.player.state {
+                PlayerState::Grounded => Some(vec2(0.0, -1.0).map(Coord::new)),
+                PlayerState::WallSliding { wall_normal } => Some(-wall_normal),
+                _ => None,
+            } {
+                if Vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
+                    self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
+                        * self.world.rules.drill_speed;
+                    self.world.player.state = PlayerState::Drilling;
+                }
+            }
+        }
+
+        if let PlayerState::Drilling = self.world.player.state {
+            self.world
+                .player
+                .collider
+                .translate(self.world.player.velocity * self.delta_time);
+            return;
+        }
+
         self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
         if self.world.player.velocity.y < Coord::ZERO {
@@ -85,11 +107,16 @@ impl Logic<'_> {
     }
 
     fn process_collisions(&mut self) {
-        if let PlayerState::Respawning { .. } = self.world.player.state {
-            return;
+        match self.world.player.state {
+            PlayerState::Respawning { .. } => return,
+            _ => (),
         }
 
-        self.world.player.state = PlayerState::Airborn;
+        let drilling = matches!(self.world.player.state, PlayerState::Drilling);
+        if !drilling {
+            self.world.player.state = PlayerState::Airborn;
+        }
+        let mut still_drilling = false;
         for _ in 0..2 {
             // Player-tiles
             let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
@@ -100,7 +127,14 @@ impl Logic<'_> {
                         .level
                         .tiles
                         .get_tile_isize(pos)
-                        .filter(|tile| !matches!(tile, Tile::Air))
+                        .filter(|tile| {
+                            let air = matches!(tile, Tile::Air);
+                            let drill = drilling && tile.is_drillable();
+                            if !air && drill {
+                                still_drilling = true;
+                            }
+                            !air && !drill
+                        })
                         .is_some()
                 })
                 .filter_map(|pos| {
@@ -114,23 +148,30 @@ impl Logic<'_> {
                     Vec2::dot(collision.normal, self.world.player.velocity) >= Coord::ZERO
                 });
             if let Some(collision) = collisions.max_by_key(|collision| collision.penetration) {
-                // for collision in collisions.collect::<Vec<_>>() {
                 self.world
                     .player
                     .collider
                     .translate(-collision.normal * collision.penetration);
-                self.world.player.velocity -=
-                    collision.normal * Vec2::dot(self.world.player.velocity, collision.normal);
-                if collision.normal.x.approx_eq(&Coord::ZERO) {
-                    self.world.player.state = PlayerState::Grounded;
-                } else if collision.normal.y.approx_eq(&Coord::ZERO)
-                    && !matches!(self.world.player.state, PlayerState::Grounded)
-                {
-                    self.world.player.state = PlayerState::WallSliding {
-                        wall_normal: -collision.normal,
-                    };
+                let bounciness = Coord::new(if drilling { 1.0 } else { 0.0 });
+                self.world.player.velocity -= collision.normal
+                    * Vec2::dot(self.world.player.velocity, collision.normal)
+                    * (Coord::ONE + bounciness);
+                if !drilling {
+                    if collision.normal.x.approx_eq(&Coord::ZERO) {
+                        self.world.player.state = PlayerState::Grounded;
+                    } else if collision.normal.y.approx_eq(&Coord::ZERO)
+                        && !matches!(self.world.player.state, PlayerState::Grounded)
+                    {
+                        self.world.player.state = PlayerState::WallSliding {
+                            wall_normal: -collision.normal,
+                        };
+                    }
                 }
             }
+        }
+
+        if drilling && !still_drilling {
+            self.world.player.state = PlayerState::Airborn;
         }
 
         // Screen edge

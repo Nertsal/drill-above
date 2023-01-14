@@ -18,6 +18,14 @@ impl Tile {
         use Tile::*;
         [Air, Grass, Stone]
     }
+
+    pub fn is_drillable(&self) -> bool {
+        match self {
+            Self::Air => true,
+            Self::Grass => true,
+            Self::Stone => false,
+        }
+    }
 }
 
 impl TileMap {

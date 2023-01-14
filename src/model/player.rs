@@ -5,6 +5,7 @@ pub struct PlayerControl {
     pub jump: bool,
     pub hold_jump: bool,
     pub move_dir: Vec2<Coord>,
+    pub drill: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,6 +22,7 @@ pub enum PlayerState {
     WallSliding { wall_normal: Vec2<Coord> },
     Airborn,
     Respawning { time: Time },
+    Drilling,
 }
 
 impl Player {
@@ -47,8 +49,7 @@ impl PlayerState {
                 let angle = rules.wall_jump_angle * wall_normal.x.signum();
                 Some(wall_normal.rotate(angle) * rules.wall_jump_strength)
             }
-            PlayerState::Airborn => None,
-            PlayerState::Respawning { .. } => None,
+            _ => None,
         }
     }
 }
@@ -65,6 +66,7 @@ impl Default for PlayerControl {
             jump: false,
             hold_jump: false,
             move_dir: Vec2::ZERO,
+            drill: false,
         }
     }
 }

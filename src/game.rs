@@ -15,7 +15,10 @@ pub struct Game {
 struct Controls {
     left: Vec<geng::Key>,
     right: Vec<geng::Key>,
+    down: Vec<geng::Key>,
+    up: Vec<geng::Key>,
     jump: Vec<geng::Key>,
+    drill: Vec<geng::Key>,
 }
 
 impl Game {
@@ -37,7 +40,10 @@ impl Game {
             controls: Controls {
                 left: vec![geng::Key::Left],
                 right: vec![geng::Key::Right],
+                down: vec![geng::Key::Down],
+                up: vec![geng::Key::Up],
                 jump: vec![geng::Key::Z],
+                drill: vec![geng::Key::C],
             },
         }
     }
@@ -60,6 +66,12 @@ impl Game {
         }
         if pressed!(self.controls.right) {
             dir.x += Coord::ONE;
+        }
+        if pressed!(self.controls.down) {
+            dir.y -= Coord::ONE;
+        }
+        if pressed!(self.controls.up) {
+            dir.y += Coord::ONE;
         }
         self.control.move_dir = dir;
     }
@@ -116,7 +128,11 @@ impl geng::State for Game {
         if let geng::Event::KeyDown { key } = event {
             if self.controls.jump.contains(&key) {
                 self.control.jump = true;
-            } else if let geng::Key::F1 = key {
+            }
+            if self.controls.drill.contains(&key) {
+                self.control.drill = true;
+            }
+            if let geng::Key::F1 = key {
                 self.draw_hitboxes = !self.draw_hitboxes;
             }
         }
