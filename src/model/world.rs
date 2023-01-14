@@ -11,6 +11,8 @@ pub struct Rules {
     pub wall_jump_timeout: Time,
     pub fall_multiplier: Coord,
     pub low_jump_multiplier: Coord,
+    pub free_fall_speed: Coord,
+    pub wall_slide_speed: Coord,
 }
 
 pub struct World {

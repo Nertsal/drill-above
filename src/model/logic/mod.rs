@@ -47,6 +47,11 @@ impl Logic<'_> {
             self.world.player.velocity.y += self.world.rules.gravity.y
                 * (self.world.rules.fall_multiplier - Coord::ONE)
                 * self.delta_time;
+            let cap = match self.world.player.state {
+                PlayerState::WallSliding { .. } => self.world.rules.wall_slide_speed,
+                _ => self.world.rules.free_fall_speed,
+            };
+            self.world.player.velocity.y = self.world.player.velocity.y.clamp_abs(cap);
         } else if self.world.player.velocity.y > Coord::ZERO && !self.player_control.hold_jump {
             self.world.player.velocity.y += self.world.rules.gravity.y
                 * (self.world.rules.low_jump_multiplier - Coord::ONE)
