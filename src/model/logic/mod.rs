@@ -21,6 +21,7 @@ impl Logic<'_> {
     fn process(&mut self) {
         self.process_player();
         self.process_collisions();
+        self.process_particles();
     }
 
     fn kill_player(&mut self) {
@@ -41,11 +42,25 @@ impl Logic<'_> {
                 }
                 return;
             }
-            PlayerState::Finished { time } => {
+            PlayerState::Finished { time, next_heart } => {
                 *time -= self.delta_time;
                 if *time <= Time::ZERO {
                     // TODO: change level instead or respawning
                     self.kill_player();
+                    return;
+                }
+                *next_heart -= self.delta_time;
+                if *next_heart <= Time::ZERO {
+                    *next_heart += Time::new(0.5);
+                    self.world.particles.push(Particle {
+                        lifetime: Time::new(2.0),
+                        position: self.world.level.finish
+                            + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
+                        velocity: vec2(0.0, 1.5)
+                            .rotate(thread_rng().gen_range(-0.5..=0.5))
+                            .map(Coord::new),
+                        particle_type: ParticleType::Heart4,
+                    });
                 }
                 return;
             }
@@ -171,7 +186,17 @@ impl Logic<'_> {
         if !drilling {
             // Finish
             if !finished && self.world.player.collider.contains(self.world.level.finish) {
-                self.world.player.state = PlayerState::Finished { time: Time::ONE };
+                self.world.player.state = PlayerState::Finished {
+                    time: Time::new(2.0),
+                    next_heart: Time::new(0.5),
+                };
+                self.world.particles.push(Particle {
+                    lifetime: Time::new(2.0),
+                    position: self.world.player.collider.head()
+                        + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
+                    velocity: vec2(0.0, 1.5).map(Coord::new),
+                    particle_type: ParticleType::Heart8,
+                });
                 return;
             }
             if finished {
@@ -255,5 +280,15 @@ impl Logic<'_> {
                 break;
             }
         }
+    }
+
+    fn process_particles(&mut self) {
+        for particle in &mut self.world.particles {
+            particle.lifetime -= self.delta_time;
+            particle.position += particle.velocity * self.delta_time;
+        }
+        self.world
+            .particles
+            .retain(|particle| particle.lifetime > Time::ZERO);
     }
 }

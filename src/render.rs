@@ -78,6 +78,8 @@ impl Render {
                 &draw_2d::Quad::new(world.player.collider.raw().map(Coord::as_f32), Rgba::GREEN),
             );
         }
+
+        self.draw_particles(&world.particles, &world.camera, framebuffer);
     }
 
     pub fn draw_level(
@@ -222,6 +224,29 @@ impl Render {
                     ),
                 );
             }
+        }
+    }
+
+    pub fn draw_particles(
+        &self,
+        particles: &[Particle],
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for particle in particles {
+            let texture = match particle.particle_type {
+                ParticleType::Heart4 => &self.assets.sprites.heart4,
+                ParticleType::Heart8 => &self.assets.sprites.heart8,
+            };
+            let size = texture.size().map(|x| x as f32 / 4.0); // TODO: remove hardcode
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(
+                    AABB::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
+                    texture,
+                ),
+            );
         }
     }
 }

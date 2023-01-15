@@ -23,6 +23,7 @@ pub struct World {
     pub camera: Camera2d,
     pub level: Level,
     pub player: Player,
+    pub particles: Vec<Particle>,
 }
 
 impl World {
@@ -34,6 +35,7 @@ impl World {
                 fov: 22.5,
             },
             player: Player::new(level.spawn_point),
+            particles: default(),
             rules,
             level,
         }

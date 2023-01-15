@@ -19,6 +19,12 @@ pub struct Sprites {
     pub hazards: HazardSprites,
     #[asset(postprocess = "pixel")]
     pub room: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub coin: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub heart4: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub heart8: ugli::Texture,
 }
 
 #[derive(geng::Assets)]
