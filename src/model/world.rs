@@ -25,6 +25,7 @@ pub struct World {
     pub level_transition: Option<String>,
     pub player: Player,
     pub particles: Vec<Particle>,
+    pub coins_collected: usize,
 }
 
 impl World {
@@ -38,6 +39,7 @@ impl World {
             player: Player::new(level.spawn_point),
             particles: default(),
             level_transition: None,
+            coins_collected: 0,
             rules,
             level,
         }

@@ -122,6 +122,7 @@ impl Render {
     ) {
         self.draw_tiles(level, &level.tiles, camera, framebuffer);
         self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
+        self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
 
         // Finish
         self.geng.draw_2d(
@@ -258,6 +259,33 @@ impl Render {
         }
     }
 
+    pub fn draw_coins(
+        &self,
+        coins: &[Coin],
+        draw_hitboxes: bool,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for coin in coins {
+            let texture = &self.assets.sprites.coin;
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(coin.collider.raw().map(Coord::as_f32), texture),
+            );
+            if draw_hitboxes {
+                self.geng.draw_2d(
+                    framebuffer,
+                    camera,
+                    &draw_2d::Quad::new(
+                        coin.collider.raw().map(Coord::as_f32),
+                        Rgba::new(1.0, 1.0, 0.0, 0.5),
+                    ),
+                );
+            }
+        }
+    }
+
     pub fn draw_particles(
         &self,
         particles: &[Particle],
@@ -279,5 +307,24 @@ impl Render {
                 ),
             );
         }
+    }
+
+    pub fn draw_ui(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
+        let framebuffer_size = framebuffer.size().map(|x| x as f32);
+        let text_size = framebuffer_size.y * 0.05;
+
+        // Coins collected
+        self.geng.draw_2d(
+            framebuffer,
+            &geng::PixelPerfectCamera,
+            &draw_2d::Text::unit(
+                &**self.geng.default_font(),
+                format!("Coins: {}", world.coins_collected),
+                Rgba::WHITE,
+            )
+            .scale_uniform(text_size)
+            .align_bounding_box(vec2(1.0, 1.0))
+            .translate(framebuffer_size * 0.95),
+        );
     }
 }

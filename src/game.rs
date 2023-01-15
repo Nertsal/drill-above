@@ -90,6 +90,7 @@ impl geng::State for Game {
         ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
         self.render
             .draw_world(&self.world, self.draw_hitboxes, &mut pixel_framebuffer);
+        self.render.draw_ui(&self.world, &mut pixel_framebuffer);
 
         // Render background
         let reference_size = vec2(16.0, 9.0);

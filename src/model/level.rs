@@ -9,7 +9,14 @@ pub struct Level {
     pub finish: Vec2<Coord>,
     pub tiles: TileMap,
     pub hazards: Vec<Hazard>,
+    pub coins: Vec<Coin>,
     pub next_level: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Coin {
+    pub collider: Collider,
+    pub collected: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,6 +48,7 @@ impl Level {
             finish: grid.grid_to_world(size.map(|x| x as isize / 2)),
             tiles: TileMap::new(size),
             hazards: Vec::new(),
+            coins: Vec::new(),
             next_level: None,
             grid,
             size,
@@ -79,6 +87,16 @@ impl Level {
             collider,
             direction,
             hazard_type: hazard,
+        });
+    }
+
+    pub fn place_coin(&mut self, pos: Vec2<isize>) {
+        let collider = AABB::ZERO.extend_positive(self.grid.cell_size);
+        let pos = self.grid.grid_to_world(pos);
+        let collider = Collider::new(collider.translate(pos));
+        self.coins.push(Coin {
+            collider,
+            collected: false,
         });
     }
 }

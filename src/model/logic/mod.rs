@@ -276,6 +276,15 @@ impl Logic<'_> {
             self.world.player.state = PlayerState::Airborn;
         }
 
+        // Player-coins
+        for coin in &mut self.world.level.coins {
+            if !coin.collected && self.world.player.collider.check(&coin.collider).is_some() {
+                self.world.coins_collected += 1;
+                coin.collected = true;
+            }
+        }
+        self.world.level.coins.retain(|coin| !coin.collected);
+
         // Screen edge
         let player = &mut self.world.player;
         if player.collider.feet().y < level_bounds.y_min {

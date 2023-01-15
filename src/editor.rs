@@ -20,6 +20,7 @@ pub struct Editor {
 enum Block {
     Tile(Tile),
     Hazard(HazardType),
+    Coin,
 }
 
 impl Editor {
@@ -45,6 +46,7 @@ impl Editor {
             block_options: itertools::chain![
                 Tile::all().map(Block::Tile),
                 HazardType::all().map(Block::Hazard),
+                [Block::Coin],
             ]
             .collect(),
             selected_block: 0,
@@ -73,6 +75,9 @@ impl Editor {
                 };
                 self.level.place_hazard(pos, direction, hazard);
             }
+            Block::Coin => {
+                self.level.place_coin(pos);
+            }
         }
     }
 
@@ -85,6 +90,16 @@ impl Editor {
             .position(|hazard| hazard.collider.contains(self.cursor_world_pos))
         {
             self.level.hazards.swap_remove(i);
+            return;
+        }
+        // Try coins
+        if let Some(i) = self
+            .level
+            .coins
+            .iter()
+            .position(|hazard| hazard.collider.contains(self.cursor_world_pos))
+        {
+            self.level.coins.swap_remove(i);
             return;
         }
 
@@ -223,6 +238,10 @@ impl geng::State for Editor {
             }
             Block::Hazard(hazard) => (
                 self.assets.sprites.hazards.get_texture(hazard),
+                [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y)),
+            ),
+            Block::Coin => (
+                &self.assets.sprites.coin,
                 [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y)),
             ),
         };
