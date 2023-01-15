@@ -86,14 +86,20 @@ impl Logic<'_> {
                 self.world.player.control_timeout = None;
             }
         } else {
-            let target_velocity = self.player_control.move_dir.x * self.world.rules.move_speed;
-            let acceleration = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
+            let target = self.player_control.move_dir.x * self.world.rules.move_speed;
+            let acc = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
                 self.world.rules.low_control_acc
             } else {
                 self.world.rules.full_control_acc
             };
-            self.world.player.velocity.x +=
-                (target_velocity - self.world.player.velocity.x) * acceleration * self.delta_time;
+            let current = self.world.player.velocity.x;
+            // If target is aligned with velocity, then do not slow down
+            if target == Coord::ZERO
+                || target.signum() != current.signum()
+                || target.abs() > current.abs()
+            {
+                self.world.player.velocity.x += (target - current).clamp_abs(acc * self.delta_time);
+            }
         }
 
         if self.player_control.jump {
@@ -113,9 +119,8 @@ impl Logic<'_> {
     }
 
     fn process_collisions(&mut self) {
-        match self.world.player.state {
-            PlayerState::Respawning { .. } => return,
-            _ => (),
+        if let PlayerState::Respawning { .. } = self.world.player.state {
+            return;
         }
 
         let drilling = matches!(self.world.player.state, PlayerState::Drilling);

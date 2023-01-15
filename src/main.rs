@@ -13,6 +13,8 @@ use assets::*;
 use model::*;
 use render::*;
 
+const FPS: f64 = 30.0;
+
 #[derive(clap::Parser)]
 struct Opt {
     #[clap(long)]
@@ -28,6 +30,7 @@ fn main() {
 
     let geng = Geng::new_with(geng::ContextOptions {
         title: "Love, Money + Gameplay".to_string(),
+        fixed_delta_time: 1.0 / FPS,
         ..Default::default()
     });
 

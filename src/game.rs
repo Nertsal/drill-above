@@ -118,6 +118,10 @@ impl geng::State for Game {
     }
 
     fn update(&mut self, delta_time: f64) {
+        let _delta_time = Time::new(delta_time as f32);
+    }
+
+    fn fixed_update(&mut self, delta_time: f64) {
         let delta_time = Time::new(delta_time as f32);
         self.update_control();
         let control = self.control.take();
