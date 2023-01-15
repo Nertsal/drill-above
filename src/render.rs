@@ -72,10 +72,36 @@ impl Render {
         // Player
         if let PlayerState::Respawning { .. } = world.player.state {
         } else {
-            self.geng.draw_2d(
+            let sprites = &self.assets.sprites.player;
+            let flip = world.player.facing_left;
+            let (texture, transform) = if let PlayerState::Drilling = world.player.state {
+                let mut angle = world.player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
+                let drill = if (angle / 2.0).floor() as i32 % 2 == 0 {
+                    // Vertical/horizontal
+                    &sprites.drill.drill_v0
+                } else {
+                    // Diagonal
+                    angle -= 1.0;
+                    &sprites.drill.drill_d0
+                };
+                (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
+            } else {
+                (&sprites.idle0, Mat3::identity())
+            };
+            let transform = Mat3::translate(world.player.collider.raw().center())
+                .map(Coord::as_f32)
+                * transform;
+            self.geng.draw_2d_transformed(
                 framebuffer,
                 &world.camera,
-                &draw_2d::Quad::new(world.player.collider.raw().map(Coord::as_f32), Rgba::GREEN),
+                &draw_2d::TexturedQuad::new(
+                    AABB::ZERO.extend_symmetric(
+                        texture.size().map(|x| x as f32 / 8.0) / 2.0
+                            * vec2(if flip { -1.0 } else { 1.0 }, 1.0),
+                    ), // TODO: remove hardcode
+                    texture,
+                ),
+                transform,
             );
         }
 
@@ -238,7 +264,7 @@ impl Render {
                 ParticleType::Heart4 => &self.assets.sprites.heart4,
                 ParticleType::Heart8 => &self.assets.sprites.heart8,
             };
-            let size = texture.size().map(|x| x as f32 / 4.0); // TODO: remove hardcode
+            let size = texture.size().map(|x| x as f32 / 8.0); // TODO: remove hardcode
             self.geng.draw_2d(
                 framebuffer,
                 camera,

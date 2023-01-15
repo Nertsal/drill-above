@@ -14,6 +14,7 @@ pub struct Player {
     pub velocity: Vec2<Coord>,
     pub state: PlayerState,
     pub control_timeout: Option<Time>,
+    pub facing_left: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -28,7 +29,7 @@ pub enum PlayerState {
 
 impl Player {
     pub fn new(feet_pos: Vec2<Coord>) -> Self {
-        let height = Coord::new(2.0);
+        let height = Coord::new(1.0);
         let half_width = Coord::new(1.0 / 2.0);
         Self {
             collider: Collider::new(AABB::from_corners(
@@ -38,6 +39,7 @@ impl Player {
             velocity: Vec2::ZERO,
             state: PlayerState::Airborn,
             control_timeout: None,
+            facing_left: false,
         }
     }
 }

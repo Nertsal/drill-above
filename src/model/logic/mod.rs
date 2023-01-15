@@ -74,6 +74,13 @@ impl Logic<'_> {
             _ => (),
         }
 
+        let player = &mut self.world.player;
+        if player.facing_left && player.velocity.x > Coord::ZERO
+            || !player.facing_left && player.velocity.x < Coord::ZERO
+        {
+            player.facing_left = !player.facing_left;
+        }
+
         if self.player_control.drill {
             if let Some(drill_dir) = match self.world.player.state {
                 PlayerState::Grounded => Some(vec2(0.0, -1.0).map(Coord::new)),

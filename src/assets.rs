@@ -17,6 +17,7 @@ pub struct Shaders {
 pub struct Sprites {
     pub tiles: TileSprites,
     pub hazards: HazardSprites,
+    pub player: PlayerSprites,
     #[asset(postprocess = "pixel")]
     pub room: ugli::Texture,
     #[asset(postprocess = "pixel")]
@@ -38,6 +39,21 @@ pub struct TileSprites {
 pub struct HazardSprites {
     #[asset(postprocess = "pixel")]
     pub spikes: ugli::Texture,
+}
+
+#[derive(geng::Assets)]
+pub struct PlayerSprites {
+    #[asset(postprocess = "pixel")]
+    pub idle0: ugli::Texture,
+    pub drill: DrillSprites,
+}
+
+#[derive(geng::Assets)]
+pub struct DrillSprites {
+    #[asset(postprocess = "pixel")]
+    pub drill_v0: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub drill_d0: ugli::Texture,
 }
 
 impl TileSprites {
