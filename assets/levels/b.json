@@ -1,4 +1,5 @@
 {
+  "coins": [],
   "grid": {
     "cell_size": {
       "x": 1.0,
