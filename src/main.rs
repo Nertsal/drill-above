@@ -35,9 +35,9 @@ fn main() {
     });
 
     if opt.editor {
-        geng::run(&geng, editor::run(&geng))
+        geng::run(&geng, editor::run(&geng, opt.level))
     } else {
-        let level = opt.level.unwrap_or_else(|| "editor.json".to_string());
+        let level = opt.level.unwrap_or_else(|| "new_level.json".to_string());
         geng::run(&geng, game::run(&geng, level))
     }
 }

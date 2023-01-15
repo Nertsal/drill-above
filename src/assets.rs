@@ -45,6 +45,8 @@ pub struct HazardSprites {
 pub struct PlayerSprites {
     #[asset(postprocess = "pixel")]
     pub idle0: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub slide0: ugli::Texture,
     pub drill: DrillSprites,
 }
 

@@ -73,20 +73,25 @@ impl Render {
         if let PlayerState::Respawning { .. } = world.player.state {
         } else {
             let sprites = &self.assets.sprites.player;
-            let flip = world.player.facing_left;
-            let (texture, transform) = if let PlayerState::Drilling = world.player.state {
-                let mut angle = world.player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
-                let drill = if (angle / 2.0).floor() as i32 % 2 == 0 {
-                    // Vertical/horizontal
-                    &sprites.drill.drill_v0
-                } else {
-                    // Diagonal
-                    angle -= 1.0;
-                    &sprites.drill.drill_d0
-                };
-                (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
-            } else {
-                (&sprites.idle0, Mat3::identity())
+            let mut flip = world.player.facing_left;
+            let (texture, transform) = match world.player.state {
+                PlayerState::Drilling => {
+                    let mut angle = world.player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
+                    let drill = if (angle / 2.0).floor() as i32 % 2 == 0 {
+                        // Vertical/horizontal
+                        &sprites.drill.drill_v0
+                    } else {
+                        // Diagonal
+                        angle -= 1.0;
+                        &sprites.drill.drill_d0
+                    };
+                    (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
+                }
+                PlayerState::WallSliding { wall_normal } => {
+                    flip = wall_normal.x < Coord::ZERO;
+                    (&sprites.slide0, Mat3::identity())
+                }
+                _ => (&sprites.idle0, Mat3::identity()),
             };
             let transform = Mat3::translate(world.player.collider.raw().center())
                 .map(Coord::as_f32)

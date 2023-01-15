@@ -6,6 +6,7 @@ pub struct Editor {
     render: Render,
     camera: Camera2d,
     framebuffer_size: Vec2<usize>,
+    level_name: String,
     level: Level,
     draw_grid: bool,
     cursor_pos: Vec2<f64>,
@@ -22,7 +23,8 @@ enum Block {
 }
 
 impl Editor {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, level_name: Option<String>) -> Self {
+        let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -33,8 +35,9 @@ impl Editor {
                 fov: 22.5,
             },
             framebuffer_size: vec2(1, 1),
-            level: util::report_err(Level::load("editor.json"), "Failed to load level")
+            level: util::report_err(Level::load(&level_name), "Failed to load level")
                 .unwrap_or_default(),
+            level_name,
             draw_grid: true,
             cursor_pos: Vec2::ZERO,
             cursor_world_pos: Vec2::ZERO,
@@ -132,8 +135,11 @@ impl Editor {
         self.dragging = None;
     }
 
-    fn save_level(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
-        let path = run_dir().join("assets").join("levels").join(path);
+    fn save_level(&self) -> anyhow::Result<()> {
+        let path = run_dir()
+            .join("assets")
+            .join("levels")
+            .join(&self.level_name);
         #[cfg(not(target_arch = "wasm32"))]
         {
             let file = std::fs::File::create(path)?;
@@ -175,9 +181,7 @@ impl geng::State for Editor {
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::S if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
-                    if let Ok(()) =
-                        util::report_err(self.save_level("editor.json"), "Failed to save level")
-                    {
+                    if let Ok(()) = util::report_err(self.save_level(), "Failed to save level") {
                         info!("Saved the level");
                     }
                 }
@@ -238,14 +242,14 @@ impl geng::State for Editor {
     }
 }
 
-pub fn run(geng: &Geng) -> impl geng::State {
+pub fn run(geng: &Geng, level: Option<String>) -> impl geng::State {
     let future = {
         let geng = geng.clone();
         async move {
             let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
                 .await
                 .expect("Failed to load assets");
-            Editor::new(&geng, &assets)
+            Editor::new(&geng, &assets, level)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
