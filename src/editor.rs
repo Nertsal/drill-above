@@ -231,10 +231,7 @@ impl geng::State for Editor {
         let (texture, geometry) = match &self.block_options[self.selected_block] {
             Block::Tile(tile) => {
                 let set = self.assets.sprites.tiles.get_tile_set(tile);
-                (
-                    set.texture(),
-                    set.get_tile_connected([false, false, false, false]),
-                )
+                (set.texture(), set.get_tile_connected([false; 8]))
             }
             Block::Hazard(hazard) => (
                 self.assets.sprites.hazards.get_texture(hazard),
