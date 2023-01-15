@@ -9,6 +9,7 @@ pub struct Level {
     pub finish: Vec2<Coord>,
     pub tiles: TileMap,
     pub hazards: Vec<Hazard>,
+    pub next_level: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +41,7 @@ impl Level {
             finish: grid.grid_to_world(size.map(|x| x as isize / 2)),
             tiles: TileMap::new(size),
             hazards: Vec::new(),
+            next_level: None,
             grid,
             size,
         }

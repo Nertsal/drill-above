@@ -22,6 +22,7 @@ pub struct World {
     pub rules: Rules,
     pub camera: Camera2d,
     pub level: Level,
+    pub level_transition: Option<String>,
     pub player: Player,
     pub particles: Vec<Particle>,
 }
@@ -36,6 +37,7 @@ impl World {
             },
             player: Player::new(level.spawn_point),
             particles: default(),
+            level_transition: None,
             rules,
             level,
         }

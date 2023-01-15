@@ -29,6 +29,14 @@ impl Logic<'_> {
         self.world.player.state = PlayerState::Respawning { time: Time::ONE };
     }
 
+    fn next_level(&mut self) {
+        if let Some(level) = self.world.level.next_level.clone() {
+            self.world.level_transition = Some(level);
+        } else {
+            // TODO: exit game or smth
+        }
+    }
+
     fn process_player(&mut self) {
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
@@ -45,8 +53,7 @@ impl Logic<'_> {
             PlayerState::Finished { time, next_heart } => {
                 *time -= self.delta_time;
                 if *time <= Time::ZERO {
-                    // TODO: change level instead or respawning
-                    self.kill_player();
+                    self.next_level();
                     return;
                 }
                 *next_heart -= self.delta_time;

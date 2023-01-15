@@ -141,6 +141,13 @@ impl geng::State for Game {
             }
         }
     }
+
+    fn transition(&mut self) -> Option<geng::Transition> {
+        self.world
+            .level_transition
+            .take()
+            .map(|level| geng::Transition::Switch(Box::new(game::run(&self.geng, level))))
+    }
 }
 
 pub fn run(geng: &Geng, level: impl AsRef<std::path::Path>) -> impl geng::State {
