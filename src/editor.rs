@@ -210,7 +210,7 @@ impl geng::State for Editor {
             }
             Block::Hazard(hazard) => (
                 self.assets.sprites.hazards.get_texture(hazard),
-                [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)].map(|(x, y)| vec2(x, y)),
+                [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y)),
             ),
         };
         let selected_tile = ui::TextureBox::new(&self.geng, &self.assets, texture, geometry)
