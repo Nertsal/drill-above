@@ -29,16 +29,27 @@ impl Logic<'_> {
     }
 
     fn process_player(&mut self) {
-        if let PlayerState::Respawning { time } = &mut self.world.player.state {
-            *time -= self.delta_time;
-            if *time <= Time::ZERO {
-                self.world.player.state = PlayerState::Airborn;
-                self.world
-                    .player
-                    .collider
-                    .teleport(self.world.level.spawn_point);
+        match &mut self.world.player.state {
+            PlayerState::Respawning { time } => {
+                *time -= self.delta_time;
+                if *time <= Time::ZERO {
+                    self.world.player.state = PlayerState::Airborn;
+                    self.world
+                        .player
+                        .collider
+                        .teleport(self.world.level.spawn_point);
+                }
+                return;
             }
-            return;
+            PlayerState::Finished { time } => {
+                *time -= self.delta_time;
+                if *time <= Time::ZERO {
+                    // TODO: change level instead or respawning
+                    self.kill_player();
+                }
+                return;
+            }
+            _ => (),
         }
 
         if self.player_control.drill {
@@ -123,8 +134,17 @@ impl Logic<'_> {
             return;
         }
 
+        let finished = matches!(self.world.player.state, PlayerState::Finished { .. });
         let drilling = matches!(self.world.player.state, PlayerState::Drilling);
         if !drilling {
+            // Finish
+            if !finished && self.world.player.collider.contains(self.world.level.finish) {
+                self.world.player.state = PlayerState::Finished { time: Time::ONE };
+                return;
+            }
+            if finished {
+                return;
+            }
             self.world.player.state = PlayerState::Airborn;
         }
         let mut still_drilling = false;

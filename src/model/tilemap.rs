@@ -41,9 +41,6 @@ impl TileMap {
     }
 
     pub fn set_tile(&mut self, pos: Vec2<usize>, tile: Tile) {
-        assert!(pos.x < self.size.x);
-        assert!(pos.y < self.size.y);
-
         let index = pos_to_index(pos, self.size.x);
         if let Some(t) = self.tiles.get_mut(index) {
             *t = tile;
@@ -55,14 +52,6 @@ impl TileMap {
             return;
         }
         self.set_tile(pos.map(|x| x as usize), tile);
-    }
-
-    pub fn get_tile(&self, pos: Vec2<usize>) -> Tile {
-        assert!(pos.x < self.size.x);
-        assert!(pos.y < self.size.y);
-
-        let index = pos_to_index(pos, self.size.x);
-        *self.tiles.get(index).unwrap()
     }
 
     pub fn get_tile_isize(&self, pos: Vec2<isize>) -> Option<Tile> {

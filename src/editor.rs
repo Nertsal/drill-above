@@ -178,6 +178,9 @@ impl geng::State for Editor {
                 geng::Key::R => {
                     self.level.spawn_point = self.cursor_world_pos;
                 }
+                geng::Key::F => {
+                    self.level.finish = self.cursor_world_pos;
+                }
                 _ => {}
             },
             _ => {}

@@ -89,6 +89,16 @@ impl Render {
     ) {
         self.draw_tiles(level, &level.tiles, camera, framebuffer);
         self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
+
+        // Finish
+        self.geng.draw_2d(
+            framebuffer,
+            camera,
+            &draw_2d::Quad::new(
+                Player::new(level.finish).collider.raw().map(Coord::as_f32),
+                Rgba::new(0.0, 0.0, 1.0, 0.9),
+            ),
+        );
     }
 
     pub fn draw_level_editor(

@@ -23,6 +23,7 @@ pub enum PlayerState {
     Airborn,
     Respawning { time: Time },
     Drilling,
+    Finished { time: Time },
 }
 
 impl Player {

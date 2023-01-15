@@ -6,6 +6,7 @@ pub struct Level {
     pub grid: Grid,
     pub size: Vec2<usize>,
     pub spawn_point: Vec2<Coord>,
+    pub finish: Vec2<Coord>,
     pub tiles: TileMap,
     pub hazards: Vec<Hazard>,
 }
@@ -35,6 +36,7 @@ impl Level {
         grid.offset = size.map(|x| Coord::new(x as f32 / 2.0)) * grid.cell_size;
         Self {
             spawn_point: grid.grid_to_world(size.map(|x| x as isize / 2)),
+            finish: grid.grid_to_world(size.map(|x| x as isize / 2)),
             tiles: TileMap::new(size),
             hazards: Vec::new(),
             grid,
