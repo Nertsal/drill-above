@@ -246,7 +246,11 @@ impl Logic<'_> {
 
         // Player-hazards
         for hazard in &self.world.level.hazards {
-            if self.world.player.collider.check(&hazard.collider).is_some() {
+            if self.world.player.collider.check(&hazard.collider).is_some()
+                && hazard.direction.map_or(true, |dir| {
+                    Vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
+                })
+            {
                 self.kill_player();
                 break;
             }

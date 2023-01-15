@@ -196,10 +196,21 @@ impl Render {
     ) {
         for hazard in hazards {
             let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
-            self.geng.draw_2d(
+            let transform = (Mat3::translate(hazard.collider.raw().bottom_left())
+                * Mat3::rotate(
+                    hazard
+                        .direction
+                        .map_or(Coord::ZERO, |dir| dir.arg() - Coord::PI / Coord::new(2.0)),
+                ))
+            .map(Coord::as_f32);
+            self.geng.draw_2d_transformed(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(hazard.sprite.map(Coord::as_f32), texture),
+                &draw_2d::TexturedQuad::new(
+                    AABB::ZERO.extend_positive(hazard.sprite.map(Coord::as_f32)),
+                    texture,
+                ),
+                transform,
             );
             if draw_hitboxes {
                 self.geng.draw_2d(

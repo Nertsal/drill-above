@@ -13,7 +13,8 @@ pub struct Level {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hazard {
-    pub sprite: AABB<Coord>,
+    pub sprite: Vec2<Coord>,
+    pub direction: Option<Vec2<Coord>>,
     pub collider: Collider,
     pub hazard_type: HazardType,
 }
@@ -58,18 +59,23 @@ impl Level {
         }
     }
 
-    pub fn place_hazard(&mut self, pos: Vec2<isize>, hazard: HazardType) {
+    pub fn place_hazard(
+        &mut self,
+        pos: Vec2<isize>,
+        direction: Option<Vec2<Coord>>,
+        hazard: HazardType,
+    ) {
         let collider = match hazard {
             HazardType::Spikes => {
                 AABB::ZERO.extend_positive(vec2(1.0, 0.5).map(Coord::new) * self.grid.cell_size)
             }
         };
         let pos = self.grid.grid_to_world(pos);
-        let sprite = AABB::point(pos).extend_positive(self.grid.cell_size);
         let collider = Collider::new(collider.translate(pos));
         self.hazards.push(Hazard {
-            sprite,
+            sprite: self.grid.cell_size,
             collider,
+            direction,
             hazard_type: hazard,
         });
     }
