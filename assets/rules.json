@@ -4,6 +4,9 @@
     "y": -20.0
   },
   "move_speed": 7.0,
+  "drill_speed": 20.0,
+  "full_control_acc": 50.0,
+  "low_control_acc": 5.0,
   "normal_jump_strength": 12.0,
   "wall_jump_strength": 10.0,
   "wall_jump_angle": 1.0,
@@ -11,6 +14,5 @@
   "fall_multiplier": 2.0,
   "low_jump_multiplier": 5.0,
   "free_fall_speed": 15.0,
-  "wall_slide_speed": 5.0,
-  "drill_speed": 15.0
+  "wall_slide_speed": 5.0
 }
