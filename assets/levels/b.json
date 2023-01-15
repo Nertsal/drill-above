@@ -1,5 +1,4 @@
 {
-  "coins": [],
   "grid": {
     "cell_size": {
       "x": 1.0,
@@ -646,6 +645,11 @@
       "Air",
       "Air",
       "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -680,6 +684,13 @@
       "Air",
       "Air",
       "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -713,25 +724,13 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -951,5 +950,16 @@
     ]
   },
   "hazards": [],
+  "coins": [
+    {
+      "collider": {
+        "x_min": 0.0,
+        "x_max": 1.0,
+        "y_min": 7.5,
+        "y_max": 8.5
+      },
+      "collected": false
+    }
+  ],
   "next_level": null
 }
