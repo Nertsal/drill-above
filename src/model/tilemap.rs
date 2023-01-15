@@ -41,8 +41,8 @@ impl TileMap {
     }
 
     pub fn set_tile(&mut self, pos: Vec2<usize>, tile: Tile) {
-        let index = pos_to_index(pos, self.size.x);
-        if let Some(t) = self.tiles.get_mut(index) {
+        if let Some(t) = pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get_mut(index))
+        {
             *t = tile;
         }
     }
@@ -59,8 +59,7 @@ impl TileMap {
             None
         } else {
             let pos = pos.map(|x| x as usize);
-            let index = pos_to_index(pos, self.size.x);
-            self.tiles.get(index).copied()
+            pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get(index).copied())
         }
     }
 
@@ -79,8 +78,12 @@ impl TileMap {
     }
 }
 
-pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> usize {
-    pos.x + pos.y * width
+pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> Option<usize> {
+    if pos.x >= width {
+        None
+    } else {
+        Some(pos.x + pos.y * width)
+    }
 }
 
 pub fn index_to_pos(index: usize, width: usize) -> Vec2<usize> {

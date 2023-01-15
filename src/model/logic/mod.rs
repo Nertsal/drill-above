@@ -143,6 +143,29 @@ impl Logic<'_> {
             return;
         }
 
+        // Level bounds
+        let level = &self.world.level;
+        let level_bounds = AABB::from_corners(
+            level.grid.grid_to_world(vec2(0, 0)),
+            level
+                .grid
+                .grid_to_world(level.size.map(|x| x as isize) - vec2(0, 1)),
+        );
+        let player = &mut self.world.player;
+        if player.collider.feet().y > level_bounds.y_max {
+            player.collider.translate(vec2(
+                Coord::ZERO,
+                level_bounds.y_max - player.collider.feet().y,
+            ));
+        }
+        let offset = player.collider.feet().x - level_bounds.center().x;
+        if offset.abs() > level_bounds.width() / Coord::new(2.0) {
+            player.collider.translate(vec2(
+                offset.signum() * (level_bounds.width() / Coord::new(2.0) - offset.abs()),
+                Coord::ZERO,
+            ));
+        }
+
         let finished = matches!(self.world.player.state, PlayerState::Finished { .. });
         let drilling = matches!(self.world.player.state, PlayerState::Drilling);
         if !drilling {
@@ -215,7 +238,8 @@ impl Logic<'_> {
         }
 
         // Screen edge
-        if self.world.player.collider.feet().y < self.world.level.grid.grid_to_world(vec2(0, 0)).y {
+        let player = &mut self.world.player;
+        if player.collider.feet().y < level_bounds.y_min {
             self.kill_player();
             return;
         }
