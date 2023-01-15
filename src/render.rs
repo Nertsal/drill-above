@@ -76,8 +76,9 @@ impl Render {
             let mut flip = world.player.facing_left;
             let (texture, transform) = match world.player.state {
                 PlayerState::Drilling => {
+                    flip = false;
                     let mut angle = world.player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
-                    let drill = if (angle / 2.0).floor() as i32 % 2 == 0 {
+                    let drill = if angle.floor() as i32 % 2 == 0 {
                         // Vertical/horizontal
                         &sprites.drill.drill_v0
                     } else {
