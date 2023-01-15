@@ -87,7 +87,13 @@ impl Logic<'_> {
             }
         } else {
             let target_velocity = self.player_control.move_dir.x * self.world.rules.move_speed;
-            self.world.player.velocity.x = target_velocity;
+            let acceleration = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
+                self.world.rules.low_control_acc
+            } else {
+                self.world.rules.full_control_acc
+            };
+            self.world.player.velocity.x +=
+                (target_velocity - self.world.player.velocity.x) * acceleration * self.delta_time;
         }
 
         if self.player_control.jump {
