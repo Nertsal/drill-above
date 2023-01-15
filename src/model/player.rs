@@ -42,19 +42,6 @@ impl Player {
     }
 }
 
-impl PlayerState {
-    pub fn jump_velocity(&self, rules: &Rules) -> Option<Vec2<Coord>> {
-        match self {
-            PlayerState::Grounded => Some(vec2(Coord::ZERO, rules.normal_jump_strength)),
-            PlayerState::WallSliding { wall_normal } => {
-                let angle = rules.wall_jump_angle * wall_normal.x.signum();
-                Some(wall_normal.rotate(angle) * rules.wall_jump_strength)
-            }
-            _ => None,
-        }
-    }
-}
-
 impl PlayerControl {
     pub fn take(&mut self) -> Self {
         std::mem::take(self)

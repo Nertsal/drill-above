@@ -114,12 +114,21 @@ impl Logic<'_> {
         }
 
         if self.player_control.jump {
-            if let Some(jump_vel) = self.world.player.state.jump_velocity(&self.world.rules) {
-                if let PlayerState::WallSliding { .. } = self.world.player.state {
-                    self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
+            let rules = &self.world.rules;
+            match self.world.player.state {
+                PlayerState::Grounded => {
+                    let jump_vel = rules.normal_jump_strength;
+                    self.world.player.velocity.y = jump_vel;
+                    self.world.player.state = PlayerState::Airborn;
                 }
-                self.world.player.velocity = jump_vel;
-                self.world.player.state = PlayerState::Airborn;
+                PlayerState::WallSliding { wall_normal } => {
+                    let angle = rules.wall_jump_angle * wall_normal.x.signum();
+                    let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
+                    self.world.player.velocity = jump_vel;
+                    self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
+                    self.world.player.state = PlayerState::Airborn;
+                }
+                _ => {}
             }
         }
 
