@@ -22,7 +22,9 @@ struct Controls {
 }
 
 impl Game {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, level: Level) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, level: Level, coins: usize) -> Self {
+        let mut world = World::new(assets, assets.rules.clone(), level);
+        world.coins_collected = coins;
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -34,7 +36,6 @@ impl Game {
                 texture.set_filter(ugli::Filter::Nearest);
                 texture
             },
-            world: World::new(assets, assets.rules.clone(), level),
             draw_hitboxes: false,
             control: PlayerControl::default(),
             controls: Controls {
@@ -45,6 +46,7 @@ impl Game {
                 jump: vec![geng::Key::Z],
                 drill: vec![geng::Key::C],
             },
+            world,
         }
     }
 
@@ -145,14 +147,21 @@ impl geng::State for Game {
     }
 
     fn transition(&mut self) -> Option<geng::Transition> {
-        self.world
-            .level_transition
-            .take()
-            .map(|level| geng::Transition::Switch(Box::new(game::run(&self.geng, level))))
+        self.world.level_transition.take().map(|level| {
+            geng::Transition::Switch(Box::new(game::level_change(
+                &self.geng,
+                level,
+                self.world.coins_collected,
+            )))
+        })
     }
 }
 
 pub fn run(geng: &Geng, level: impl AsRef<std::path::Path>) -> impl geng::State {
+    level_change(geng, level, 0)
+}
+
+fn level_change(geng: &Geng, level: impl AsRef<std::path::Path>, coins: usize) -> impl geng::State {
     let future = {
         let geng = geng.clone();
         let level = level.as_ref().to_owned();
@@ -164,7 +173,7 @@ pub fn run(geng: &Geng, level: impl AsRef<std::path::Path>) -> impl geng::State 
                 geng::LoadAsset::load(&geng, &run_dir().join("assets").join("levels").join(level))
                     .await
                     .expect("Failed to load level");
-            Game::new(&geng, &assets, level)
+            Game::new(&geng, &assets, level, coins)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
