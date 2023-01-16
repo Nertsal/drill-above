@@ -17,6 +17,7 @@ pub struct Player {
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
     pub coyote_time: Option<(Coyote, Time)>,
+    pub jump_buffer: Option<Time>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -58,6 +59,7 @@ impl Player {
             control_timeout: None,
             facing_left: false,
             coyote_time: None,
+            jump_buffer: None,
         }
     }
 }

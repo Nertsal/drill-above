@@ -173,7 +173,13 @@ impl Logic<'_> {
             }
         }
 
-        if self.player_control.jump {
+        if let Some(time) = &mut self.world.player.jump_buffer {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.jump_buffer = None;
+            }
+        }
+        if self.player_control.jump || self.world.player.jump_buffer.is_some() {
             let rules = &self.world.rules;
             let jump = match self.world.player.state {
                 PlayerState::Grounded { .. } => Some(Coyote::Ground),
@@ -183,6 +189,7 @@ impl Logic<'_> {
             };
             if let Some(jump) = jump {
                 self.world.player.coyote_time = None;
+                self.world.player.jump_buffer = None;
                 match jump {
                     Coyote::Ground => {
                         let jump_vel = rules.normal_jump_strength;
@@ -201,6 +208,8 @@ impl Logic<'_> {
                         self.play_sound(&self.world.assets.sounds.jump);
                     }
                 }
+            } else if self.player_control.jump {
+                self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
             }
         }
 

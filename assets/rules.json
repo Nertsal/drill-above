@@ -7,6 +7,7 @@
   "drill_speed": 20.0,
   "full_control_acc": 500.0,
   "low_control_acc": 50.0,
+  "jump_buffer_time": 0.15,
   "coyote_time": 0.15,
   "normal_jump_strength": 12.0,
   "wall_jump_strength": 12.0,
