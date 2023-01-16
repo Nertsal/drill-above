@@ -182,6 +182,7 @@ impl Logic<'_> {
                 _ => None,
             };
             if let Some(jump) = jump {
+                self.world.player.coyote_time = None;
                 match jump {
                     Coyote::Ground => {
                         let jump_vel = rules.normal_jump_strength;
