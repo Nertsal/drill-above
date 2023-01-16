@@ -337,6 +337,9 @@ impl Logic<'_> {
         );
         let target = self.world.player.collider.pos();
         let target = target.clamp_aabb(camera_bounds);
-        self.world.camera.center = target.map(Coord::as_f32);
+        // TODO: remove hardcoded pixels per unit
+        let pos = target.map(Coord::as_f32);
+        let pixel = (pos.map(|x| (x * 8.0).round()) + vec2(0.0, 0.0)) / 8.0;
+        self.world.camera.center = pixel;
     }
 }

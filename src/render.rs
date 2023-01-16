@@ -37,6 +37,32 @@ impl Render {
         }
     }
 
+    fn draw_pixel_perfect(
+        &self,
+        bottom_left: Vec2<Coord>,
+        texture: &ugli::Texture,
+        flip: bool,
+        transform: Mat3<f32>,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        // TODO: remove hardcoded pixels per unit
+        let size = texture.size().map(|x| x as f32) / 8.0;
+        let pos = bottom_left.map(Coord::as_f32);
+        let pixel = pos.map(|x| (x * 8.0).floor());
+        let pos = pixel / 8.0 + size / 2.0;
+        let transform = Mat3::translate(pos) * transform;
+        self.geng.draw_2d_transformed(
+            framebuffer,
+            camera,
+            &draw_2d::TexturedQuad::new(
+                AABB::ZERO.extend_symmetric(size / 2.0 * vec2(if flip { -1.0 } else { 1.0 }, 1.0)),
+                texture,
+            ),
+            transform,
+        )
+    }
+
     pub fn draw_grid(
         &self,
         grid: &Grid,
@@ -96,20 +122,13 @@ impl Render {
                 }
                 _ => (&sprites.idle0, Mat3::identity()),
             };
-            let transform = Mat3::translate(world.player.collider.raw().center())
-                .map(Coord::as_f32)
-                * transform;
-            self.geng.draw_2d_transformed(
-                framebuffer,
-                &world.camera,
-                &draw_2d::TexturedQuad::new(
-                    AABB::ZERO.extend_symmetric(
-                        texture.size().map(|x| x as f32 / 8.0) / 2.0
-                            * vec2(if flip { -1.0 } else { 1.0 }, 1.0),
-                    ), // TODO: remove hardcode
-                    texture,
-                ),
+            self.draw_pixel_perfect(
+                world.player.collider.raw().bottom_left(),
+                texture,
+                flip,
                 transform,
+                &world.camera,
+                framebuffer,
             );
         }
 
