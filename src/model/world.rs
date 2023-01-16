@@ -29,7 +29,7 @@ pub struct World {
     pub player: Player,
     pub particles: Vec<Particle>,
     pub coins_collected: usize,
-    pub drill_sound: geng::SoundEffect,
+    pub drill_sound: Option<geng::SoundEffect>,
 }
 
 impl World {
@@ -46,11 +46,7 @@ impl World {
             particles: default(),
             level_transition: None,
             coins_collected: 0,
-            drill_sound: {
-                let mut effect = assets.sounds.drill.effect();
-                effect.set_volume(0.5);
-                effect
-            },
+            drill_sound: None,
             rules,
             level,
         }

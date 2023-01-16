@@ -105,8 +105,11 @@ impl Logic<'_> {
                     self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
                         * self.world.rules.drill_speed;
                     self.world.player.state = PlayerState::Drilling;
-                    self.world.drill_sound.set_volume(self.world.volume);
-                    self.world.drill_sound.play();
+                    let sound = self
+                        .world
+                        .drill_sound
+                        .get_or_insert_with(|| self.world.assets.sounds.drill.play());
+                    sound.set_volume(self.world.volume);
                 }
             }
         }
@@ -280,7 +283,9 @@ impl Logic<'_> {
 
         if drilling && !still_drilling {
             self.world.player.state = PlayerState::Airborn;
-            self.world.drill_sound.set_volume(0.0);
+            if let Some(mut sound) = self.world.drill_sound.take() {
+                sound.stop();
+            }
         }
 
         // Finish
