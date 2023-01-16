@@ -25,9 +25,15 @@ impl Logic<'_> {
         self.process_camera();
     }
 
+    fn play_sound(&self, sound: &geng::Sound) {
+        let mut sound = sound.play();
+        sound.set_volume(self.world.volume);
+    }
+
     fn kill_player(&mut self) {
         self.world.player.velocity = Vec2::ZERO;
         self.world.player.state = PlayerState::Respawning { time: Time::ONE };
+        self.play_sound(&self.world.assets.sounds.death);
     }
 
     fn next_level(&mut self) {
@@ -157,10 +163,12 @@ impl Logic<'_> {
                     let jump_vel = rules.normal_jump_strength;
                     self.world.player.velocity.y = jump_vel;
                     self.world.player.state = PlayerState::Airborn;
+                    self.play_sound(&self.world.assets.sounds.jump);
                 }
                 PlayerState::Airborn if self.world.player.coyote_time.is_some() => {
                     let jump_vel = rules.normal_jump_strength;
                     self.world.player.velocity.y = jump_vel;
+                    self.play_sound(&self.world.assets.sounds.jump);
                 }
                 PlayerState::WallSliding { wall_normal } => {
                     let angle = rules.wall_jump_angle * wall_normal.x.signum();
@@ -168,6 +176,7 @@ impl Logic<'_> {
                     self.world.player.velocity = jump_vel;
                     self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
                     self.world.player.state = PlayerState::Airborn;
+                    self.play_sound(&self.world.assets.sounds.jump);
                 }
                 _ => {}
             }
@@ -288,13 +297,18 @@ impl Logic<'_> {
         }
 
         // Player-coins
+        let mut collected = false;
         for coin in &mut self.world.level.coins {
             if !coin.collected && self.world.player.collider.check(&coin.collider).is_some() {
                 self.world.coins_collected += 1;
                 coin.collected = true;
+                collected = true;
             }
         }
         self.world.level.coins.retain(|coin| !coin.collected);
+        if collected {
+            self.play_sound(&self.world.assets.sounds.coin);
+        }
 
         // Screen edge
         let player = &mut self.world.player;

@@ -20,7 +20,9 @@ pub struct Rules {
 }
 
 pub struct World {
+    pub assets: Rc<Assets>,
     pub rules: Rules,
+    pub volume: f64,
     pub camera: Camera2d,
     pub level: Level,
     pub level_transition: Option<String>,
@@ -30,8 +32,10 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(rules: Rules, level: Level) -> Self {
+    pub fn new(assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
         Self {
+            assets: assets.clone(),
+            volume: 0.5,
             camera: Camera2d {
                 center: vec2(0.0, 0.25),
                 rotation: 0.0,

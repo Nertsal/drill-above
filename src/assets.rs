@@ -4,6 +4,7 @@ use super::*;
 pub struct Assets {
     pub shaders: Shaders,
     pub sprites: Sprites,
+    pub sounds: Sounds,
     pub rules: Rules,
 }
 
@@ -11,6 +12,13 @@ pub struct Assets {
 pub struct Shaders {
     pub texture: ugli::Program,
     pub grid: ugli::Program,
+}
+
+#[derive(geng::Assets)]
+pub struct Sounds {
+    pub jump: geng::Sound,
+    pub death: geng::Sound,
+    pub coin: geng::Sound,
 }
 
 #[derive(geng::Assets)]

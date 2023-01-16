@@ -34,7 +34,7 @@ impl Game {
                 texture.set_filter(ugli::Filter::Nearest);
                 texture
             },
-            world: World::new(assets.rules.clone(), level),
+            world: World::new(assets, assets.rules.clone(), level),
             draw_hitboxes: false,
             control: PlayerControl::default(),
             controls: Controls {
