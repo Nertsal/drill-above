@@ -18,6 +18,7 @@ void main() {
 #endif
 
 #ifdef FRAGMENT_SHADER
+uniform ivec2 u_grid_size;
 uniform vec4 u_grid_color;
 uniform vec2 u_grid_width;
 
@@ -36,6 +37,10 @@ void main() {
     if (pos.y < 0.0) {
         pos.y += 1.0;
         cell_pos.y -= 1;
+    }
+
+    if (cell_pos.x < 0 || cell_pos.y < 0 || cell_pos.x >= u_grid_size.x || cell_pos.y >= u_grid_size.y) {
+        discard;
     }
 
     if (0.5 - abs(pos.x - 0.5) > u_grid_width.x && 0.5 - abs(pos.y - 0.5) > u_grid_width.y) {
