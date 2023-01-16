@@ -19,6 +19,8 @@ pub struct Sounds {
     pub jump: geng::Sound,
     pub death: geng::Sound,
     pub coin: geng::Sound,
+    #[asset(postprocess = "loop_sound")]
+    pub drill: geng::Sound,
 }
 
 #[derive(geng::Assets)]
@@ -86,4 +88,8 @@ impl HazardSprites {
 
 fn pixel(texture: &mut ugli::Texture) {
     texture.set_filter(ugli::Filter::Nearest)
+}
+
+fn loop_sound(sound: &mut geng::Sound) {
+    sound.looped = true;
 }
