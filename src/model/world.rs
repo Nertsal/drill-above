@@ -18,6 +18,7 @@ pub struct Rules {
     pub free_fall_speed: Coord,
     pub wall_slide_speed: Coord,
     pub drill_speed: Coord,
+    pub drill_jump_speed: Coord,
 }
 
 pub struct World {

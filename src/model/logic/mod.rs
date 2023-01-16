@@ -88,6 +88,16 @@ impl Logic<'_> {
             _ => (),
         }
 
+        if let Some(time) = &mut self.world.player.jump_buffer {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.jump_buffer = None;
+            }
+        }
+        if self.player_control.jump {
+            self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
+        }
+
         let player = &mut self.world.player;
         if player.facing_left && player.velocity.x > Coord::ZERO
             || !player.facing_left && player.velocity.x < Coord::ZERO
@@ -173,13 +183,7 @@ impl Logic<'_> {
             }
         }
 
-        if let Some(time) = &mut self.world.player.jump_buffer {
-            *time -= self.delta_time;
-            if *time <= Time::ZERO {
-                self.world.player.jump_buffer = None;
-            }
-        }
-        if self.player_control.jump || self.world.player.jump_buffer.is_some() {
+        if self.world.player.jump_buffer.is_some() {
             let rules = &self.world.rules;
             let jump = match self.world.player.state {
                 PlayerState::Grounded { .. } => Some(Coyote::Ground),
@@ -208,8 +212,6 @@ impl Logic<'_> {
                         self.play_sound(&self.world.assets.sounds.jump);
                     }
                 }
-            } else if self.player_control.jump {
-                self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
             }
         }
 
@@ -320,6 +322,13 @@ impl Logic<'_> {
 
         if drilling && !still_drilling {
             self.world.player.state = PlayerState::Airborn;
+            if self.world.player.jump_buffer.take().is_some() {
+                // Jump boost
+                self.world.player.velocity = self.world.player.velocity.normalize_or_zero()
+                    * self.world.rules.drill_jump_speed;
+                // TODO: extra particles
+            }
+            // TODO: particles
             if let Some(mut sound) = self.world.drill_sound.take() {
                 sound.stop();
             }
