@@ -12,4 +12,5 @@ pub struct Particle {
 pub enum ParticleType {
     Heart4,
     Heart8,
+    Circle { radius: Coord, color: Rgba<f32> },
 }

@@ -44,6 +44,38 @@ impl Logic<'_> {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn spawn_particles(
+        &mut self,
+        lifetime: Time,
+        position: Vec2<Coord>,
+        direction: Vec2<Coord>,
+        speed: Coord,
+        amount: usize,
+        base_color: Rgba<f32>,
+        base_radius: Coord,
+    ) {
+        let mut rng = thread_rng();
+        for _ in 0..amount {
+            let radius = base_radius * Coord::new(rng.gen_range(0.9..=1.1));
+            let color_delta = Rgba::new(
+                rng.gen_range(-0.05..=0.05),
+                rng.gen_range(-0.05..=0.05),
+                rng.gen_range(-0.05..=0.05),
+                0.0,
+            );
+            let color = base_color.zip_map(color_delta, |s, t| (s + t).clamp(0.0, 1.0));
+            let angle = Coord::new(rng.gen_range(-0.3..=0.3));
+            let direction = direction.rotate(angle);
+            self.world.particles.push(Particle {
+                lifetime,
+                position,
+                velocity: direction * speed,
+                particle_type: ParticleType::Circle { radius, color },
+            });
+        }
+    }
+
     fn process_player(&mut self) {
         if let Some((_, time)) = &mut self.world.player.coyote_time {
             *time -= self.delta_time;
@@ -212,6 +244,15 @@ impl Logic<'_> {
                     }
                     Coyote::Drill { direction } => {
                         self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
+                        self.spawn_particles(
+                            Time::ONE,
+                            self.world.player.collider.pos(),
+                            direction,
+                            self.world.rules.drill_jump_speed * Coord::new(0.2),
+                            5,
+                            Rgba::GRAY,
+                            Coord::new(0.2),
+                        );
                     }
                 }
             }
@@ -328,12 +369,28 @@ impl Logic<'_> {
             if self.world.player.jump_buffer.take().is_some() {
                 // Jump boost
                 self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
-                // TODO: extra particles
+                self.spawn_particles(
+                    Time::ONE,
+                    self.world.player.collider.pos(),
+                    direction,
+                    self.world.rules.drill_jump_speed * Coord::new(0.2),
+                    5,
+                    Rgba::GRAY,
+                    Coord::new(0.2),
+                );
             } else {
                 self.world.player.coyote_time =
                     Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
             }
-            // TODO: particles
+            self.spawn_particles(
+                Time::ONE,
+                self.world.player.collider.pos(),
+                direction,
+                Coord::new(1.0),
+                5,
+                Rgba::GRAY,
+                Coord::new(0.1),
+            );
             if let Some(mut sound) = self.world.drill_sound.take() {
                 sound.stop();
             }

@@ -321,6 +321,19 @@ impl Render {
             let texture = match particle.particle_type {
                 ParticleType::Heart4 => &self.assets.sprites.heart4,
                 ParticleType::Heart8 => &self.assets.sprites.heart8,
+                ParticleType::Circle { radius, color } => {
+                    let radius = (radius * particle.lifetime.min(Time::ONE)).as_f32();
+                    self.geng.draw_2d(
+                        framebuffer,
+                        camera,
+                        &draw_2d::Ellipse::circle(
+                            particle.position.map(Coord::as_f32),
+                            radius,
+                            color,
+                        ),
+                    );
+                    continue;
+                }
             };
             let size = texture.size().map(|x| x as f32 / 8.0); // TODO: remove hardcode
             self.geng.draw_2d(
