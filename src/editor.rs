@@ -1,5 +1,7 @@
 use super::*;
 
+const CAMERA_MOVE_SPEED: f32 = 10.0;
+
 pub struct Editor {
     geng: Geng,
     assets: Rc<Assets>,
@@ -175,8 +177,27 @@ impl geng::State for Editor {
 
         if self.draw_grid {
             self.render
-                .draw_grid(&self.level.grid, &self.camera, framebuffer);
+                .draw_grid(&self.level.grid, self.level.size, &self.camera, framebuffer);
         }
+    }
+
+    fn update(&mut self, delta_time: f64) {
+        let delta_time = delta_time as f32;
+        let window = self.geng.window();
+        let mut dir = Vec2::ZERO;
+        if window.is_key_pressed(geng::Key::A) {
+            dir.x -= 1.0;
+        }
+        if window.is_key_pressed(geng::Key::D) {
+            dir.x += 1.0;
+        }
+        if window.is_key_pressed(geng::Key::S) {
+            dir.y -= 1.0;
+        }
+        if window.is_key_pressed(geng::Key::W) {
+            dir.y += 1.0;
+        }
+        self.camera.center += dir * CAMERA_MOVE_SPEED * delta_time;
     }
 
     fn handle_event(&mut self, event: geng::Event) {

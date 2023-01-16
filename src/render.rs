@@ -40,6 +40,7 @@ impl Render {
     pub fn draw_grid(
         &self,
         grid: &Grid,
+        size: Vec2<usize>,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -52,6 +53,7 @@ impl Render {
             (
                 ugli::uniforms! {
                     u_grid_matrix: matrix,
+                    u_grid_size: size,
                     u_grid_color: Rgba::GRAY,
                     u_grid_width: vec2(0.01, 0.01),
                 },
