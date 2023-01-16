@@ -95,12 +95,24 @@ impl Logic<'_> {
             player.facing_left = !player.facing_left;
         }
 
-        if self.player_control.drill && self.world.level.drill_allowed {
-            if let Some(drill_dir) = match self.world.player.state {
-                PlayerState::Grounded => Some(vec2(0.0, -1.0).map(Coord::new)),
-                PlayerState::WallSliding { wall_normal } => Some(-wall_normal),
-                _ => None,
-            } {
+        if !matches!(self.world.player.state, PlayerState::Drilling)
+            && self.player_control.drill
+            && self.world.level.drill_allowed
+        {
+            let dirs = itertools::chain![
+                match self.world.player.state {
+                    PlayerState::Grounded(tile) if tile.is_drillable() =>
+                        Some(vec2(0.0, -1.0).map(Coord::new)),
+                    PlayerState::WallSliding { tile, wall_normal } if tile.is_drillable() =>
+                        Some(-wall_normal),
+                    _ => None,
+                },
+                self.world
+                    .player
+                    .touching_wall
+                    .and_then(|(tile, normal)| tile.is_drillable().then_some(-normal))
+            ];
+            for drill_dir in dirs {
                 if Vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
                     self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
                         * self.world.rules.drill_speed;
@@ -164,7 +176,7 @@ impl Logic<'_> {
         if self.player_control.jump {
             let rules = &self.world.rules;
             match self.world.player.state {
-                PlayerState::Grounded => {
+                PlayerState::Grounded { .. } => {
                     let jump_vel = rules.normal_jump_strength;
                     self.world.player.velocity.y = jump_vel;
                     self.world.player.state = PlayerState::Airborn;
@@ -175,7 +187,7 @@ impl Logic<'_> {
                     self.world.player.velocity.y = jump_vel;
                     self.play_sound(&self.world.assets.sounds.jump);
                 }
-                PlayerState::WallSliding { wall_normal } => {
+                PlayerState::WallSliding { wall_normal, .. } => {
                     let angle = rules.wall_jump_angle * wall_normal.x.signum();
                     let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
                     self.world.player.velocity = jump_vel;
@@ -225,12 +237,13 @@ impl Logic<'_> {
             self.world.player.state = PlayerState::Airborn;
         }
         let mut still_drilling = false;
+        self.world.player.touching_wall = None;
         for _ in 0..2 {
             // Player-tiles
             let player_aabb = self.world.player.collider.grid_aabb(&self.world.level.grid);
             let collisions = (player_aabb.x_min..=player_aabb.x_max)
                 .flat_map(move |x| (player_aabb.y_min..=player_aabb.y_max).map(move |y| vec2(x, y)))
-                .filter(|&pos| {
+                .filter_map(|pos| {
                     self.world
                         .level
                         .tiles
@@ -243,19 +256,25 @@ impl Logic<'_> {
                             }
                             !air && !drill
                         })
-                        .is_some()
-                })
-                .filter_map(|pos| {
-                    let collider = Collider::new(
-                        AABB::point(self.world.level.grid.grid_to_world(pos))
-                            .extend_positive(self.world.level.grid.cell_size),
-                    );
-                    self.world.player.collider.check(&collider)
-                })
-                .filter(|collision| {
-                    Vec2::dot(collision.normal, self.world.player.velocity) >= Coord::ZERO
+                        .and_then(|tile| {
+                            let collider = Collider::new(
+                                AABB::point(self.world.level.grid.grid_to_world(pos))
+                                    .extend_positive(self.world.level.grid.cell_size),
+                            );
+                            self.world
+                                .player
+                                .collider
+                                .check(&collider)
+                                .and_then(|collision| {
+                                    (Vec2::dot(collision.normal, self.world.player.velocity)
+                                        >= Coord::ZERO)
+                                        .then_some((tile, collision))
+                                })
+                        })
                 });
-            if let Some(collision) = collisions.max_by_key(|collision| collision.penetration) {
+            if let Some((tile, collision)) =
+                collisions.max_by_key(|(_, collision)| collision.penetration)
+            {
                 self.world
                     .player
                     .collider
@@ -268,14 +287,16 @@ impl Logic<'_> {
                     if collision.normal.x.approx_eq(&Coord::ZERO)
                         && collision.normal.y < Coord::ZERO
                     {
-                        self.world.player.state = PlayerState::Grounded;
+                        self.world.player.state = PlayerState::Grounded(tile);
                         self.world.player.coyote_time = Some(self.world.rules.coyote_time);
-                    } else if collision.normal.y.approx_eq(&Coord::ZERO)
-                        && !matches!(self.world.player.state, PlayerState::Grounded)
-                    {
-                        self.world.player.state = PlayerState::WallSliding {
-                            wall_normal: -collision.normal,
-                        };
+                    } else if collision.normal.y.approx_eq(&Coord::ZERO) {
+                        self.world.player.touching_wall = Some((tile, -collision.normal));
+                        if !matches!(self.world.player.state, PlayerState::Grounded(..)) {
+                            self.world.player.state = PlayerState::WallSliding {
+                                tile,
+                                wall_normal: -collision.normal,
+                            };
+                        }
                     }
                 }
             }

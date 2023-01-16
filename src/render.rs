@@ -116,7 +116,7 @@ impl Render {
                     };
                     (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
                 }
-                PlayerState::WallSliding { wall_normal } => {
+                PlayerState::WallSliding { wall_normal, .. } => {
                     flip = wall_normal.x < Coord::ZERO;
                     (&sprites.slide0, Mat3::identity())
                 }

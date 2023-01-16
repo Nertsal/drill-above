@@ -13,6 +13,7 @@ pub struct Player {
     pub collider: Collider,
     pub velocity: Vec2<Coord>,
     pub state: PlayerState,
+    pub touching_wall: Option<(Tile, Vec2<Coord>)>,
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
     pub coyote_time: Option<Time>,
@@ -20,12 +21,20 @@ pub struct Player {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum PlayerState {
-    Grounded,
-    WallSliding { wall_normal: Vec2<Coord> },
+    Grounded(Tile),
+    WallSliding {
+        tile: Tile,
+        wall_normal: Vec2<Coord>,
+    },
     Airborn,
-    Respawning { time: Time },
+    Respawning {
+        time: Time,
+    },
     Drilling,
-    Finished { time: Time, next_heart: Time },
+    Finished {
+        time: Time,
+        next_heart: Time,
+    },
 }
 
 impl Player {
@@ -39,6 +48,7 @@ impl Player {
             )),
             velocity: Vec2::ZERO,
             state: PlayerState::Airborn,
+            touching_wall: None,
             control_timeout: None,
             facing_left: false,
             coyote_time: None,
