@@ -55,13 +55,13 @@ fn main() {
     if opt.editor {
         geng::run(&geng, editor::run(&geng, opt.level))
     } else {
-        let level = opt.level.unwrap_or_else(|| "a.json".to_string());
+        let level = opt.level.unwrap_or_else(|| "01.json".to_string());
         geng::run(&geng, game::run(&geng, level))
     }
 }
 
 fn parse_size(input: &str) -> Option<Vec2<usize>> {
-    let mut xs = input.split("x");
+    let mut xs = input.split('x');
     let pos = vec2(xs.next()?.parse().ok()?, xs.next()?.parse().ok()?);
     if xs.next().is_some() {
         return None;

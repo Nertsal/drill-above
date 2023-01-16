@@ -89,7 +89,7 @@ impl Logic<'_> {
             player.facing_left = !player.facing_left;
         }
 
-        if self.player_control.drill {
+        if self.player_control.drill && self.world.level.drill_allowed {
             if let Some(drill_dir) = match self.world.player.state {
                 PlayerState::Grounded => Some(vec2(0.0, -1.0).map(Coord::new)),
                 PlayerState::WallSliding { wall_normal } => Some(-wall_normal),

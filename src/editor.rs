@@ -69,13 +69,7 @@ impl Editor {
                 self.level.tiles.set_tile_isize(pos, tile);
             }
             Block::Hazard(hazard) => {
-                let direction = match hazard {
-                    HazardType::Spikes => {
-                        // TODO: Attach to a surface
-                        Some(vec2(0.0, 1.0).map(Coord::new))
-                    }
-                };
-                self.level.place_hazard(pos, direction, hazard);
+                self.level.place_hazard(pos, hazard);
             }
             Block::Coin => {
                 self.level.place_coin(pos);

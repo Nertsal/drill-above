@@ -233,7 +233,7 @@ impl Render {
     ) {
         for hazard in hazards {
             let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
-            let transform = (Mat3::translate(hazard.collider.raw().bottom_left())
+            let transform = (Mat3::translate(hazard.sprite.center())
                 * Mat3::rotate(
                     hazard
                         .direction
@@ -244,7 +244,7 @@ impl Render {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::ZERO.extend_positive(hazard.sprite.map(Coord::as_f32)),
+                    AABB::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
                     texture,
                 ),
                 transform,

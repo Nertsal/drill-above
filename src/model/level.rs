@@ -3,6 +3,7 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
 #[asset(json)]
 pub struct Level {
+    pub drill_allowed: bool,
     pub grid: Grid,
     pub size: Vec2<usize>,
     pub spawn_point: Vec2<Coord>,
@@ -21,7 +22,7 @@ pub struct Coin {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hazard {
-    pub sprite: Vec2<Coord>,
+    pub sprite: AABB<Coord>,
     pub direction: Option<Vec2<Coord>>,
     pub collider: Collider,
     pub hazard_type: HazardType,
@@ -50,6 +51,7 @@ impl Level {
             hazards: Vec::new(),
             coins: Vec::new(),
             next_level: None,
+            drill_allowed: true,
             grid,
             size,
         }
@@ -62,21 +64,48 @@ impl Level {
         )
     }
 
-    pub fn place_hazard(
-        &mut self,
-        pos: Vec2<isize>,
-        direction: Option<Vec2<Coord>>,
-        hazard: HazardType,
-    ) {
-        let collider = match hazard {
+    pub fn place_hazard(&mut self, pos: Vec2<isize>, hazard: HazardType) {
+        let connect = |pos| {
+            self.tiles
+                .get_tile_isize(pos)
+                .map(|tile| !matches!(tile, Tile::Air))
+                .unwrap_or(false)
+        };
+        let (direction, collider) = match hazard {
             HazardType::Spikes => {
-                AABB::ZERO.extend_positive(vec2(1.0, 0.5).map(Coord::new) * self.grid.cell_size)
+                let (direction, aabb) = if connect(pos + vec2(0, 1)) {
+                    (
+                        vec2(0, -1),
+                        AABB::from_corners(vec2(0.0, 0.5), vec2(1.0, 1.0)),
+                    )
+                } else if connect(pos + vec2(1, 0)) {
+                    (
+                        vec2(-1, 0),
+                        AABB::from_corners(vec2(0.5, 0.0), vec2(1.0, 1.0)),
+                    )
+                } else if connect(pos + vec2(-1, 0)) {
+                    (
+                        vec2(1, 0),
+                        AABB::from_corners(vec2(0.0, 0.0), vec2(0.5, 1.0)),
+                    )
+                } else {
+                    (
+                        vec2(0, 1),
+                        AABB::from_corners(vec2(0.0, 0.0), vec2(1.0, 0.5)),
+                    )
+                };
+                let aabb = aabb.map(Coord::new);
+                (
+                    Some(direction.map(|x| Coord::new(x as f32))),
+                    AABB::point(aabb.bottom_left() * self.grid.cell_size)
+                        .extend_positive(aabb.size() * self.grid.cell_size),
+                )
             }
         };
         let pos = self.grid.grid_to_world(pos);
         let collider = Collider::new(collider.translate(pos));
         self.hazards.push(Hazard {
-            sprite: self.grid.cell_size,
+            sprite: AABB::point(pos).extend_positive(self.grid.cell_size),
             collider,
             direction,
             hazard_type: hazard,
