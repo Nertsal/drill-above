@@ -13,7 +13,7 @@ use assets::*;
 use model::*;
 use render::*;
 
-const FPS: f64 = 30.0;
+const FPS: f64 = 60.0;
 
 #[derive(clap::Parser)]
 struct Opt {
