@@ -42,6 +42,7 @@ pub enum PlayerState {
 pub enum Coyote {
     Ground,
     Wall { wall_normal: Vec2<Coord> },
+    Drill { direction: Vec2<Coord> },
 }
 
 impl Player {

@@ -201,7 +201,6 @@ impl Logic<'_> {
                         self.world.player.state = PlayerState::Airborn;
                         self.play_sound(&self.world.assets.sounds.jump);
                     }
-
                     Coyote::Wall { wall_normal } => {
                         let angle = rules.wall_jump_angle * wall_normal.x.signum();
                         let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
@@ -210,6 +209,9 @@ impl Logic<'_> {
                             Some(self.world.rules.wall_jump_timeout);
                         self.world.player.state = PlayerState::Airborn;
                         self.play_sound(&self.world.assets.sounds.jump);
+                    }
+                    Coyote::Drill { direction } => {
+                        self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
                     }
                 }
             }
@@ -322,11 +324,14 @@ impl Logic<'_> {
 
         if drilling && !still_drilling {
             self.world.player.state = PlayerState::Airborn;
+            let direction = self.world.player.velocity.normalize_or_zero();
             if self.world.player.jump_buffer.take().is_some() {
                 // Jump boost
-                self.world.player.velocity = self.world.player.velocity.normalize_or_zero()
-                    * self.world.rules.drill_jump_speed;
+                self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
                 // TODO: extra particles
+            } else {
+                self.world.player.coyote_time =
+                    Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
             }
             // TODO: particles
             if let Some(mut sound) = self.world.drill_sound.take() {
