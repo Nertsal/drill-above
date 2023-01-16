@@ -15,6 +15,7 @@ pub struct Player {
     pub state: PlayerState,
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
+    pub coyote_time: Option<Time>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -40,6 +41,7 @@ impl Player {
             state: PlayerState::Airborn,
             control_timeout: None,
             facing_left: false,
+            coyote_time: None,
         }
     }
 }

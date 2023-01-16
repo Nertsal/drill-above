@@ -39,6 +39,13 @@ impl Logic<'_> {
     }
 
     fn process_player(&mut self) {
+        if let Some(time) = &mut self.world.player.coyote_time {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.coyote_time = None;
+            }
+        }
+
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
                 *time -= self.delta_time;
@@ -151,6 +158,10 @@ impl Logic<'_> {
                     self.world.player.velocity.y = jump_vel;
                     self.world.player.state = PlayerState::Airborn;
                 }
+                PlayerState::Airborn if self.world.player.coyote_time.is_some() => {
+                    let jump_vel = rules.normal_jump_strength;
+                    self.world.player.velocity.y = jump_vel;
+                }
                 PlayerState::WallSliding { wall_normal } => {
                     let angle = rules.wall_jump_angle * wall_normal.x.signum();
                     let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
@@ -242,6 +253,7 @@ impl Logic<'_> {
                 if !drilling {
                     if collision.normal.x.approx_eq(&Coord::ZERO) {
                         self.world.player.state = PlayerState::Grounded;
+                        self.world.player.coyote_time = Some(self.world.rules.coyote_time);
                     } else if collision.normal.y.approx_eq(&Coord::ZERO)
                         && !matches!(self.world.player.state, PlayerState::Grounded)
                     {

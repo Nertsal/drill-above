@@ -7,6 +7,7 @@ pub struct Rules {
     pub move_speed: Coord,
     pub full_control_acc: Coord,
     pub low_control_acc: Coord,
+    pub coyote_time: Time,
     pub normal_jump_strength: Coord,
     pub wall_jump_strength: Coord,
     pub wall_jump_angle: R32,
