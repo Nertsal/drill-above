@@ -55,18 +55,12 @@ impl Level {
         }
     }
 
-    pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
-        let path = run_dir().join("assets").join("levels").join(path);
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let file = std::fs::File::open(path)?;
-            let reader = std::io::BufReader::new(file);
-            Ok(serde_json::from_reader(reader)?)
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            anyhow::bail!("unimplemented")
-        }
+    pub fn bounds(&self) -> AABB<Coord> {
+        AABB::from_corners(
+            self.grid.grid_to_world(vec2(0, 0)),
+            self.grid
+                .grid_to_world(self.size.map(|x| x as isize) - vec2(0, 1)),
+        )
     }
 
     pub fn place_hazard(
@@ -98,6 +92,40 @@ impl Level {
             collider,
             collected: false,
         });
+    }
+
+    pub fn change_size(&mut self, size: Vec2<usize>) {
+        self.tiles.change_size(size);
+        self.size = size;
+    }
+
+    pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
+        let path = run_dir().join("assets").join("levels").join(path);
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let file = std::fs::File::open(path)?;
+            let reader = std::io::BufReader::new(file);
+            Ok(serde_json::from_reader(reader)?)
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            anyhow::bail!("unimplemented")
+        }
+    }
+
+    pub fn save(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let path = run_dir().join("assets").join("levels").join(path);
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let file = std::fs::File::create(path)?;
+            let writer = std::io::BufWriter::new(file);
+            serde_json::to_writer_pretty(writer, self)?;
+            Ok(())
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            anyhow::bail!("unimplemented")
+        }
     }
 }
 

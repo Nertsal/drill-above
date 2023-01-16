@@ -22,6 +22,7 @@ impl Logic<'_> {
         self.process_player();
         self.process_collisions();
         self.process_particles();
+        self.process_camera();
     }
 
     fn kill_player(&mut self) {
@@ -174,12 +175,7 @@ impl Logic<'_> {
 
         // Level bounds
         let level = &self.world.level;
-        let level_bounds = AABB::from_corners(
-            level.grid.grid_to_world(vec2(0, 0)),
-            level
-                .grid
-                .grid_to_world(level.size.map(|x| x as isize) - vec2(0, 1)),
-        );
+        let level_bounds = level.bounds();
         let player = &mut self.world.player;
         if player.collider.feet().y > level_bounds.y_max {
             player.collider.translate(vec2(
@@ -314,5 +310,18 @@ impl Logic<'_> {
         self.world
             .particles
             .retain(|particle| particle.lifetime > Time::ZERO);
+    }
+
+    fn process_camera(&mut self) {
+        let level_bounds = self.world.level.bounds();
+        let camera_view =
+            vec2(self.world.camera.fov * (16.0 / 9.0), self.world.camera.fov).map(Coord::new); // TODO: remove hardcode
+        let camera_bounds = AABB::from_corners(
+            level_bounds.bottom_left() + camera_view,
+            level_bounds.top_right() - camera_view,
+        );
+        let target = self.world.player.collider.pos();
+        let target = target.clamp_aabb(camera_bounds);
+        self.world.camera.center = target.map(Coord::as_f32);
     }
 }

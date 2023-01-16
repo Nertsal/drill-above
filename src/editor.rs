@@ -1,6 +1,6 @@
 use super::*;
 
-const CAMERA_MOVE_SPEED: f32 = 10.0;
+const CAMERA_MOVE_SPEED: f32 = 20.0;
 
 pub struct Editor {
     geng: Geng,
@@ -153,17 +153,7 @@ impl Editor {
     }
 
     fn save_level(&self) -> anyhow::Result<()> {
-        let path = run_dir()
-            .join("assets")
-            .join("levels")
-            .join(&self.level_name);
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let file = std::fs::File::create(path)?;
-            let writer = std::io::BufWriter::new(file);
-            serde_json::to_writer_pretty(writer, &self.level)?;
-        }
-        Ok(())
+        self.level.save(&self.level_name)
     }
 }
 

@@ -85,6 +85,20 @@ impl TileMap {
                 .is_some()
         })
     }
+
+    pub fn change_size(&mut self, size: Vec2<usize>) {
+        let mut tiles = vec![Tile::Air; size.x * size.y];
+        for y in 0..size.y {
+            for x in 0..size.x {
+                let i = x + y * size.x;
+                if x < self.size.x && y < self.size.y {
+                    tiles[i] = self.tiles[x + y * self.size.x];
+                }
+            }
+        }
+        self.size = size;
+        self.tiles = tiles;
+    }
 }
 
 pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> Option<usize> {
