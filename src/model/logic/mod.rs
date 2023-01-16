@@ -251,7 +251,9 @@ impl Logic<'_> {
                     * Vec2::dot(self.world.player.velocity, collision.normal)
                     * (Coord::ONE + bounciness);
                 if !drilling {
-                    if collision.normal.x.approx_eq(&Coord::ZERO) {
+                    if collision.normal.x.approx_eq(&Coord::ZERO)
+                        && collision.normal.y < Coord::ZERO
+                    {
                         self.world.player.state = PlayerState::Grounded;
                         self.world.player.coyote_time = Some(self.world.rules.coyote_time);
                     } else if collision.normal.y.approx_eq(&Coord::ZERO)
