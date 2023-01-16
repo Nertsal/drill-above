@@ -238,7 +238,10 @@ impl Render {
                     },
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
                 ),
-                ugli::DrawParameters::default(),
+                ugli::DrawParameters {
+                    blend_mode: Some(ugli::BlendMode::default()),
+                    ..Default::default()
+                },
             );
         }
     }

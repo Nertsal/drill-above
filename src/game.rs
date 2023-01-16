@@ -106,11 +106,12 @@ impl geng::State for Game {
         );
 
         // Render the texture onto the screen
-        let target = AABB::from_corners(
-            screen.size() * vec2(50.0, 180.0 - 111.0) / vec2(320.0, 180.0),
-            screen.size() * vec2(163.0, 180.0 - 47.0) / vec2(320.0, 180.0),
-        )
-        .translate(screen.bottom_left());
+        // let target = AABB::from_corners(
+        //     screen.size() * vec2(50.0, 180.0 - 111.0) / vec2(320.0, 180.0),
+        //     screen.size() * vec2(163.0, 180.0 - 47.0) / vec2(320.0, 180.0),
+        // )
+        // .translate(screen.bottom_left());
+        let target = screen;
         self.geng.draw_2d(
             framebuffer,
             &geng::PixelPerfectCamera,
