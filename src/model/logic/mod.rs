@@ -177,10 +177,10 @@ impl Logic<'_> {
         let level = &self.world.level;
         let level_bounds = level.bounds();
         let player = &mut self.world.player;
-        if player.collider.feet().y > level_bounds.y_max {
+        if player.collider.head().y > level_bounds.y_max {
             player.collider.translate(vec2(
                 Coord::ZERO,
-                level_bounds.y_max - player.collider.feet().y,
+                level_bounds.y_max - player.collider.head().y,
             ));
         }
         let offset = player.collider.feet().x - level_bounds.center().x;
@@ -313,9 +313,10 @@ impl Logic<'_> {
     }
 
     fn process_camera(&mut self) {
-        let level_bounds = self.world.level.bounds();
-        let camera_view =
-            vec2(self.world.camera.fov * (16.0 / 9.0), self.world.camera.fov).map(Coord::new); // TODO: remove hardcode
+        let mut level_bounds = self.world.level.bounds();
+        level_bounds.y_min += self.world.level.grid.cell_size.y * Coord::new(0.5);
+        let camera_view = (vec2(self.world.camera.fov * (16.0 / 9.0), self.world.camera.fov) / 2.0)
+            .map(Coord::new); // TODO: remove hardcode
         let camera_bounds = AABB::from_corners(
             level_bounds.bottom_left() + camera_view,
             level_bounds.top_right() - camera_view,

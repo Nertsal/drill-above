@@ -58,8 +58,7 @@ impl Level {
     pub fn bounds(&self) -> AABB<Coord> {
         AABB::from_corners(
             self.grid.grid_to_world(vec2(0, 0)),
-            self.grid
-                .grid_to_world(self.size.map(|x| x as isize) - vec2(0, 1)),
+            self.grid.grid_to_world(self.size.map(|x| x as isize)),
         )
     }
 
