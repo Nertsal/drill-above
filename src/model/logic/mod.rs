@@ -196,26 +196,11 @@ impl Logic<'_> {
         }
 
         let finished = matches!(self.world.player.state, PlayerState::Finished { .. });
+        if finished {
+            return;
+        }
         let drilling = matches!(self.world.player.state, PlayerState::Drilling);
         if !drilling {
-            // Finish
-            if !finished && self.world.player.collider.contains(self.world.level.finish) {
-                self.world.player.state = PlayerState::Finished {
-                    time: Time::new(2.0),
-                    next_heart: Time::new(0.5),
-                };
-                self.world.particles.push(Particle {
-                    lifetime: Time::new(2.0),
-                    position: self.world.player.collider.head()
-                        + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
-                    velocity: vec2(0.0, 1.5).map(Coord::new),
-                    particle_type: ParticleType::Heart8,
-                });
-                return;
-            }
-            if finished {
-                return;
-            }
             self.world.player.state = PlayerState::Airborn;
         }
         let mut still_drilling = false;
@@ -274,6 +259,22 @@ impl Logic<'_> {
 
         if drilling && !still_drilling {
             self.world.player.state = PlayerState::Airborn;
+        }
+
+        // Finish
+        if !drilling && !finished && self.world.player.collider.contains(self.world.level.finish) {
+            self.world.player.state = PlayerState::Finished {
+                time: Time::new(2.0),
+                next_heart: Time::new(0.5),
+            };
+            self.world.particles.push(Particle {
+                lifetime: Time::new(2.0),
+                position: self.world.player.collider.head()
+                    + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
+                velocity: vec2(0.0, 1.5).map(Coord::new),
+                particle_type: ParticleType::Heart8,
+            });
+            return;
         }
 
         // Player-coins
