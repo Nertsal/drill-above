@@ -16,7 +16,7 @@ pub struct Player {
     pub touching_wall: Option<(Tile, Vec2<Coord>)>,
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
-    pub coyote_time: Option<Time>,
+    pub coyote_time: Option<(Coyote, Time)>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -35,6 +35,12 @@ pub enum PlayerState {
         time: Time,
         next_heart: Time,
     },
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum Coyote {
+    Ground,
+    Wall { wall_normal: Vec2<Coord> },
 }
 
 impl Player {

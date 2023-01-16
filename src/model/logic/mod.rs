@@ -45,7 +45,7 @@ impl Logic<'_> {
     }
 
     fn process_player(&mut self) {
-        if let Some(time) = &mut self.world.player.coyote_time {
+        if let Some((_, time)) = &mut self.world.player.coyote_time {
             *time -= self.delta_time;
             if *time <= Time::ZERO {
                 self.world.player.coyote_time = None;
@@ -175,27 +175,31 @@ impl Logic<'_> {
 
         if self.player_control.jump {
             let rules = &self.world.rules;
-            match self.world.player.state {
-                PlayerState::Grounded { .. } => {
-                    let jump_vel = rules.normal_jump_strength;
-                    self.world.player.velocity.y = jump_vel;
-                    self.world.player.state = PlayerState::Airborn;
-                    self.play_sound(&self.world.assets.sounds.jump);
+            let jump = match self.world.player.state {
+                PlayerState::Grounded { .. } => Some(Coyote::Ground),
+                PlayerState::WallSliding { wall_normal, .. } => Some(Coyote::Wall { wall_normal }),
+                PlayerState::Airborn => self.world.player.coyote_time.map(|(coyote, _)| coyote),
+                _ => None,
+            };
+            if let Some(jump) = jump {
+                match jump {
+                    Coyote::Ground => {
+                        let jump_vel = rules.normal_jump_strength;
+                        self.world.player.velocity.y = jump_vel;
+                        self.world.player.state = PlayerState::Airborn;
+                        self.play_sound(&self.world.assets.sounds.jump);
+                    }
+
+                    Coyote::Wall { wall_normal } => {
+                        let angle = rules.wall_jump_angle * wall_normal.x.signum();
+                        let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
+                        self.world.player.velocity = jump_vel;
+                        self.world.player.control_timeout =
+                            Some(self.world.rules.wall_jump_timeout);
+                        self.world.player.state = PlayerState::Airborn;
+                        self.play_sound(&self.world.assets.sounds.jump);
+                    }
                 }
-                PlayerState::Airborn if self.world.player.coyote_time.is_some() => {
-                    let jump_vel = rules.normal_jump_strength;
-                    self.world.player.velocity.y = jump_vel;
-                    self.play_sound(&self.world.assets.sounds.jump);
-                }
-                PlayerState::WallSliding { wall_normal, .. } => {
-                    let angle = rules.wall_jump_angle * wall_normal.x.signum();
-                    let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
-                    self.world.player.velocity = jump_vel;
-                    self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
-                    self.world.player.state = PlayerState::Airborn;
-                    self.play_sound(&self.world.assets.sounds.jump);
-                }
-                _ => {}
             }
         }
 
@@ -288,14 +292,16 @@ impl Logic<'_> {
                         && collision.normal.y < Coord::ZERO
                     {
                         self.world.player.state = PlayerState::Grounded(tile);
-                        self.world.player.coyote_time = Some(self.world.rules.coyote_time);
+                        self.world.player.coyote_time =
+                            Some((Coyote::Ground, self.world.rules.coyote_time));
                     } else if collision.normal.y.approx_eq(&Coord::ZERO) {
-                        self.world.player.touching_wall = Some((tile, -collision.normal));
+                        let wall_normal = -collision.normal;
+                        self.world.player.touching_wall = Some((tile, wall_normal));
                         if !matches!(self.world.player.state, PlayerState::Grounded(..)) {
-                            self.world.player.state = PlayerState::WallSliding {
-                                tile,
-                                wall_normal: -collision.normal,
-                            };
+                            self.world.player.state =
+                                PlayerState::WallSliding { tile, wall_normal };
+                            self.world.player.coyote_time =
+                                Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
                         }
                     }
                 }
