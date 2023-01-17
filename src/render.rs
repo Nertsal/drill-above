@@ -39,29 +39,6 @@ impl Render {
         }
     }
 
-    fn draw_pixel_perfect(
-        &self,
-        bottom_left: Vec2<Coord>,
-        texture: &ugli::Texture,
-        flip: bool,
-        transform: Mat3<f32>,
-        camera: &impl geng::AbstractCamera2d,
-        framebuffer: &mut ugli::Framebuffer,
-    ) {
-        let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
-        let pos = pixel_perfect_pos(bottom_left) + size / 2.0;
-        let transform = Mat3::translate(pos) * transform;
-        self.geng.draw_2d_transformed(
-            framebuffer,
-            camera,
-            &draw_2d::TexturedQuad::new(
-                AABB::ZERO.extend_symmetric(size / 2.0 * vec2(if flip { -1.0 } else { 1.0 }, 1.0)),
-                texture,
-            ),
-            transform,
-        )
-    }
-
     pub fn draw_grid(
         &self,
         grid: &Grid,
@@ -96,7 +73,7 @@ impl Render {
     ) {
         self.draw_background(world, framebuffer);
         self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
-        self.draw_player(&world.player, &world.camera, framebuffer);
+        self.draw_player(&world.player, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
     }
 
@@ -388,6 +365,7 @@ impl Render {
     pub fn draw_player(
         &self,
         player: &Player,
+        draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -415,14 +393,31 @@ impl Render {
                 }
                 _ => (&sprites.idle0, Mat3::identity()),
             };
-            self.draw_pixel_perfect(
-                player.collider.raw().bottom_left(),
-                texture,
-                flip,
-                transform,
-                camera,
+
+            let pos = player.collider.feet();
+            let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
+            let pos = pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
+            let transform = Mat3::translate(pos) * transform;
+            self.geng.draw_2d_transformed(
                 framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(
+                    AABB::ZERO
+                        .extend_symmetric(size / 2.0 * vec2(if flip { -1.0 } else { 1.0 }, 1.0)),
+                    texture,
+                ),
+                transform,
             );
+            if draw_hitboxes {
+                self.geng.draw_2d(
+                    framebuffer,
+                    camera,
+                    &draw_2d::Quad::new(
+                        player.collider.raw().map(Coord::as_f32),
+                        Rgba::new(0.0, 1.0, 0.0, 0.7),
+                    ),
+                );
+            }
         }
     }
 

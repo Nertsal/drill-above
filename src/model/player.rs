@@ -47,8 +47,8 @@ pub enum Coyote {
 
 impl Player {
     pub fn new(feet_pos: Vec2<Coord>) -> Self {
-        let height = Coord::new(1.0);
-        let half_width = Coord::new(1.0 / 2.0);
+        let height = Coord::new(0.9);
+        let half_width = Coord::new(0.9 / 2.0);
         Self {
             collider: Collider::new(AABB::from_corners(
                 feet_pos - vec2(half_width, Coord::ZERO),
