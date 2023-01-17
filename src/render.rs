@@ -211,7 +211,7 @@ impl Render {
 
         let texture = &self.assets.sprites.sun;
         let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT);
-        let move_speed = 0.05;
+        let move_speed = 0.9;
         let mut pos = bounds.bottom_left();
         pos += (world.camera.center - camera_bounds.bottom_left()) * move_speed;
         let matrix = Mat3::translate(pos) * Mat3::scale(size);
