@@ -4,6 +4,7 @@ use geng::Camera2d;
 mod assets;
 mod editor;
 mod game;
+mod intro;
 mod model;
 mod render;
 mod ui;
@@ -54,9 +55,10 @@ fn main() {
 
     if opt.editor {
         geng::run(&geng, editor::run(&geng, opt.level))
+    } else if let Some(level) = &opt.level {
+        geng::run(&geng, game::run(&geng, None, level))
     } else {
-        let level = opt.level.unwrap_or_else(|| "intro_01.json".to_string());
-        geng::run(&geng, game::run(&geng, level))
+        geng::run(&geng, intro::run(&geng))
     }
 }
 

@@ -150,6 +150,7 @@ impl geng::State for Game {
         self.world.level_transition.take().map(|level| {
             geng::Transition::Switch(Box::new(game::level_change(
                 &self.geng,
+                Some(&self.assets),
                 level,
                 self.world.coins_collected,
             )))
@@ -157,18 +158,31 @@ impl geng::State for Game {
     }
 }
 
-pub fn run(geng: &Geng, level: impl AsRef<std::path::Path>) -> impl geng::State {
-    level_change(geng, level, 0)
+pub fn run(
+    geng: &Geng,
+    assets: Option<&Rc<Assets>>,
+    level: impl AsRef<std::path::Path>,
+) -> impl geng::State {
+    level_change(geng, assets, level, 0)
 }
 
-fn level_change(geng: &Geng, level: impl AsRef<std::path::Path>, coins: usize) -> impl geng::State {
+fn level_change(
+    geng: &Geng,
+    assets: Option<&Rc<Assets>>,
+    level: impl AsRef<std::path::Path>,
+    coins: usize,
+) -> impl geng::State {
     let future = {
         let geng = geng.clone();
+        let assets = assets.cloned();
         let level = level.as_ref().to_owned();
         async move {
-            let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
-                .await
-                .expect("Failed to load assets");
+            let assets = match assets {
+                Some(assets) => assets,
+                None => geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+                    .await
+                    .expect("Failed to load assets"),
+            };
             let level: Level =
                 geng::LoadAsset::load(&geng, &run_dir().join("assets").join("levels").join(level))
                     .await
