@@ -19,6 +19,10 @@ impl World {
 
 impl Logic<'_> {
     fn process(&mut self) {
+        if !matches!(self.world.player.state, PlayerState::Finished { .. }) {
+            self.world.time += self.delta_time;
+        }
+
         self.process_player();
         self.process_collisions();
         self.process_particles();

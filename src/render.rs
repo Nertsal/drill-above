@@ -472,7 +472,12 @@ impl Render {
         }
     }
 
-    pub fn draw_ui(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
+    pub fn draw_ui(
+        &self,
+        show_time: Option<Time>,
+        world: &World,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
         let framebuffer_size = framebuffer.size().map(|x| x as f32);
 
         // Coins collected
@@ -502,6 +507,38 @@ impl Render {
             .align_bounding_box(vec2(0.0, 0.5))
             .translate(pos + vec2(size.x, -size.y / 2.0)),
         );
+
+        if let Some(time) = show_time {
+            // Speedrun timer
+            let pos = framebuffer_size * vec2(0.77, 0.95);
+            let size = framebuffer_size.x * 0.01;
+            let (m, s, ms) = time_ms(time);
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    Rgba::WHITE,
+                )
+                .scale_uniform(size)
+                .align_bounding_box(vec2(0.0, 1.0))
+                .translate(pos),
+            );
+            let (m, s, ms) = time_ms(world.time);
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    Rgba::WHITE,
+                )
+                .scale_uniform(size * 0.7)
+                .align_bounding_box(vec2(0.0, 1.0))
+                .translate(pos - vec2(0.0, size * 2.5)),
+            );
+        }
     }
 }
 
@@ -509,4 +546,11 @@ fn pixel_perfect_pos(pos: Vec2<Coord>) -> Vec2<f32> {
     let pos = pos.map(Coord::as_f32);
     let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
     pixel / PIXELS_PER_UNIT
+}
+
+fn time_ms(mut time: Time) -> (u32, u32, Time) {
+    let minutes = (time / Time::new(60.0)).floor();
+    time -= minutes * Time::new(60.0);
+    let seconds = time.floor();
+    (minutes.as_f32() as _, seconds.as_f32() as _, time - seconds)
 }

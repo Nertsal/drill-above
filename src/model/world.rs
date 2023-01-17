@@ -32,6 +32,7 @@ pub struct World {
     pub particles: Vec<Particle>,
     pub coins_collected: usize,
     pub drill_sound: Option<geng::SoundEffect>,
+    pub time: Time,
 }
 
 impl World {
@@ -48,6 +49,7 @@ impl World {
             particles: default(),
             level_transition: None,
             coins_collected: 0,
+            time: Time::ZERO,
             drill_sound: None,
             rules,
             level,
