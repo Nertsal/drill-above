@@ -29,6 +29,7 @@ pub struct Sprites {
     pub tiles: TileSprites,
     pub hazards: HazardSprites,
     pub player: PlayerSprites,
+    pub props: PropSprites,
     #[asset(postprocess = "pixel")]
     pub room: ugli::Texture,
     #[asset(postprocess = "pixel")]
@@ -53,6 +54,12 @@ pub struct TileSprites {
 pub struct HazardSprites {
     #[asset(postprocess = "pixel")]
     pub spikes: ugli::Texture,
+}
+
+#[derive(geng::Assets)]
+pub struct PropSprites {
+    #[asset(postprocess = "pixel")]
+    pub tutorial_drill_use: ugli::Texture,
 }
 
 #[derive(geng::Assets)]
@@ -92,6 +99,14 @@ impl HazardSprites {
     pub fn get_texture(&self, hazard: &HazardType) -> &ugli::Texture {
         match hazard {
             HazardType::Spikes => &self.spikes,
+        }
+    }
+}
+
+impl PropSprites {
+    pub fn get_texture(&self, prop: &PropType) -> &ugli::Texture {
+        match prop {
+            PropType::DrillUse => &self.tutorial_drill_use,
         }
     }
 }

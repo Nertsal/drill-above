@@ -1,7 +1,5 @@
 use super::*;
 
-const PIXELS_PER_UNIT: f32 = 8.0;
-
 #[derive(ugli::Vertex, Debug, Clone, Copy)]
 struct Vertex {
     a_pos: Vec2<f32>,
@@ -189,6 +187,7 @@ impl Render {
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
+        self.draw_props(&level.props, camera, framebuffer);
         self.draw_tiles(level, &level.tiles, camera, framebuffer);
         self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
         self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
@@ -293,6 +292,22 @@ impl Render {
                     blend_mode: Some(ugli::BlendMode::default()),
                     ..Default::default()
                 },
+            );
+        }
+    }
+
+    pub fn draw_props(
+        &self,
+        props: &[Prop],
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for prop in props {
+            let texture = self.assets.sprites.props.get_texture(&prop.prop_type);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(prop.sprite.map(Coord::as_f32), texture),
             );
         }
     }

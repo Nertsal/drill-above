@@ -11,6 +11,8 @@ pub struct Level {
     pub tiles: TileMap,
     pub hazards: Vec<Hazard>,
     pub coins: Vec<Coin>,
+    #[serde(default)]
+    pub props: Vec<Prop>,
     pub next_level: Option<String>,
 }
 
@@ -28,15 +30,33 @@ pub struct Hazard {
     pub hazard_type: HazardType,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Prop {
+    pub sprite: AABB<Coord>,
+    pub prop_type: PropType,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum HazardType {
     Spikes,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum PropType {
+    DrillUse,
 }
 
 impl HazardType {
     pub fn all() -> [Self; 1] {
         use HazardType::*;
         [Spikes]
+    }
+}
+
+impl PropType {
+    pub fn all() -> [Self; 1] {
+        use PropType::*;
+        [DrillUse]
     }
 }
 
@@ -50,6 +70,7 @@ impl Level {
             tiles: TileMap::new(size),
             hazards: Vec::new(),
             coins: Vec::new(),
+            props: Vec::new(),
             next_level: None,
             drill_allowed: true,
             grid,
@@ -105,6 +126,15 @@ impl Level {
         });
     }
 
+    pub fn place_prop(&mut self, pos: Vec2<isize>, size: Vec2<Coord>, prop: PropType) {
+        let pos = self.grid.grid_to_world(pos);
+        let sprite = AABB::point(pos).extend_symmetric(size / Coord::new(2.0));
+        self.props.push(Prop {
+            sprite,
+            prop_type: prop,
+        });
+    }
+
     pub fn place_coin(&mut self, pos: Vec2<isize>) {
         let collider = AABB::ZERO.extend_positive(self.grid.cell_size);
         let pos = self.grid.grid_to_world(pos);
@@ -113,6 +143,33 @@ impl Level {
             collider,
             collected: false,
         });
+    }
+
+    pub fn remove_all_at(&mut self, pos: Vec2<Coord>) {
+        // Try hazards first
+        if let Some(i) = self.props.iter().position(|prop| prop.sprite.contains(pos)) {
+            self.props.swap_remove(i);
+        }
+        // Try hazards first
+        while let Some(i) = self
+            .hazards
+            .iter()
+            .position(|hazard| hazard.collider.contains(pos))
+        {
+            self.hazards.swap_remove(i);
+        }
+        // Try coins
+        while let Some(i) = self
+            .coins
+            .iter()
+            .position(|hazard| hazard.collider.contains(pos))
+        {
+            self.coins.swap_remove(i);
+        }
+
+        // Try tiles
+        let pos = self.grid.world_to_grid(pos).0;
+        self.tiles.set_tile_isize(pos, Tile::Air);
     }
 
     pub fn change_size(&mut self, size: Vec2<usize>) {

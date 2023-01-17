@@ -15,13 +15,17 @@ pub struct Editor {
     cursor_world_pos: Vec2<Coord>,
     dragging: Option<geng::MouseButton>,
     block_options: Vec<Block>,
+    props: Vec<PropType>,
+    use_prop: bool,
     selected_block: usize,
+    selected_prop: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
 enum Block {
     Tile(Tile),
     Hazard(HazardType),
+    Prop(PropType),
     Coin,
 }
 
@@ -51,7 +55,10 @@ impl Editor {
                 [Block::Coin],
             ]
             .collect(),
+            props: itertools::chain![PropType::all()].collect(),
+            use_prop: false,
             selected_block: 0,
+            selected_prop: 0,
         }
     }
 
@@ -63,7 +70,11 @@ impl Editor {
 
     fn place_block(&mut self) {
         let pos = self.level.grid.world_to_grid(self.cursor_world_pos).0;
-        let block = self.block_options[self.selected_block];
+        let block = if self.use_prop {
+            Block::Prop(self.props[self.selected_prop])
+        } else {
+            self.block_options[self.selected_block]
+        };
         match block {
             Block::Tile(tile) => {
                 self.level.tiles.set_tile_isize(pos, tile);
@@ -74,34 +85,22 @@ impl Editor {
             Block::Coin => {
                 self.level.place_coin(pos);
             }
+            Block::Prop(prop) => {
+                let size = self
+                    .assets
+                    .sprites
+                    .props
+                    .get_texture(&prop)
+                    .size()
+                    .map(|x| x as f32 / PIXELS_PER_UNIT)
+                    .map(Coord::new);
+                self.level.place_prop(pos, size, prop);
+            }
         }
     }
 
     fn remove_block(&mut self) {
-        // Try hazards first
-        if let Some(i) = self
-            .level
-            .hazards
-            .iter()
-            .position(|hazard| hazard.collider.contains(self.cursor_world_pos))
-        {
-            self.level.hazards.swap_remove(i);
-            return;
-        }
-        // Try coins
-        if let Some(i) = self
-            .level
-            .coins
-            .iter()
-            .position(|hazard| hazard.collider.contains(self.cursor_world_pos))
-        {
-            self.level.coins.swap_remove(i);
-            return;
-        }
-
-        // Try tiles
-        let pos = self.level.grid.world_to_grid(self.cursor_world_pos).0;
-        self.level.tiles.set_tile_isize(pos, Tile::Air);
+        self.level.remove_all_at(self.cursor_world_pos);
     }
 
     fn update_cursor(&mut self, cursor_pos: Vec2<f64>) {
@@ -154,7 +153,8 @@ impl Editor {
 impl geng::State for Editor {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.framebuffer_size = framebuffer.size();
-        ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
+        let color = Rgba::try_from("#341a22").unwrap();
+        ugli::clear(framebuffer, Some(color), None, None);
 
         self.render
             .draw_level_editor(&self.level, true, &self.camera, framebuffer);
@@ -211,6 +211,12 @@ impl geng::State for Editor {
                 geng::Key::F => {
                     self.level.finish = self.cursor_world_pos;
                 }
+                geng::Key::Num1 => {
+                    self.use_prop = false;
+                }
+                geng::Key::Num2 => {
+                    self.use_prop = true;
+                }
                 _ => {}
             },
             _ => {}
@@ -233,30 +239,33 @@ impl geng::State for Editor {
             Rgba::WHITE,
         );
 
-        let (texture, geometry) = match &self.block_options[self.selected_block] {
-            Block::Tile(tile) => {
-                let set = self.assets.sprites.tiles.get_tile_set(tile);
-                (set.texture(), set.get_tile_connected([false; 8]))
-            }
-            Block::Hazard(hazard) => (
-                self.assets.sprites.hazards.get_texture(hazard),
-                [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y)),
-            ),
-            Block::Coin => (
-                &self.assets.sprites.coin,
-                [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y)),
-            ),
-        };
-        let selected_tile = ui::TextureBox::new(&self.geng, &self.assets, texture, geometry)
-            .fixed_size(
+        let block_ui = |block: &Block| {
+            let unit = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
+            let (texture, geometry) = match block {
+                Block::Tile(tile) => {
+                    let set = self.assets.sprites.tiles.get_tile_set(tile);
+                    (set.texture(), set.get_tile_connected([false; 8]))
+                }
+                Block::Hazard(hazard) => (self.assets.sprites.hazards.get_texture(hazard), unit),
+                Block::Coin => (&self.assets.sprites.coin, unit),
+                Block::Prop(prop) => (self.assets.sprites.props.get_texture(prop), unit),
+            };
+            ui::TextureBox::new(&self.geng, &self.assets, texture, geometry).fixed_size(
                 vec2(framebuffer_size.y * 0.05, framebuffer_size.y * 0.05).map(|x| x as f64),
-            );
+            )
+        };
+
+        let selected_tile = if self.use_prop {
+            block_ui(&Block::Prop(self.props[self.selected_prop]))
+        } else {
+            block_ui(&self.block_options[self.selected_block])
+        };
 
         let ui = geng::ui::stack![
             cell_pos.align(vec2(1.0, 1.0)),
-            selected_tile
+            geng::ui::column![selected_tile]
                 .align(vec2(1.0, 0.0))
-                .uniform_padding(framebuffer_size.y as f64 * 0.05)
+                .uniform_padding(framebuffer_size.y as f64 * 0.05),
         ];
 
         Box::new(ui)

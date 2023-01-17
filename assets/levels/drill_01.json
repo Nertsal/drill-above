@@ -1077,5 +1077,25 @@
       "collected": false
     }
   ],
+  "props": [
+    {
+      "sprite": {
+        "x_min": 5.125,
+        "x_max": 12.875,
+        "y_min": 6.0,
+        "y_max": 9.0
+      },
+      "prop_type": "DrillUse"
+    },
+    {
+      "sprite": {
+        "x_min": 5.125,
+        "x_max": 12.875,
+        "y_min": 6.0,
+        "y_max": 9.0
+      },
+      "prop_type": "DrillUse"
+    }
+  ],
   "next_level": "drill_02.json"
 }
