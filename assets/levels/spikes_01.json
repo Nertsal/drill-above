@@ -719,6 +719,8 @@
       "Air",
       "Air",
       "Air",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -756,12 +758,10 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -959,14 +959,14 @@
         "y_max": -0.5
       },
       "direction": {
-        "x": 0.0,
+        "x": -0.0,
         "y": 1.0
       },
       "collider": {
-        "x_min": -11.0,
-        "x_max": -10.0,
+        "x_min": -10.9,
+        "x_max": -10.1,
         "y_min": -1.5,
-        "y_max": -1.0
+        "y_max": -1.1
       },
       "hazard_type": "Spikes"
     },
@@ -978,14 +978,14 @@
         "y_max": -0.5
       },
       "direction": {
-        "x": 0.0,
+        "x": -0.0,
         "y": 1.0
       },
       "collider": {
-        "x_min": -10.0,
-        "x_max": -9.0,
+        "x_min": -9.9,
+        "x_max": -9.1,
         "y_min": -1.5,
-        "y_max": -1.0
+        "y_max": -1.1
       },
       "hazard_type": "Spikes"
     },
@@ -997,33 +997,14 @@
         "y_max": -0.5
       },
       "direction": {
-        "x": 0.0,
+        "x": -0.0,
         "y": 1.0
       },
       "collider": {
-        "x_min": -9.0,
-        "x_max": -8.0,
+        "x_min": -8.9,
+        "x_max": -8.1,
         "y_min": -1.5,
-        "y_max": -1.0
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "x_min": -17.0,
-        "x_max": -16.0,
-        "y_min": 3.5,
-        "y_max": 4.5
-      },
-      "direction": {
-        "x": 1.0,
-        "y": 0.0
-      },
-      "collider": {
-        "x_min": -17.0,
-        "x_max": -16.5,
-        "y_min": 3.5,
-        "y_max": 4.5
+        "y_max": -1.1
       },
       "hazard_type": "Spikes"
     },
@@ -1035,14 +1016,14 @@
         "y_max": 6.5
       },
       "direction": {
-        "x": 0.0,
+        "x": -0.0,
         "y": 1.0
       },
       "collider": {
-        "x_min": 2.0,
-        "x_max": 3.0,
+        "x_min": 2.1,
+        "x_max": 2.9,
         "y_min": 5.5,
-        "y_max": 6.0
+        "y_max": 5.9
       },
       "hazard_type": "Spikes"
     },
@@ -1054,14 +1035,14 @@
         "y_max": 6.5
       },
       "direction": {
-        "x": 0.0,
+        "x": -0.0,
         "y": 1.0
       },
       "collider": {
-        "x_min": 3.0,
-        "x_max": 4.0,
+        "x_min": 3.1,
+        "x_max": 3.9,
         "y_min": 5.5,
-        "y_max": 6.0
+        "y_max": 5.9
       },
       "hazard_type": "Spikes"
     }
@@ -1069,8 +1050,8 @@
   "coins": [
     {
       "collider": {
-        "x_min": -19.0,
-        "x_max": -18.0,
+        "x_min": -9.0,
+        "x_max": -8.0,
         "y_min": 8.5,
         "y_max": 9.5
       },
