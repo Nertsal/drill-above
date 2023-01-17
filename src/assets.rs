@@ -22,6 +22,7 @@ pub struct Sounds {
     pub coin: geng::Sound,
     #[asset(postprocess = "loop_sound")]
     pub drill: geng::Sound,
+    pub drill_jump: geng::Sound,
 }
 
 #[derive(geng::Assets)]

@@ -265,6 +265,7 @@ impl Logic<'_> {
                     }
                     Coyote::Drill { direction } => {
                         self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
+                        self.play_sound(&self.world.assets.sounds.drill_jump);
                         self.spawn_particles(
                             Time::ONE,
                             self.world.player.collider.pos(),
