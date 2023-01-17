@@ -65,7 +65,7 @@ impl Logic<'_> {
                 0.0,
             );
             let color = base_color.zip_map(color_delta, |s, t| (s + t).clamp(0.0, 1.0));
-            let angle = Coord::new(rng.gen_range(-0.3..=0.3));
+            let angle = Coord::new(rng.gen_range(-0.5..=0.5));
             let direction = direction.rotate(angle);
             self.world.particles.push(Particle {
                 lifetime,
@@ -232,6 +232,15 @@ impl Logic<'_> {
                         self.world.player.velocity.y = jump_vel;
                         self.world.player.state = PlayerState::Airborn;
                         self.play_sound(&self.world.assets.sounds.jump);
+                        self.spawn_particles(
+                            Time::ONE,
+                            self.world.player.collider.feet(),
+                            vec2(Coord::ZERO, Coord::ONE),
+                            Coord::new(1.0),
+                            3,
+                            Rgba::WHITE,
+                            Coord::new(0.1),
+                        );
                     }
                     Coyote::Wall { wall_normal } => {
                         let angle = rules.wall_jump_angle * wall_normal.x.signum();
@@ -241,6 +250,18 @@ impl Logic<'_> {
                             Some(self.world.rules.wall_jump_timeout);
                         self.world.player.state = PlayerState::Airborn;
                         self.play_sound(&self.world.assets.sounds.jump);
+                        self.spawn_particles(
+                            Time::ONE,
+                            self.world.player.collider.feet()
+                                - wall_normal
+                                    * self.world.player.collider.raw().width()
+                                    * Coord::new(0.5),
+                            jump_vel.normalize_or_zero(),
+                            Coord::new(1.0),
+                            3,
+                            Rgba::WHITE,
+                            Coord::new(0.1),
+                        );
                     }
                     Coyote::Drill { direction } => {
                         self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
@@ -248,10 +269,10 @@ impl Logic<'_> {
                             Time::ONE,
                             self.world.player.collider.pos(),
                             direction,
-                            self.world.rules.drill_jump_speed * Coord::new(0.2),
+                            Coord::new(1.0),
                             5,
-                            Rgba::GRAY,
-                            Coord::new(0.2),
+                            Rgba::from_rgb(0.8, 0.25, 0.2),
+                            Coord::new(0.3),
                         );
                     }
                 }
@@ -292,6 +313,7 @@ impl Logic<'_> {
             return;
         }
         let drilling = matches!(self.world.player.state, PlayerState::Drilling);
+        let was_grounded = matches!(self.world.player.state, PlayerState::Grounded(..));
         if !drilling {
             self.world.player.state = PlayerState::Airborn;
         }
@@ -346,6 +368,17 @@ impl Logic<'_> {
                     if collision.normal.x.approx_eq(&Coord::ZERO)
                         && collision.normal.y < Coord::ZERO
                     {
+                        if !was_grounded {
+                            self.spawn_particles(
+                                Time::ONE,
+                                self.world.player.collider.feet(),
+                                vec2(Coord::ZERO, Coord::ONE),
+                                Coord::new(0.5),
+                                3,
+                                Rgba::WHITE,
+                                Coord::new(0.1),
+                            );
+                        }
                         self.world.player.state = PlayerState::Grounded(tile);
                         self.world.player.coyote_time =
                             Some((Coyote::Ground, self.world.rules.coyote_time));
@@ -366,28 +399,14 @@ impl Logic<'_> {
         if drilling && !still_drilling {
             self.world.player.state = PlayerState::Airborn;
             let direction = self.world.player.velocity.normalize_or_zero();
-            if self.world.player.jump_buffer.take().is_some() {
-                // Jump boost
-                self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
-                self.spawn_particles(
-                    Time::ONE,
-                    self.world.player.collider.pos(),
-                    direction,
-                    self.world.rules.drill_jump_speed * Coord::new(0.2),
-                    5,
-                    Rgba::GRAY,
-                    Coord::new(0.2),
-                );
-            } else {
-                self.world.player.coyote_time =
-                    Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
-            }
+            self.world.player.coyote_time =
+                Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
             self.spawn_particles(
                 Time::ONE,
                 self.world.player.collider.pos(),
                 direction,
-                Coord::new(1.0),
-                5,
+                Coord::new(0.5),
+                8,
                 Rgba::GRAY,
                 Coord::new(0.1),
             );
@@ -413,17 +432,26 @@ impl Logic<'_> {
         }
 
         // Player-coins
-        let mut collected = false;
+        let mut collected = None;
         for coin in &mut self.world.level.coins {
             if !coin.collected && self.world.player.collider.check(&coin.collider).is_some() {
                 self.world.coins_collected += 1;
                 coin.collected = true;
-                collected = true;
+                collected = Some(coin.collider.pos());
             }
         }
         self.world.level.coins.retain(|coin| !coin.collected);
-        if collected {
+        if let Some(pos) = collected {
             self.play_sound(&self.world.assets.sounds.coin);
+            self.spawn_particles(
+                Time::ONE,
+                pos,
+                vec2(Coord::ZERO, Coord::ONE),
+                Coord::new(0.5),
+                5,
+                Rgba::YELLOW,
+                Coord::new(0.2),
+            );
         }
 
         // Screen edge
