@@ -150,7 +150,7 @@ impl Render {
                 a_pos: vec2(vertices[i].0, vertices[i].1),
                 a_uv: geometry[i],
             });
-            let geometry = vec![
+            let geometry = [
                 vertices[0],
                 vertices[1],
                 vertices[2],
@@ -169,8 +169,24 @@ impl Render {
                 pos.y = 0.0;
             }
             let pos = (texture_bounds.size() * pos - vec2(0.5, 0.5)) * move_speed;
-            let pos = texture_bounds.bottom_left() + pos;
+            let mut pos = texture_bounds.bottom_left() + pos;
+            let move_speed = (1.0 - i as f32 / 3.0) * 0.7;
+            pos.x = world.camera.center.x * move_speed * 1.0;
+            pos.x = world.camera.center.x + pos.x - (pos.x / size.x + 0.5).floor() * size.x;
             let pos = pixel_perfect_pos(pos.map(Coord::new));
+
+            let geometry = itertools::chain![
+                geometry.iter().map(|&(mut v)| {
+                    v.a_pos -= vec2(1.0, 0.0);
+                    v
+                }),
+                geometry.iter().map(|&(mut v)| {
+                    v.a_pos += vec2(1.0, 0.0);
+                    v
+                }),
+                geometry,
+            ]
+            .collect();
 
             let matrix = Mat3::translate(pos) * Mat3::scale(size);
             let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
@@ -248,6 +264,10 @@ impl Render {
     ) {
         let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
         for (i, tile) in tiles.tiles().iter().enumerate() {
+            if let Tile::Air = tile {
+                continue;
+            }
+
             let connections = tiles.get_tile_connections(i);
             let pos = index_to_pos(i, level.size.x);
             let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
