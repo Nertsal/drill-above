@@ -11,6 +11,8 @@ pub struct Game {
     controls: Controls,
     control: PlayerControl,
     fade: Time,
+    accumulated_time: Time,
+    show_time: bool,
 }
 
 struct Controls {
@@ -23,7 +25,14 @@ struct Controls {
 }
 
 impl Game {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, level: Level, coins: usize) -> Self {
+    pub fn new(
+        geng: &Geng,
+        assets: &Rc<Assets>,
+        level: Level,
+        coins: usize,
+        time: Time,
+        show_time: bool,
+    ) -> Self {
         let mut world = World::new(assets, assets.rules.clone(), level);
         world.coins_collected = coins;
         Self {
@@ -48,6 +57,8 @@ impl Game {
                 jump: vec![geng::Key::Z],
                 drill: vec![geng::Key::C],
             },
+            accumulated_time: time,
+            show_time,
             world,
         }
     }
@@ -94,7 +105,6 @@ impl geng::State for Game {
         ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
         self.render
             .draw_world(&self.world, self.draw_hitboxes, &mut pixel_framebuffer);
-        self.render.draw_ui(&self.world, &mut pixel_framebuffer);
 
         // Render background
         let reference_size = vec2(16.0, 9.0);
@@ -120,6 +130,13 @@ impl geng::State for Game {
             framebuffer,
             &geng::PixelPerfectCamera,
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
+        );
+
+        self.render.draw_ui(
+            self.show_time
+                .then_some(self.accumulated_time + self.world.time),
+            &self.world,
+            framebuffer,
         );
 
         // Fade
@@ -157,8 +174,14 @@ impl geng::State for Game {
             if self.controls.drill.contains(&key) {
                 self.control.drill = true;
             }
-            if let geng::Key::F1 = key {
-                self.draw_hitboxes = !self.draw_hitboxes;
+            match key {
+                geng::Key::F1 => {
+                    self.draw_hitboxes = !self.draw_hitboxes;
+                }
+                geng::Key::F2 => {
+                    self.show_time = !self.show_time;
+                }
+                _ => (),
             }
         }
     }
@@ -170,6 +193,8 @@ impl geng::State for Game {
                 Some(&self.assets),
                 level,
                 self.world.coins_collected,
+                self.accumulated_time + self.world.time,
+                self.show_time,
             )))
         })
     }
@@ -180,7 +205,7 @@ pub fn run(
     assets: Option<&Rc<Assets>>,
     level: impl AsRef<std::path::Path>,
 ) -> impl geng::State {
-    level_change(geng, assets, level, 0)
+    level_change(geng, assets, level, 0, Time::ZERO, false)
 }
 
 fn level_change(
@@ -188,6 +213,8 @@ fn level_change(
     assets: Option<&Rc<Assets>>,
     level: impl AsRef<std::path::Path>,
     coins: usize,
+    time: Time,
+    show_time: bool,
 ) -> impl geng::State {
     let future = {
         let geng = geng.clone();
@@ -204,7 +231,7 @@ fn level_change(
                 geng::LoadAsset::load(&geng, &run_dir().join("assets").join("levels").join(level))
                     .await
                     .expect("Failed to load level");
-            Game::new(&geng, &assets, level, coins)
+            Game::new(&geng, &assets, level, coins, time, show_time)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)

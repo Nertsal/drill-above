@@ -2,6 +2,8 @@ use super::*;
 
 #[derive(geng::Assets)]
 pub struct Assets {
+    #[asset(load_with = "load_font(&geng, &base_path.join(\"pixel.ttf\"))")]
+    pub font: Rc<geng::Font>,
     pub shaders: Shaders,
     pub sprites: Sprites,
     pub sounds: Sounds,
@@ -150,4 +152,21 @@ impl geng::LoadAsset for Animation {
         .boxed_local()
     }
     const DEFAULT_EXT: Option<&'static str> = Some("gif");
+}
+
+fn load_font(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Rc<geng::Font>> {
+    let geng = geng.clone();
+    let path = path.to_owned();
+    async move {
+        let data = <Vec<u8> as geng::LoadAsset>::load(&geng, &path).await?;
+        Ok(Rc::new(geng::Font::new(
+            &geng,
+            &data,
+            geng::ttf::Options {
+                pixel_size: 64.0,
+                max_distance: 0.1,
+            },
+        )?))
+    }
+    .boxed_local()
 }
