@@ -89,7 +89,7 @@ impl Level {
                 );
                 let aabb = aabb.map(Coord::new);
                 (
-                    Some(direction.map(|x| Coord::new(x as f32))),
+                    Some(direction.map(Coord::new)),
                     AABB::point(aabb.bottom_left() * self.grid.cell_size)
                         .extend_positive(aabb.size() * self.grid.cell_size),
                 )
