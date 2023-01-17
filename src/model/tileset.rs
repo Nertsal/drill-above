@@ -1,10 +1,8 @@
 use super::*;
 
-const SIZE: Vec2<usize> = vec2(7, 7);
+pub struct TileSet<const W: usize, const H: usize>(ugli::Texture);
 
-pub struct TileSet(ugli::Texture);
-
-impl TileSet {
+impl<const W: usize, const H: usize> TileSet<W, H> {
     pub fn new(mut texture: ugli::Texture) -> Self {
         texture.set_filter(ugli::Filter::Nearest);
         Self(texture)
@@ -15,8 +13,8 @@ impl TileSet {
     }
 
     pub fn get_tile_uv(&self, index: usize) -> [Vec2<f32>; 4] {
-        let tile_size = SIZE.map(|x| 1.0 / x as f32);
-        let pos = vec2(index % SIZE.x, index / SIZE.x);
+        let tile_size = vec2(W, H).map(|x| 1.0 / x as f32);
+        let pos = vec2(index % W, index / W);
         let pos = pos.map(|x| x as f32) * tile_size;
         [
             pos,
@@ -25,8 +23,12 @@ impl TileSet {
             pos + vec2(0.0, tile_size.y),
         ]
     }
+}
 
+impl TileSet<7, 7> {
     pub fn get_tile_connected(&self, connections: [bool; 8]) -> [Vec2<f32>; 4] {
+        const W: usize = 7;
+
         // [bottom, right, top, left]
         let (x, y) = match connections {
             [false, _, true, _, false, _, false, _] => (0, 0),
@@ -85,12 +87,12 @@ impl TileSet {
             [true, true, true, true, true, false, true, false] => (6, 2),
             [true, true, true, false, true, false, true, true] => (6, 3),
         };
-        let index = x + y * SIZE.x;
+        let index = x + y * W;
         self.get_tile_uv(index)
     }
 }
 
-impl geng::LoadAsset for TileSet {
+impl<const W: usize, const H: usize> geng::LoadAsset for TileSet<W, H> {
     fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
         Box::pin(ugli::Texture::load(geng, path).map(|texture| Ok(Self::new(texture?))))
     }

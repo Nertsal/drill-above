@@ -1,5 +1,7 @@
 use super::*;
 
+const PIXELS_PER_UNIT: f32 = 8.0;
+
 #[derive(ugli::Vertex, Debug, Clone, Copy)]
 struct Vertex {
     a_pos: Vec2<f32>,
@@ -46,11 +48,8 @@ impl Render {
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        // TODO: remove hardcoded pixels per unit
-        let size = texture.size().map(|x| x as f32) / 8.0;
-        let pos = bottom_left.map(Coord::as_f32);
-        let pixel = pos.map(|x| (x * 8.0).floor());
-        let pos = pixel / 8.0 + size / 2.0;
+        let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
+        let pos = pixel_perfect_pos(bottom_left) + size / 2.0;
         let transform = Mat3::translate(pos) * transform;
         self.geng.draw_2d_transformed(
             framebuffer,
@@ -95,6 +94,7 @@ impl Render {
         draw_hitboxes: bool,
         framebuffer: &mut ugli::Framebuffer,
     ) {
+        self.draw_background(world, framebuffer);
         self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
 
         // Player
@@ -133,6 +133,51 @@ impl Render {
         }
 
         self.draw_particles(&world.particles, &world.camera, framebuffer);
+    }
+
+    pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
+        // Parallax background
+        for i in (0..4).rev() {
+            let texture = &self.assets.sprites.background;
+            let geometry = texture.get_tile_uv(i);
+            let texture = texture.texture();
+            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+            let vertices = [0, 1, 2, 3].map(|i| Vertex {
+                a_pos: vec2(vertices[i].0, vertices[i].1),
+                a_uv: geometry[i],
+            });
+            let geometry = vec![
+                vertices[0],
+                vertices[1],
+                vertices[2],
+                vertices[0],
+                vertices[2],
+                vertices[3],
+            ];
+
+            let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
+            let pos = pixel_perfect_pos(Vec2::ZERO) - size / 2.0;
+
+            let matrix = Mat3::translate(pos) * Mat3::scale(size);
+            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
+            ugli::draw(
+                framebuffer,
+                &self.assets.shaders.texture,
+                ugli::DrawMode::Triangles,
+                &geometry,
+                (
+                    ugli::uniforms! {
+                        u_model_matrix: matrix,
+                        u_texture: texture,
+                    },
+                    geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
+                ),
+                ugli::DrawParameters {
+                    blend_mode: Some(ugli::BlendMode::default()),
+                    ..Default::default()
+                },
+            );
+        }
     }
 
     pub fn draw_level(
@@ -335,7 +380,7 @@ impl Render {
                     continue;
                 }
             };
-            let size = texture.size().map(|x| x as f32 / 8.0); // TODO: remove hardcode
+            let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT);
             self.geng.draw_2d(
                 framebuffer,
                 camera,
@@ -365,4 +410,10 @@ impl Render {
             .translate(framebuffer_size * 0.95),
         );
     }
+}
+
+fn pixel_perfect_pos(pos: Vec2<Coord>) -> Vec2<f32> {
+    let pos = pos.map(Coord::as_f32);
+    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).floor());
+    pixel / PIXELS_PER_UNIT
 }

@@ -36,13 +36,14 @@ pub struct Sprites {
     pub heart4: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub heart8: ugli::Texture,
+    pub background: TileSet<1, 4>,
 }
 
 #[derive(geng::Assets)]
 pub struct TileSprites {
-    pub air: TileSet,
-    pub grass: TileSet,
-    pub stone: TileSet,
+    pub air: TileSet<7, 7>,
+    pub grass: TileSet<7, 7>,
+    pub stone: TileSet<7, 7>,
 }
 
 #[derive(geng::Assets)]
@@ -69,7 +70,7 @@ pub struct DrillSprites {
 }
 
 impl TileSprites {
-    pub fn get_tile_set(&self, tile: &Tile) -> &TileSet {
+    pub fn get_tile_set(&self, tile: &Tile) -> &TileSet<7, 7> {
         match tile {
             Tile::Air => &self.air,
             Tile::Grass => &self.grass,
