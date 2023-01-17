@@ -79,6 +79,10 @@ impl Level {
         }
     }
 
+    pub fn finish(&self) -> Collider {
+        Collider::new(AABB::point(self.finish).extend_positive(self.grid.cell_size))
+    }
+
     pub fn bounds(&self) -> AABB<Coord> {
         AABB::from_corners(
             self.grid.grid_to_world(vec2(0, 0)),
