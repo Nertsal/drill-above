@@ -60,6 +60,8 @@ pub struct HazardSprites {
 pub struct PropSprites {
     #[asset(postprocess = "pixel")]
     pub tutorial_drill_use: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub tutorial_drill_jump: ugli::Texture,
 }
 
 #[derive(geng::Assets)]
@@ -107,6 +109,7 @@ impl PropSprites {
     pub fn get_texture(&self, prop: &PropType) -> &ugli::Texture {
         match prop {
             PropType::DrillUse => &self.tutorial_drill_use,
+            PropType::DrillJump => &self.tutorial_drill_jump,
         }
     }
 }

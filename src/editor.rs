@@ -63,9 +63,15 @@ impl Editor {
     }
 
     fn scroll_selected_tile(&mut self, delta: isize) {
-        let current = self.selected_block as isize;
-        let target = current + delta;
-        self.selected_block = target.rem_euclid(self.block_options.len() as isize) as usize;
+        if self.use_prop {
+            let current = self.selected_block as isize;
+            let target = current + delta;
+            self.selected_prop = target.rem_euclid(self.props.len() as isize) as usize;
+        } else {
+            let current = self.selected_block as isize;
+            let target = current + delta;
+            self.selected_block = target.rem_euclid(self.block_options.len() as isize) as usize;
+        }
     }
 
     fn place_block(&mut self) {

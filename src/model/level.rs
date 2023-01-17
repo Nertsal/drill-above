@@ -44,6 +44,7 @@ pub enum HazardType {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum PropType {
     DrillUse,
+    DrillJump,
 }
 
 impl HazardType {
@@ -54,9 +55,9 @@ impl HazardType {
 }
 
 impl PropType {
-    pub fn all() -> [Self; 1] {
+    pub fn all() -> [Self; 2] {
         use PropType::*;
-        [DrillUse]
+        [DrillUse, DrillJump]
     }
 }
 
