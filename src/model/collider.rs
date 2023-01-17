@@ -35,7 +35,9 @@ impl Collider {
     }
 
     pub fn grid_aabb(&self, grid: &Grid) -> AABB<isize> {
-        let [a, b] = [self.0.bottom_left(), self.0.top_right()].map(|p| grid.world_to_grid(p).0);
+        let eps = Coord::new(1e-3);
+        let [a, b] = [self.0.bottom_left(), self.0.top_right() - vec2(eps, eps)]
+            .map(|p| grid.world_to_grid(p).0);
         AABB::from_corners(a, b)
     }
 
