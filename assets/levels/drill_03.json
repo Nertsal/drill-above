@@ -1875,18 +1875,18 @@
       "sprite": {
         "x_min": 36.0,
         "x_max": 37.0,
-        "y_min": 9.5,
-        "y_max": 10.5
+        "y_min": 6.5,
+        "y_max": 7.5
       },
       "direction": {
         "x": 1.0,
-        "y": 0.0
+        "y": -0.0
       },
       "collider": {
         "x_min": 36.0,
-        "x_max": 36.5,
-        "y_min": 9.5,
-        "y_max": 10.5
+        "x_max": 36.4,
+        "y_min": 6.6,
+        "y_max": 7.4
       },
       "hazard_type": "Spikes"
     },
@@ -1899,13 +1899,13 @@
       },
       "direction": {
         "x": 1.0,
-        "y": 0.0
+        "y": -0.0
       },
       "collider": {
         "x_min": 36.0,
-        "x_max": 36.5,
-        "y_min": 8.5,
-        "y_max": 9.5
+        "x_max": 36.4,
+        "y_min": 8.6,
+        "y_max": 9.4
       },
       "hazard_type": "Spikes"
     },
@@ -1918,13 +1918,13 @@
       },
       "direction": {
         "x": 1.0,
-        "y": 0.0
+        "y": -0.0
       },
       "collider": {
         "x_min": 36.0,
-        "x_max": 36.5,
-        "y_min": 7.5,
-        "y_max": 8.5
+        "x_max": 36.4,
+        "y_min": 7.6,
+        "y_max": 8.4
       },
       "hazard_type": "Spikes"
     },
@@ -1932,18 +1932,18 @@
       "sprite": {
         "x_min": 36.0,
         "x_max": 37.0,
-        "y_min": 6.5,
-        "y_max": 7.5
+        "y_min": 9.5,
+        "y_max": 10.5
       },
       "direction": {
         "x": 1.0,
-        "y": 0.0
+        "y": -0.0
       },
       "collider": {
         "x_min": 36.0,
-        "x_max": 36.5,
-        "y_min": 6.5,
-        "y_max": 7.5
+        "x_max": 36.4,
+        "y_min": 9.6,
+        "y_max": 10.4
       },
       "hazard_type": "Spikes"
     }

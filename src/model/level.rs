@@ -73,27 +73,20 @@ impl Level {
         };
         let (direction, collider) = match hazard {
             HazardType::Spikes => {
-                let (direction, aabb) = if connect(pos + vec2(0, 1)) {
-                    (
-                        vec2(0, -1),
-                        AABB::from_corners(vec2(0.0, 0.5), vec2(1.0, 1.0)),
-                    )
-                } else if connect(pos + vec2(1, 0)) {
-                    (
-                        vec2(-1, 0),
-                        AABB::from_corners(vec2(0.5, 0.0), vec2(1.0, 1.0)),
-                    )
-                } else if connect(pos + vec2(-1, 0)) {
-                    (
-                        vec2(1, 0),
-                        AABB::from_corners(vec2(0.0, 0.0), vec2(0.5, 1.0)),
-                    )
-                } else {
-                    (
-                        vec2(0, 1),
-                        AABB::from_corners(vec2(0.0, 0.0), vec2(1.0, 0.5)),
-                    )
-                };
+                let size = vec2(0.8, 0.4);
+                let direction = -[vec2(1, 0), vec2(-1, 0), vec2(0, 1)]
+                    .into_iter()
+                    .find(|&d| connect(pos + d))
+                    .unwrap_or(vec2(0, -1))
+                    .map(|x| x as f32);
+                let pos = vec2(0.5, 0.5) - direction * 0.5;
+                let aabb = AABB::from_corners(
+                    pos + vec2(-size.x * direction.y * 0.5, -size.x * direction.x * 0.5),
+                    pos + vec2(
+                        size.x * direction.y * 0.5 + size.y * direction.x,
+                        size.y * direction.y + size.x * direction.x * 0.5,
+                    ),
+                );
                 let aabb = aabb.map(Coord::new);
                 (
                     Some(direction.map(|x| Coord::new(x as f32))),
