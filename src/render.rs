@@ -96,42 +96,7 @@ impl Render {
     ) {
         self.draw_background(world, framebuffer);
         self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
-
-        // Player
-        if let PlayerState::Respawning { .. } = world.player.state {
-        } else {
-            let sprites = &self.assets.sprites.player;
-            let mut flip = world.player.facing_left;
-            let (texture, transform) = match world.player.state {
-                PlayerState::Drilling => {
-                    flip = false;
-                    let mut angle = world.player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
-                    let drill = if angle.floor() as i32 % 2 == 0 {
-                        // Vertical/horizontal
-                        &sprites.drill.drill_v0
-                    } else {
-                        // Diagonal
-                        angle -= 1.0;
-                        &sprites.drill.drill_d0
-                    };
-                    (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
-                }
-                PlayerState::WallSliding { wall_normal, .. } => {
-                    flip = wall_normal.x < Coord::ZERO;
-                    (&sprites.slide0, Mat3::identity())
-                }
-                _ => (&sprites.idle0, Mat3::identity()),
-            };
-            self.draw_pixel_perfect(
-                world.player.collider.raw().bottom_left(),
-                texture,
-                flip,
-                transform,
-                &world.camera,
-                framebuffer,
-            );
-        }
-
+        self.draw_player(&world.player, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
     }
 
@@ -420,6 +385,47 @@ impl Render {
         }
     }
 
+    pub fn draw_player(
+        &self,
+        player: &Player,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        if let PlayerState::Respawning { .. } = player.state {
+        } else {
+            let sprites = &self.assets.sprites.player;
+            let mut flip = player.facing_left;
+            let (texture, transform) = match player.state {
+                PlayerState::Drilling => {
+                    flip = false;
+                    let mut angle = player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
+                    let drill = if angle.floor() as i32 % 2 == 0 {
+                        // Vertical/horizontal
+                        &sprites.drill.drill_v0
+                    } else {
+                        // Diagonal
+                        angle -= 1.0;
+                        &sprites.drill.drill_d0
+                    };
+                    (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
+                }
+                PlayerState::WallSliding { wall_normal, .. } => {
+                    flip = wall_normal.x < Coord::ZERO;
+                    (&sprites.slide0, Mat3::identity())
+                }
+                _ => (&sprites.idle0, Mat3::identity()),
+            };
+            self.draw_pixel_perfect(
+                player.collider.raw().bottom_left(),
+                texture,
+                flip,
+                transform,
+                camera,
+                framebuffer,
+            );
+        }
+    }
+
     pub fn draw_particles(
         &self,
         particles: &[Particle],
@@ -488,6 +494,6 @@ impl Render {
 
 fn pixel_perfect_pos(pos: Vec2<Coord>) -> Vec2<f32> {
     let pos = pos.map(Coord::as_f32);
-    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).floor());
+    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
     pixel / PIXELS_PER_UNIT
 }
