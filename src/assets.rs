@@ -5,7 +5,6 @@ pub struct Assets {
     pub shaders: Shaders,
     pub sprites: Sprites,
     pub sounds: Sounds,
-    pub intro: Animation,
     pub rules: Rules,
 }
 

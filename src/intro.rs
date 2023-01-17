@@ -3,15 +3,17 @@ use super::*;
 pub struct Intro {
     geng: Geng,
     assets: Rc<Assets>,
+    intro: Animation,
     time: Time,
     transition: Option<geng::Transition>,
 }
 
 impl Intro {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, intro: Animation) -> Self {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
+            intro,
             time: Time::ZERO,
             transition: None,
         }
@@ -21,7 +23,7 @@ impl Intro {
 impl geng::State for Intro {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
-        let Some(texture) = self.assets.intro.get_frame(self.time) else {
+        let Some(texture) = self.intro.get_frame(self.time) else {
             self.transition = Some(geng::Transition::Switch(Box::new(game::run(&self.geng, Some(&self.assets), "intro_01.json"))));
             return;
         };
@@ -56,7 +58,11 @@ pub fn run(geng: &Geng) -> impl geng::State {
             let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
                 .await
                 .expect("Failed to load assets");
-            Intro::new(&geng, &assets)
+            let intro: Animation =
+                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro"))
+                    .await
+                    .expect("Failed to load intro animation");
+            Intro::new(&geng, &assets, intro)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
