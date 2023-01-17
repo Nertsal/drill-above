@@ -170,8 +170,8 @@ impl Render {
             }
             let pos = (texture_bounds.size() * pos - vec2(0.5, 0.5)) * move_speed;
             let mut pos = texture_bounds.bottom_left() + pos;
-            let move_speed = (1.0 - i as f32 / 3.0) * 0.7;
-            pos.x = world.camera.center.x * move_speed * 1.0;
+            let move_speed = (1.0 - i as f32 / 3.0) * 0.1;
+            pos.x = world.camera.center.x * move_speed;
             pos.x = world.camera.center.x + pos.x - (pos.x / size.x + 0.5).floor() * size.x;
             let pos = pixel_perfect_pos(pos.map(Coord::new));
 
@@ -208,6 +208,36 @@ impl Render {
                 },
             );
         }
+
+        let texture = &self.assets.sprites.sun;
+        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT);
+        let move_speed = 0.05;
+        let mut pos = bounds.bottom_left();
+        pos += (world.camera.center - camera_bounds.bottom_left()) * move_speed;
+        let matrix = Mat3::translate(pos) * Mat3::scale(size);
+        let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+        let vertices = vertices.map(|(x, y)| Vertex {
+            a_pos: vec2(x, y),
+            a_uv: vec2(x, y),
+        });
+        let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), vertices.to_vec());
+        ugli::draw(
+            framebuffer,
+            &self.assets.shaders.texture,
+            ugli::DrawMode::TriangleFan,
+            &geometry,
+            (
+                ugli::uniforms! {
+                    u_model_matrix: matrix,
+                    u_texture: texture,
+                },
+                geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
+            ),
+            ugli::DrawParameters {
+                blend_mode: Some(ugli::BlendMode::default()),
+                ..Default::default()
+            },
+        );
     }
 
     pub fn draw_level(
