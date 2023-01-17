@@ -468,7 +468,15 @@ impl Logic<'_> {
         }
 
         // Finish
-        if !drilling && !finished && self.world.player.collider.contains(self.world.level.finish) {
+        if !drilling
+            && !finished
+            && self
+                .world
+                .player
+                .collider
+                .check(&self.world.level.finish())
+                .is_some()
+        {
             self.world.player.state = PlayerState::Finished {
                 time: Time::new(2.0),
                 next_heart: Time::new(0.5),
@@ -480,6 +488,7 @@ impl Logic<'_> {
                 velocity: vec2(0.0, 1.5).map(Coord::new),
                 particle_type: ParticleType::Heart8,
             });
+            self.play_sound(&self.world.assets.sounds.charm);
             return;
         }
 
@@ -540,9 +549,8 @@ impl Logic<'_> {
         let camera_bounds = self.world.camera_bounds();
         let target = self.world.player.collider.pos();
         let target = target.clamp_aabb(camera_bounds);
-        // TODO: remove hardcoded pixels per unit
         let pos = target.map(Coord::as_f32);
-        let pixel = (pos.map(|x| (x * 8.0).round()) + vec2(0.0, 0.0)) / 8.0;
+        let pixel = (pos.map(|x| (x * PIXELS_PER_UNIT).round())) / PIXELS_PER_UNIT;
         self.world.camera.center = pixel;
     }
 }

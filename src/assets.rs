@@ -24,6 +24,7 @@ pub struct Sounds {
     #[asset(postprocess = "loop_sound")]
     pub drill: geng::Sound,
     pub drill_jump: geng::Sound,
+    pub charm: geng::Sound,
 }
 
 #[derive(geng::Assets)]
@@ -32,6 +33,8 @@ pub struct Sprites {
     pub hazards: HazardSprites,
     pub player: PlayerSprites,
     pub props: PropSprites,
+    #[asset(postprocess = "pixel")]
+    pub partner: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub room: ugli::Texture,
     #[asset(postprocess = "pixel")]

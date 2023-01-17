@@ -193,14 +193,24 @@ impl Render {
         self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
 
         // Finish
+        let finish = level.finish().raw().map(Coord::as_f32);
         self.geng.draw_2d(
             framebuffer,
             camera,
-            &draw_2d::Quad::new(
-                Player::new(level.finish).collider.raw().map(Coord::as_f32),
-                Rgba::new(0.0, 0.0, 1.0, 0.9),
+            &draw_2d::TexturedQuad::new(
+                AABB::ZERO
+                    .extend_symmetric(finish.size() / 2.0 * vec2(-1.0, 1.0))
+                    .translate(finish.center()),
+                &self.assets.sprites.partner,
             ),
         );
+        if draw_hitboxes {
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::Quad::new(finish, Rgba::new(0.0, 0.0, 1.0, 0.9)),
+            );
+        }
     }
 
     pub fn draw_level_editor(
