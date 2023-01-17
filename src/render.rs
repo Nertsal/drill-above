@@ -136,11 +136,15 @@ impl Render {
     }
 
     pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
+        let texture = &self.assets.sprites.background;
+        let size = texture.texture().size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
+        let bounds = world.level.bounds().map(Coord::as_f32);
+        let texture_bounds = bounds.extend_positive(vec2(0.5, 0.0) - size);
+        let camera_bounds = world.camera_bounds().map(Coord::as_f32);
+
         // Parallax background
         for i in (0..4).rev() {
-            let texture = &self.assets.sprites.background;
             let geometry = texture.get_tile_uv(i);
-            let texture = texture.texture();
             let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
             let vertices = [0, 1, 2, 3].map(|i| Vertex {
                 a_pos: vec2(vertices[i].0, vertices[i].1),
@@ -155,8 +159,18 @@ impl Render {
                 vertices[3],
             ];
 
-            let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
-            let pos = pixel_perfect_pos(Vec2::ZERO) - size / 2.0;
+            let move_speed = 1.0 + (i as f32 / 3.0) * 0.1;
+            let mut pos =
+                (world.camera.center - camera_bounds.bottom_left()) / camera_bounds.size();
+            if camera_bounds.width().approx_eq(&0.0) {
+                pos.x = 0.0;
+            }
+            if camera_bounds.height().approx_eq(&0.0) {
+                pos.y = 0.0;
+            }
+            let pos = (texture_bounds.size() * pos - vec2(0.5, 0.5)) * move_speed;
+            let pos = texture_bounds.bottom_left() + pos;
+            let pos = pixel_perfect_pos(pos.map(Coord::new));
 
             let matrix = Mat3::translate(pos) * Mat3::scale(size);
             let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
@@ -168,7 +182,7 @@ impl Render {
                 (
                     ugli::uniforms! {
                         u_model_matrix: matrix,
-                        u_texture: texture,
+                        u_texture: texture.texture(),
                     },
                     geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
                 ),

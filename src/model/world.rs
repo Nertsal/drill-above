@@ -53,4 +53,15 @@ impl World {
             level,
         }
     }
+
+    pub fn camera_bounds(&self) -> AABB<Coord> {
+        let mut level_bounds = self.level.bounds();
+        level_bounds.y_min += self.level.grid.cell_size.y * Coord::new(0.5);
+        let camera_view =
+            (vec2(self.camera.fov * (16.0 / 9.0), self.camera.fov) / 2.0).map(Coord::new); // TODO: remove hardcode
+        AABB::from_corners(
+            level_bounds.bottom_left() + camera_view,
+            level_bounds.top_right() - camera_view,
+        )
+    }
 }

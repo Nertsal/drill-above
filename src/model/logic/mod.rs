@@ -457,14 +457,7 @@ impl Logic<'_> {
     }
 
     fn process_camera(&mut self) {
-        let mut level_bounds = self.world.level.bounds();
-        level_bounds.y_min += self.world.level.grid.cell_size.y * Coord::new(0.5);
-        let camera_view = (vec2(self.world.camera.fov * (16.0 / 9.0), self.world.camera.fov) / 2.0)
-            .map(Coord::new); // TODO: remove hardcode
-        let camera_bounds = AABB::from_corners(
-            level_bounds.bottom_left() + camera_view,
-            level_bounds.top_right() - camera_view,
-        );
+        let camera_bounds = self.world.camera_bounds();
         let target = self.world.player.collider.pos();
         let target = target.clamp_aabb(camera_bounds);
         // TODO: remove hardcoded pixels per unit
