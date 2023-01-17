@@ -477,7 +477,10 @@ impl Render {
 
         // Coins collected
         let texture = &self.assets.sprites.coin;
-        let size = texture.size().map(|x| x as f32 * 2.0);
+        let size = framebuffer_size.y * 0.07;
+        let size = texture
+            .size()
+            .map(|x| x as f32 / texture.size().x as f32 * size);
         let pos = vec2(0.05, 0.95) * framebuffer_size;
         self.geng.draw_2d(
             framebuffer,
@@ -491,7 +494,7 @@ impl Render {
             framebuffer,
             &geng::PixelPerfectCamera,
             &draw_2d::Text::unit(
-                &**self.geng.default_font(),
+                &*self.assets.font,
                 format!("{}", world.coins_collected),
                 Rgba::YELLOW,
             )

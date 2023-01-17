@@ -94,7 +94,6 @@ impl geng::State for Game {
         ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
         self.render
             .draw_world(&self.world, self.draw_hitboxes, &mut pixel_framebuffer);
-        self.render.draw_ui(&self.world, &mut pixel_framebuffer);
 
         // Render background
         let reference_size = vec2(16.0, 9.0);
@@ -121,6 +120,8 @@ impl geng::State for Game {
             &geng::PixelPerfectCamera,
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
+
+        self.render.draw_ui(&self.world, framebuffer);
 
         // Fade
         if self.fade > Time::ZERO {
@@ -159,6 +160,9 @@ impl geng::State for Game {
             }
             if let geng::Key::F1 = key {
                 self.draw_hitboxes = !self.draw_hitboxes;
+            }
+            if let geng::Key::G = key {
+                self.world.coins_collected += 1;
             }
         }
     }
