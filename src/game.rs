@@ -10,6 +10,7 @@ pub struct Game {
     draw_hitboxes: bool,
     controls: Controls,
     control: PlayerControl,
+    fade: Time,
 }
 
 struct Controls {
@@ -37,6 +38,7 @@ impl Game {
                 texture
             },
             draw_hitboxes: false,
+            fade: Time::ONE,
             control: PlayerControl::default(),
             controls: Controls {
                 left: vec![geng::Key::Left],
@@ -119,10 +121,25 @@ impl geng::State for Game {
             &geng::PixelPerfectCamera,
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
+
+        // Fade
+        if self.fade > Time::ZERO {
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Quad::new(
+                    screen,
+                    Rgba::new(0.0, 0.0, 0.0, self.fade.as_f32().min(1.0)),
+                ),
+            );
+        }
     }
 
     fn update(&mut self, delta_time: f64) {
-        let _delta_time = Time::new(delta_time as f32);
+        let delta_time = Time::new(delta_time as f32);
+        if self.fade > Time::ZERO {
+            self.fade -= delta_time;
+        }
     }
 
     fn fixed_update(&mut self, delta_time: f64) {
