@@ -397,22 +397,34 @@ impl Logic<'_> {
             }
         }
 
-        if drilling && !still_drilling {
-            self.world.player.state = PlayerState::Airborn;
-            let direction = self.world.player.velocity.normalize_or_zero();
-            self.world.player.coyote_time =
-                Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
-            self.spawn_particles(
-                Time::ONE,
-                self.world.player.collider.pos(),
-                direction,
-                Coord::new(0.5),
-                8,
-                Rgba::GRAY,
-                Coord::new(0.1),
-            );
-            if let Some(mut sound) = self.world.drill_sound.take() {
-                sound.stop();
+        if drilling {
+            if !still_drilling {
+                self.world.player.state = PlayerState::Airborn;
+                let direction = self.world.player.velocity.normalize_or_zero();
+                self.world.player.coyote_time =
+                    Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
+                self.spawn_particles(
+                    Time::ONE,
+                    self.world.player.collider.pos(),
+                    direction,
+                    Coord::new(0.3),
+                    8,
+                    Rgba::from_rgb(0.7, 0.7, 0.7),
+                    Coord::new(0.2),
+                );
+                if let Some(mut sound) = self.world.drill_sound.take() {
+                    sound.stop();
+                }
+            } else if thread_rng().gen_bool(0.2) {
+                self.spawn_particles(
+                    Time::ONE,
+                    self.world.player.collider.pos(),
+                    -self.world.player.velocity.normalize_or_zero(),
+                    Coord::new(0.5),
+                    2,
+                    Rgba::from_rgb(0.8, 0.8, 0.8),
+                    Coord::new(0.1),
+                );
             }
         }
 
