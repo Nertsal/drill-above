@@ -120,6 +120,41 @@ impl Logic<'_> {
             _ => (),
         }
 
+        match self.world.player.state {
+            PlayerState::Grounded(..) => {
+                if self.world.player.velocity.x.abs() > Coord::new(0.1)
+                    && thread_rng().gen_bool(0.1)
+                {
+                    self.spawn_particles(
+                        Time::ONE,
+                        self.world.player.collider.feet(),
+                        vec2(self.world.player.velocity.x.signum(), Coord::ONE),
+                        Coord::new(0.5),
+                        2,
+                        Rgba::from_rgb(0.8, 0.8, 0.8),
+                        Coord::new(0.1),
+                    );
+                }
+            }
+            PlayerState::WallSliding { wall_normal, .. } => {
+                if self.world.player.velocity.y < Coord::new(-0.1) && thread_rng().gen_bool(0.1) {
+                    self.spawn_particles(
+                        Time::ONE,
+                        self.world.player.collider.pos()
+                            - wall_normal
+                                * self.world.player.collider.raw().width()
+                                * Coord::new(0.5),
+                        vec2(wall_normal.x * Coord::new(0.2), Coord::ONE),
+                        Coord::new(0.5),
+                        2,
+                        Rgba::from_rgb(0.8, 0.8, 0.8),
+                        Coord::new(0.1),
+                    );
+                }
+            }
+            _ => (),
+        }
+
         if let Some(time) = &mut self.world.player.jump_buffer {
             *time -= self.delta_time;
             if *time <= Time::ZERO {
