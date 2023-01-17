@@ -129,7 +129,7 @@ impl geng::State for Game {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Quad::new(
                     screen,
-                    Rgba::new(0.0, 0.0, 0.0, self.fade.as_f32().min(1.0)),
+                    Rgba::new(0.196, 0.196, 0.196, self.fade.as_f32().min(1.0)),
                 ),
             );
         }
