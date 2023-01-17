@@ -458,20 +458,30 @@ impl Render {
 
     pub fn draw_ui(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
         let framebuffer_size = framebuffer.size().map(|x| x as f32);
-        let text_size = framebuffer_size.y * 0.05;
 
         // Coins collected
+        let texture = &self.assets.sprites.coin;
+        let size = texture.size().map(|x| x as f32 * 2.0);
+        let pos = vec2(0.05, 0.95) * framebuffer_size;
+        self.geng.draw_2d(
+            framebuffer,
+            &geng::PixelPerfectCamera,
+            &draw_2d::TexturedQuad::new(
+                AABB::point(pos).extend_right(size.x).extend_down(size.y),
+                texture,
+            ),
+        );
         self.geng.draw_2d(
             framebuffer,
             &geng::PixelPerfectCamera,
             &draw_2d::Text::unit(
                 &**self.geng.default_font(),
-                format!("Coins: {}", world.coins_collected),
-                Rgba::WHITE,
+                format!("{}", world.coins_collected),
+                Rgba::YELLOW,
             )
-            .scale_uniform(text_size)
-            .align_bounding_box(vec2(1.0, 1.0))
-            .translate(framebuffer_size * 0.95),
+            .scale_uniform(size.y * 0.3)
+            .align_bounding_box(vec2(0.0, 0.5))
+            .translate(pos + vec2(size.x, -size.y / 2.0)),
         );
     }
 }
