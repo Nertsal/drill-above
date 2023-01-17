@@ -59,7 +59,7 @@ pub fn run(geng: &Geng) -> impl geng::State {
                 .await
                 .expect("Failed to load assets");
             let intro: Animation =
-                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro"))
+                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro.gif"))
                     .await
                     .expect("Failed to load intro animation");
             Intro::new(&geng, &assets, intro)
