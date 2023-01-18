@@ -41,7 +41,7 @@ impl Game {
         let mut world = World::new(assets, assets.rules.clone(), level);
         world.coins_collected = coins;
         let mut music = music.unwrap_or_else(|| assets.music.play());
-        music.set_volume(world.volume);
+        music.set_volume((world.volume - 0.3).max(0.0));
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
