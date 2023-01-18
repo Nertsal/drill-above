@@ -40,6 +40,8 @@ impl Game {
         show_time: bool,
         music: Option<geng::SoundEffect>,
     ) -> Self {
+        geng.window().set_cursor_type(geng::CursorType::None);
+
         let mut world = World::new(assets, assets.rules.clone(), level);
         world.coins_collected = coins;
         let mut music = music.unwrap_or_else(|| assets.music.play());
