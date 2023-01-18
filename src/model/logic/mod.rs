@@ -125,6 +125,12 @@ impl Logic<'_> {
                         particle_type: ParticleType::Heart4,
                     });
                 }
+                self.world.player.velocity += self.world.rules.gravity * self.delta_time;
+                self.world.player.velocity.x = Coord::ZERO;
+                self.world
+                    .player
+                    .collider
+                    .translate(self.world.player.velocity * self.delta_time);
                 return;
             }
             _ => (),
@@ -355,10 +361,8 @@ impl Logic<'_> {
             ));
         }
 
-        let finished = matches!(self.world.player.state, PlayerState::Finished { .. });
-        if finished {
-            return;
-        }
+        let finished = matches!(self.world.player.state, PlayerState::Finished { .. })
+            .then_some(self.world.player.state);
         let drilling = matches!(self.world.player.state, PlayerState::Drilling);
         let was_grounded = matches!(self.world.player.state, PlayerState::Grounded(..));
         if !drilling {
@@ -415,7 +419,7 @@ impl Logic<'_> {
                     if collision.normal.x.approx_eq(&Coord::ZERO)
                         && collision.normal.y < Coord::ZERO
                     {
-                        if !was_grounded {
+                        if !was_grounded && finished.is_none() {
                             self.spawn_particles(
                                 Time::ONE,
                                 self.world.player.collider.feet(),
@@ -441,6 +445,11 @@ impl Logic<'_> {
                     }
                 }
             }
+        }
+
+        if let Some(state) = finished {
+            self.world.player.state = state;
+            return;
         }
 
         if drilling {
@@ -473,7 +482,7 @@ impl Logic<'_> {
 
         // Finish
         if !drilling
-            && !finished
+            && finished.is_none()
             && self
                 .world
                 .player
