@@ -10,6 +10,8 @@ pub struct Intro {
     play_button: Option<AABB<f32>>,
     hit_play: bool,
     cursor_pos: Vec2<f32>,
+    animation_frame: usize,
+    next_frame: Time,
 }
 
 impl Intro {
@@ -17,13 +19,15 @@ impl Intro {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
-            intro,
             time: Time::ZERO,
             zoom: R32::ONE,
             transition: None,
             play_button: None,
             hit_play: false,
             cursor_pos: Vec2::ZERO,
+            animation_frame: 0,
+            next_frame: Time::new(intro.first().unwrap().1),
+            intro,
         }
     }
 }
@@ -32,10 +36,8 @@ impl geng::State for Intro {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         let framebuffer_size = framebuffer.size().map(|x| x as f32);
 
-        let animation_time = Time::new(10.0);
-
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
-        if self.time > animation_time + Time::new(1.5) && self.hit_play {
+        if self.time > Time::new(1.5) && self.hit_play {
             self.transition = Some(geng::Transition::Switch(Box::new(game::run(
                 &self.geng,
                 Some(&self.assets),
@@ -49,7 +51,7 @@ impl geng::State for Intro {
         let ratio = ratio.x.min(ratio.y);
         let target_size = reference_size * ratio;
 
-        self.zoom = (self.time - animation_time).max(Time::ONE);
+        self.zoom = self.time.max(Time::ONE);
         let zoom = (self.zoom.as_f32() - 1.0).min(1.0);
         let zoom = 3.0 * zoom * zoom - 2.0 * zoom * zoom * zoom; // Smoothstep
         let screen = AABB::from_corners(
@@ -63,9 +65,8 @@ impl geng::State for Intro {
             .extend_symmetric(target_size / 2.0 * scale);
 
         self.play_button = None;
-        let frame = if self.time < animation_time {
-            let t = self.time / animation_time;
-            (t.as_f32() * (self.intro.frames.len() as f32 - 2.0)).floor() as usize
+        let frame = if self.animation_frame < self.intro.len() {
+            self.animation_frame
         } else if !self.hit_play {
             self.play_button = Some(
                 AABB::from_corners(
@@ -79,7 +80,7 @@ impl geng::State for Intro {
             self.intro.len() - 1
         };
 
-        if let Some(texture) = self.intro.get(frame) {
+        if let Some((texture, _)) = self.intro.get(frame) {
             self.geng.draw_2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
@@ -118,7 +119,18 @@ impl geng::State for Intro {
 
     fn update(&mut self, delta_time: f64) {
         let delta_time = Time::new(delta_time as f32);
-        self.time += delta_time;
+        if self.animation_frame >= self.intro.len() {
+            self.time += delta_time;
+        }
+        self.next_frame -= delta_time;
+        if self.next_frame < Time::ZERO {
+            self.animation_frame += 1;
+            self.next_frame = self
+                .intro
+                .get(self.animation_frame)
+                .map(|(_, delay)| Time::new(*delay))
+                .unwrap_or(Time::ZERO);
+        }
     }
 
     fn transition(&mut self) -> Option<geng::Transition> {

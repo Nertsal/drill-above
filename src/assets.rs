@@ -93,7 +93,7 @@ pub struct DrillSprites {
 #[derive(Deref)]
 pub struct Animation {
     #[deref]
-    pub frames: Vec<ugli::Texture>,
+    pub frames: Vec<(ugli::Texture, f32)>,
 }
 
 impl TileSprites {
@@ -151,7 +151,11 @@ impl geng::LoadAsset for Animation {
                     .into_frames()
                     .map(|frame| {
                         let frame = frame.unwrap();
-                        ugli::Texture::from_image_image(geng.ugli(), frame.into_buffer())
+                        let (n, d) = frame.delay().numer_denom_ms();
+                        (
+                            ugli::Texture::from_image_image(geng.ugli(), frame.into_buffer()),
+                            n as f32 / d as f32 / 1000.0,
+                        )
                     })
                     .collect(),
             })
