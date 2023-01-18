@@ -27,6 +27,8 @@ pub struct Sounds {
     pub drill: geng::Sound,
     pub drill_jump: geng::Sound,
     pub charm: geng::Sound,
+    #[asset(path = "cutscene.mp3")]
+    pub cutscene: geng::Sound,
 }
 
 #[derive(geng::Assets)]

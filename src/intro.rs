@@ -17,6 +17,9 @@ pub struct Intro {
 impl Intro {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, intro: Animation) -> Self {
         geng.window().set_cursor_type(geng::CursorType::None);
+        let volume = 1.0;
+        let mut effect = assets.sounds.cutscene.play();
+        effect.set_volume(volume);
 
         Self {
             geng: geng.clone(),
