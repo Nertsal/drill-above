@@ -13,6 +13,7 @@ pub struct Game {
     control: PlayerControl,
     fade: Time,
     accumulated_time: Time,
+    deaths: usize,
     show_time: bool,
     music: Option<geng::SoundEffect>,
 }
@@ -35,6 +36,7 @@ impl Game {
         level: Level,
         coins: usize,
         time: Time,
+        deaths: usize,
         show_time: bool,
         music: Option<geng::SoundEffect>,
     ) -> Self {
@@ -66,6 +68,7 @@ impl Game {
             },
             accumulated_time: time,
             music: Some(music),
+            deaths,
             level_name,
             show_time,
             world,
@@ -159,7 +162,7 @@ impl geng::State for Game {
 
             // Coins
             let texture = &self.assets.sprites.coin;
-            let pos = center + vec2(0.0, framebuffer_size.y * 0.03);
+            let pos = center + vec2(0.0, framebuffer_size.y * 0.03 * 4.0);
             let size = framebuffer_size.y * 0.07;
             let size = texture
                 .size()
@@ -183,6 +186,30 @@ impl geng::State for Game {
                 .scale_uniform(size.y * 0.3)
                 .align_bounding_box(vec2(0.0, 0.5))
                 .translate(pos + vec2(size.x / 2.0, size.y / 2.0)),
+            );
+
+            // Deaths
+            let texture = &self.assets.sprites.skull;
+            let pos = center + vec2(0.0, framebuffer_size.y * 0.03);
+            let size = framebuffer_size.y * 0.07;
+            let size = texture
+                .size()
+                .map(|x| x as f32 / texture.size().x as f32 * size);
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::TexturedQuad::new(
+                    AABB::point(pos).extend_left(size.x).extend_up(size.y),
+                    texture,
+                ),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(&*self.assets.font, format!("{}", self.deaths), Rgba::BLACK)
+                    .scale_uniform(size.y * 0.3)
+                    .align_bounding_box(vec2(0.0, 0.5))
+                    .translate(pos + vec2(size.x / 2.0, size.y / 2.0)),
             );
 
             // Time
@@ -268,6 +295,7 @@ impl geng::State for Game {
                 level,
                 self.world.coins_collected,
                 self.accumulated_time + self.world.time,
+                self.deaths + self.world.deaths,
                 self.show_time,
                 self.music.take(),
             ))));
@@ -281,15 +309,17 @@ pub fn run(
     assets: Option<&Rc<Assets>>,
     level: impl AsRef<std::path::Path>,
 ) -> impl geng::State {
-    level_change(geng, assets, level, 0, Time::ZERO, false, None)
+    level_change(geng, assets, level, 0, Time::ZERO, 0, false, None)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn level_change(
     geng: &Geng,
     assets: Option<&Rc<Assets>>,
     level: impl AsRef<std::path::Path>,
     coins: usize,
     time: Time,
+    deaths: usize,
     show_time: bool,
     music: Option<geng::SoundEffect>,
 ) -> impl geng::State {
@@ -310,7 +340,7 @@ fn level_change(
                     .await
                     .expect("Failed to load level");
             Game::new(
-                &geng, &assets, level_name, level, coins, time, show_time, music,
+                &geng, &assets, level_name, level, coins, time, deaths, show_time, music,
             )
         }
     };

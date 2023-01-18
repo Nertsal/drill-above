@@ -48,6 +48,8 @@ pub struct Sprites {
     pub background: TileSet<1, 4>,
     #[asset(postprocess = "pixel")]
     pub sun: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub skull: ugli::Texture,
 }
 
 #[derive(geng::Assets)]
