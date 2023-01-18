@@ -16,6 +16,8 @@ pub struct Intro {
 
 impl Intro {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, intro: Animation) -> Self {
+        geng.window().set_cursor_type(geng::CursorType::None);
+
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -55,46 +57,62 @@ impl geng::State for Intro {
         let zoom = (self.zoom.as_f32() - 1.0).min(1.0);
         let zoom = 3.0 * zoom * zoom - 2.0 * zoom * zoom * zoom; // Smoothstep
         let screen = AABB::from_corners(
-            vec2(760.0, 1632.0 - 935.0) / vec2(2448.0, 1632.0) * target_size,
-            vec2(1692.0, 1632.0 - 384.0) / vec2(2448.0, 1632.0) * target_size,
+            vec2(112.0, 180.0 - 97.0) / vec2(320.0, 180.0) * target_size,
+            vec2(207.0, 180.0 - 41.0) / vec2(320.0, 180.0) * target_size,
         );
         let scale = 1.0 + (target_size.y - screen.height()) * zoom / screen.height();
         let offset = (screen.center() - target_size / 2.0) * zoom;
 
         let aabb = AABB::point(framebuffer_size / 2.0 - offset * scale)
             .extend_symmetric(target_size / 2.0 * scale);
+        let screen = AABB::from_corners(
+            screen.bottom_left() / target_size * aabb.size(),
+            screen.top_right() / target_size * aabb.size(),
+        )
+        .translate(aabb.bottom_left());
 
         self.play_button = None;
-        let frame = if self.animation_frame < self.intro.len() {
-            self.animation_frame
-        } else if !self.hit_play {
+        let texture = if self.animation_frame < self.intro.len() {
+            self.intro
+                .get(self.animation_frame)
+                .map(|(texture, _)| texture)
+        } else {
             self.play_button = Some(
                 AABB::from_corners(
-                    aabb.size() * vec2(1180.0, 1632.0 - 747.0) / vec2(2448.0, 1632.0),
-                    aabb.size() * vec2(1277.0, 1632.0 - 604.0) / vec2(2448.0, 1632.0),
+                    aabb.size() * vec2(161.0, 180.0 - 85.0) / vec2(320.0, 180.0),
+                    aabb.size() * vec2(169.0, 180.0 - 71.0) / vec2(320.0, 180.0),
                 )
                 .translate(aabb.bottom_left()),
             );
-            self.intro.len() - 3
-        } else {
-            self.intro.len() - 1
+            self.play_button
+                .and_then(|button| {
+                    button
+                        .contains(self.cursor_pos)
+                        .then_some(&self.assets.sprites.drill_hover)
+                })
+                .or_else(|| self.intro.last().map(|(texture, _)| texture))
         };
 
-        if let Some((texture, _)) = self.intro.get(frame) {
+        if let Some(texture) = texture {
             self.geng.draw_2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::TexturedQuad::new(aabb, texture),
             );
         }
-        if let Some(button) = self.play_button {
-            if button.contains(self.cursor_pos) {
-                self.geng.draw_2d(
-                    framebuffer,
-                    &geng::PixelPerfectCamera,
-                    &draw_2d::Quad::new(button, Rgba::new(0.0, 0.0, 0.0, 0.5)),
-                );
-            }
+
+        if self.time > Time::ZERO {
+            let texture = &self.assets.sprites.cursor;
+            let size = texture.size().map(|x| x as f32) * aabb.height() / 180.0;
+            let pos = self.cursor_pos.clamp_aabb(screen);
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::TexturedQuad::new(
+                    AABB::point(pos).extend_right(size.x).extend_down(size.y),
+                    texture,
+                ),
+            );
         }
     }
 

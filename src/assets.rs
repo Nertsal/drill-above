@@ -50,6 +50,10 @@ pub struct Sprites {
     pub sun: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub skull: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub drill_hover: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub cursor: ugli::Texture,
 }
 
 #[derive(geng::Assets)]
@@ -152,10 +156,10 @@ impl geng::LoadAsset for Animation {
                     .map(|frame| {
                         let frame = frame.unwrap();
                         let (n, d) = frame.delay().numer_denom_ms();
-                        (
-                            ugli::Texture::from_image_image(geng.ugli(), frame.into_buffer()),
-                            n as f32 / d as f32 / 1000.0,
-                        )
+                        let mut texture =
+                            ugli::Texture::from_image_image(geng.ugli(), frame.into_buffer());
+                        texture.set_filter(ugli::Filter::Nearest);
+                        (texture, n as f32 / d as f32 / 1000.0)
                     })
                     .collect(),
             })
