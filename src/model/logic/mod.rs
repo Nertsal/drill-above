@@ -514,7 +514,7 @@ impl Logic<'_> {
                 vec2(Coord::ZERO, Coord::ONE),
                 Coord::new(0.5),
                 5,
-                Rgba::YELLOW,
+                Rgba::try_from("#e3a912").unwrap(),
                 Coord::new(0.2),
             );
         }
