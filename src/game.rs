@@ -252,11 +252,13 @@ impl geng::State for Game {
     fn transition(&mut self) -> Option<geng::Transition> {
         if let Some(level) = self.world.level_transition.take() {
             if level == self.level_name {
+                let coins = self.world.coins_collected;
                 self.world = World::new(
                     &self.assets,
                     self.assets.rules.clone(),
                     self.world.level.clone(),
                 );
+                self.world.coins_collected = coins;
                 return None;
             }
 
