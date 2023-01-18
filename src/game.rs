@@ -6,6 +6,7 @@ pub struct Game {
     render: Render,
     framebuffer_size: Vec2<usize>,
     pixel_texture: ugli::Texture,
+    level_name: String,
     world: World,
     draw_hitboxes: bool,
     controls: Controls,
@@ -28,6 +29,7 @@ impl Game {
     pub fn new(
         geng: &Geng,
         assets: &Rc<Assets>,
+        level_name: String,
         level: Level,
         coins: usize,
         time: Time,
@@ -58,6 +60,7 @@ impl Game {
                 drill: vec![geng::Key::C],
             },
             accumulated_time: time,
+            level_name,
             show_time,
             world,
         }
@@ -136,12 +139,62 @@ impl geng::State for Game {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
-        self.render.draw_ui(
-            self.show_time
-                .then_some(self.accumulated_time + self.world.time),
-            &self.world,
-            framebuffer,
-        );
+        let is_credits = self.level_name == "credits.json";
+        if !is_credits {
+            let show_time = self
+                .show_time
+                .then_some(self.accumulated_time + self.world.time);
+            self.render.draw_ui(show_time, &self.world, framebuffer);
+        }
+
+        if is_credits {
+            let framebuffer_size = framebuffer.size().map(|x| x as f32);
+            let center = framebuffer_size * vec2(0.5, 0.7);
+
+            // Coins
+            let texture = &self.assets.sprites.coin;
+            let pos = center + vec2(0.0, framebuffer_size.y * 0.03);
+            let size = framebuffer_size.y * 0.07;
+            let size = texture
+                .size()
+                .map(|x| x as f32 / texture.size().x as f32 * size);
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::TexturedQuad::new(
+                    AABB::point(pos).extend_left(size.x).extend_up(size.y),
+                    texture,
+                ),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("{}", self.world.coins_collected),
+                    Rgba::try_from("#e3a912").unwrap(),
+                )
+                .scale_uniform(size.y * 0.3)
+                .align_bounding_box(vec2(0.0, 0.5))
+                .translate(pos + vec2(size.x / 2.0, size.y / 2.0)),
+            );
+
+            // Time
+            let size = framebuffer_size.y * 0.02;
+            let (m, s, ms) = time_ms(self.accumulated_time);
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size)
+                .align_bounding_box(vec2(0.5, 1.0))
+                .translate(center),
+            );
+        }
 
         // Fade
         if self.fade > Time::ZERO {
@@ -191,16 +244,26 @@ impl geng::State for Game {
     }
 
     fn transition(&mut self) -> Option<geng::Transition> {
-        self.world.level_transition.take().map(|level| {
-            geng::Transition::Switch(Box::new(game::level_change(
+        if let Some(level) = self.world.level_transition.take() {
+            if level == self.level_name {
+                self.world = World::new(
+                    &self.assets,
+                    self.assets.rules.clone(),
+                    self.world.level.clone(),
+                );
+                return None;
+            }
+
+            return Some(geng::Transition::Switch(Box::new(game::level_change(
                 &self.geng,
                 Some(&self.assets),
                 level,
                 self.world.coins_collected,
                 self.accumulated_time + self.world.time,
                 self.show_time,
-            )))
-        })
+            ))));
+        }
+        None
     }
 }
 
@@ -231,11 +294,12 @@ fn level_change(
                     .await
                     .expect("Failed to load assets"),
             };
+            let level_name = level.to_string_lossy().to_string();
             let level: Level =
                 geng::LoadAsset::load(&geng, &run_dir().join("assets").join("levels").join(level))
                     .await
                     .expect("Failed to load level");
-            Game::new(&geng, &assets, level, coins, time, show_time)
+            Game::new(&geng, &assets, level_name, level, coins, time, show_time)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)

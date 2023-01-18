@@ -511,11 +511,11 @@ impl Render {
             &draw_2d::Text::unit(
                 &*self.assets.font,
                 format!("{}", world.coins_collected),
-                Rgba::YELLOW,
+                Rgba::try_from("#e3a912").unwrap(),
             )
             .scale_uniform(size.y * 0.3)
             .align_bounding_box(vec2(0.0, 0.5))
-            .translate(pos + vec2(size.x, -size.y / 2.0)),
+            .translate(pos + vec2(size.x * 1.5, -size.y / 2.0)),
         );
 
         if let Some(time) = show_time {
@@ -556,11 +556,4 @@ fn pixel_perfect_pos(pos: Vec2<Coord>) -> Vec2<f32> {
     let pos = pos.map(Coord::as_f32);
     let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
     pixel / PIXELS_PER_UNIT
-}
-
-fn time_ms(mut time: Time) -> (u32, u32, Time) {
-    let minutes = (time / Time::new(60.0)).floor();
-    time -= minutes * Time::new(60.0);
-    let seconds = time.floor();
-    (minutes.as_f32() as _, seconds.as_f32() as _, time - seconds)
 }

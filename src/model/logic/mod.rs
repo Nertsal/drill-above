@@ -44,7 +44,7 @@ impl Logic<'_> {
         if let Some(level) = self.world.level.next_level.clone() {
             self.world.level_transition = Some(level);
         } else {
-            // TODO: exit game or smth
+            self.world.level_transition = Some("credits.json".to_string());
         }
     }
 
