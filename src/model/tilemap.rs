@@ -81,8 +81,8 @@ impl TileMap {
         let neighbours = deltas.map(|(x, y)| pos + vec2(x, y));
         neighbours.map(|pos| {
             self.get_tile_isize(pos)
-                .filter(|tile| *tile == center)
-                .is_some()
+                .map(|tile| tile == center)
+                .unwrap_or(true)
         })
     }
 
