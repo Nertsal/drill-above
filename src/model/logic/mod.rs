@@ -88,6 +88,12 @@ impl Logic<'_> {
             }
         }
 
+        if !matches!(self.world.player.state, PlayerState::Drilling) {
+            if let Some(mut sound) = self.world.drill_sound.take() {
+                sound.stop();
+            }
+        }
+
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
                 *time -= self.delta_time;
@@ -203,6 +209,7 @@ impl Logic<'_> {
                         .drill_sound
                         .get_or_insert_with(|| self.world.assets.sounds.drill.play());
                     sound.set_volume(self.world.volume);
+                    break;
                 }
             }
         }
@@ -451,9 +458,6 @@ impl Logic<'_> {
                     Rgba::from_rgb(0.7, 0.7, 0.7),
                     Coord::new(0.2),
                 );
-                if let Some(mut sound) = self.world.drill_sound.take() {
-                    sound.stop();
-                }
             } else if thread_rng().gen_bool(0.2) {
                 self.spawn_particles(
                     Time::ONE,
