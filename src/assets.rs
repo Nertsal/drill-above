@@ -129,12 +129,12 @@ fn loop_sound(sound: &mut geng::Sound) {
     sound.looped = true;
 }
 
-impl Animation {
-    pub fn get_frame(&self, time: Time) -> Option<&ugli::Texture> {
-        let i = (time.as_f32() * self.frames.len() as f32).floor() as usize;
-        self.frames.get(i)
-    }
-}
+// impl Animation {
+//     pub fn get_frame(&self, time: Time) -> Option<&ugli::Texture> {
+//         let i = (time.as_f32() * self.frames.len() as f32).floor() as usize;
+//         self.frames.get(i)
+//     }
+// }
 
 impl geng::LoadAsset for Animation {
     fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
