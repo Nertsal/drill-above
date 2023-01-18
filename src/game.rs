@@ -75,6 +75,10 @@ impl Game {
             self.control.hold_jump = true;
         }
 
+        if pressed!(self.controls.drill) {
+            self.control.drill = true;
+        }
+
         let mut dir = Vec2::ZERO;
         if pressed!(self.controls.left) {
             dir.x -= Coord::ONE;
