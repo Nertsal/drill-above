@@ -7,6 +7,8 @@ pub struct Assets {
     pub shaders: Shaders,
     pub sprites: Sprites,
     pub sounds: Sounds,
+    #[asset(postprocess = "loop_sound")]
+    pub music: geng::Sound,
     pub rules: Rules,
 }
 

@@ -14,6 +14,7 @@ pub struct Game {
     fade: Time,
     accumulated_time: Time,
     show_time: bool,
+    music: Option<geng::SoundEffect>,
 }
 
 struct Controls {
@@ -26,6 +27,7 @@ struct Controls {
 }
 
 impl Game {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         geng: &Geng,
         assets: &Rc<Assets>,
@@ -34,9 +36,12 @@ impl Game {
         coins: usize,
         time: Time,
         show_time: bool,
+        music: Option<geng::SoundEffect>,
     ) -> Self {
         let mut world = World::new(assets, assets.rules.clone(), level);
         world.coins_collected = coins;
+        let mut music = music.unwrap_or_else(|| assets.music.play());
+        music.set_volume(world.volume);
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -60,6 +65,7 @@ impl Game {
                 drill: vec![geng::Key::C],
             },
             accumulated_time: time,
+            music: Some(music),
             level_name,
             show_time,
             world,
@@ -261,6 +267,7 @@ impl geng::State for Game {
                 self.world.coins_collected,
                 self.accumulated_time + self.world.time,
                 self.show_time,
+                self.music.take(),
             ))));
         }
         None
@@ -272,7 +279,7 @@ pub fn run(
     assets: Option<&Rc<Assets>>,
     level: impl AsRef<std::path::Path>,
 ) -> impl geng::State {
-    level_change(geng, assets, level, 0, Time::ZERO, false)
+    level_change(geng, assets, level, 0, Time::ZERO, false, None)
 }
 
 fn level_change(
@@ -282,6 +289,7 @@ fn level_change(
     coins: usize,
     time: Time,
     show_time: bool,
+    music: Option<geng::SoundEffect>,
 ) -> impl geng::State {
     let future = {
         let geng = geng.clone();
@@ -299,7 +307,9 @@ fn level_change(
                 geng::LoadAsset::load(&geng, &run_dir().join("assets").join("levels").join(level))
                     .await
                     .expect("Failed to load level");
-            Game::new(&geng, &assets, level_name, level, coins, time, show_time)
+            Game::new(
+                &geng, &assets, level_name, level, coins, time, show_time, music,
+            )
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
