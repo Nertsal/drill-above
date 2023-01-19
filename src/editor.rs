@@ -14,11 +14,15 @@ pub struct Editor {
     cursor_pos: Vec2<f64>,
     cursor_world_pos: Vec2<Coord>,
     dragging: Option<geng::MouseButton>,
-    block_options: Vec<Block>,
-    props: Vec<PropType>,
-    use_prop: bool,
-    selected_block: usize,
-    selected_prop: usize,
+    tabs: Vec<EditorTab>,
+    active_tab: usize,
+}
+
+#[derive(Debug, Clone)]
+struct EditorTab {
+    pub name: String,
+    pub blocks: Vec<Block>,
+    pub selected: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -49,58 +53,68 @@ impl Editor {
             cursor_pos: Vec2::ZERO,
             cursor_world_pos: Vec2::ZERO,
             dragging: None,
-            block_options: itertools::chain![
-                Tile::all().map(Block::Tile),
-                HazardType::all().map(Block::Hazard),
-                [Block::Coin],
-            ]
-            .collect(),
-            props: itertools::chain![PropType::all()].collect(),
-            use_prop: false,
-            selected_block: 0,
-            selected_prop: 0,
+            tabs: vec![
+                EditorTab::new(
+                    "Tiles",
+                    Tile::all()
+                        .into_iter()
+                        .filter(|tile| !matches!(tile, Tile::Air))
+                        .map(Block::Tile)
+                        .collect(),
+                ),
+                EditorTab::new("Collectables", vec![Block::Coin]),
+                EditorTab::new(
+                    "Hazards",
+                    HazardType::all().into_iter().map(Block::Hazard).collect(),
+                ),
+                EditorTab::new(
+                    "Props",
+                    PropType::all().into_iter().map(Block::Prop).collect(),
+                ),
+            ],
+            active_tab: 0,
         }
     }
 
-    fn scroll_selected_tile(&mut self, delta: isize) {
-        if self.use_prop {
-            let current = self.selected_block as isize;
+    fn scroll_selected(&mut self, delta: isize) {
+        if let Some(tab) = self.tabs.get_mut(self.active_tab) {
+            let current = tab.selected as isize;
             let target = current + delta;
-            self.selected_prop = target.rem_euclid(self.props.len() as isize) as usize;
-        } else {
-            let current = self.selected_block as isize;
-            let target = current + delta;
-            self.selected_block = target.rem_euclid(self.block_options.len() as isize) as usize;
+            tab.selected = target.rem_euclid(tab.blocks.len() as isize) as usize;
         }
+    }
+
+    fn selected_block(&self) -> Option<Block> {
+        self.tabs
+            .get(self.active_tab)
+            .and_then(|tab| tab.blocks.get(tab.selected))
+            .copied()
     }
 
     fn place_block(&mut self) {
         let pos = self.level.grid.world_to_grid(self.cursor_world_pos).0;
-        let block = if self.use_prop {
-            Block::Prop(self.props[self.selected_prop])
-        } else {
-            self.block_options[self.selected_block]
-        };
-        match block {
-            Block::Tile(tile) => {
-                self.level.tiles.set_tile_isize(pos, tile);
-            }
-            Block::Hazard(hazard) => {
-                self.level.place_hazard(pos, hazard);
-            }
-            Block::Coin => {
-                self.level.place_coin(pos);
-            }
-            Block::Prop(prop) => {
-                let size = self
-                    .assets
-                    .sprites
-                    .props
-                    .get_texture(&prop)
-                    .size()
-                    .map(|x| x as f32 / PIXELS_PER_UNIT)
-                    .map(Coord::new);
-                self.level.place_prop(pos, size, prop);
+        if let Some(block) = self.selected_block() {
+            match block {
+                Block::Tile(tile) => {
+                    self.level.tiles.set_tile_isize(pos, tile);
+                }
+                Block::Hazard(hazard) => {
+                    self.level.place_hazard(pos, hazard);
+                }
+                Block::Coin => {
+                    self.level.place_coin(pos);
+                }
+                Block::Prop(prop) => {
+                    let size = self
+                        .assets
+                        .sprites
+                        .props
+                        .get_texture(&prop)
+                        .size()
+                        .map(|x| x as f32 / PIXELS_PER_UNIT)
+                        .map(Coord::new);
+                    self.level.place_prop(pos, size, prop);
+                }
             }
         }
     }
@@ -203,7 +217,7 @@ impl geng::State for Editor {
                 self.release(button);
             }
             geng::Event::Wheel { delta } => {
-                self.scroll_selected_tile(delta.signum() as isize);
+                self.scroll_selected(delta.signum() as isize);
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::S if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
@@ -217,11 +231,11 @@ impl geng::State for Editor {
                 geng::Key::F => {
                     self.level.finish = self.cursor_world_pos;
                 }
-                geng::Key::Num1 => {
-                    self.use_prop = false;
+                geng::Key::Left => {
+                    self.scroll_selected(-1);
                 }
-                geng::Key::Num2 => {
-                    self.use_prop = true;
+                geng::Key::Right => {
+                    self.scroll_selected(1);
                 }
                 _ => {}
             },
@@ -229,7 +243,7 @@ impl geng::State for Editor {
         }
     }
 
-    fn ui<'a>(&'a mut self, _cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
+    fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         use geng::ui::*;
 
         let framebuffer_size = self.framebuffer_size.map(|x| x as f32);
@@ -245,9 +259,39 @@ impl geng::State for Editor {
             Rgba::WHITE,
         );
 
+        let tabs = self
+            .tabs
+            .iter()
+            .enumerate()
+            .map(|(i, tab)| {
+                let color = if i == self.active_tab {
+                    Rgba::from_rgb(0.1, 0.1, 0.3)
+                } else {
+                    Rgba::GRAY
+                };
+                let button = geng::ui::Button::new(cx, &tab.name);
+                if button.was_clicked() {
+                    self.active_tab = i;
+                }
+                Box::new(
+                    geng::ui::stack![
+                        geng::ui::ColorBox::new(color),
+                        // geng::ui::Text::new(
+                        //     &tab.name,
+                        //     self.assets.font.clone(),
+                        //     framebuffer_size.y * 0.05,
+                        //     Rgba::WHITE
+                        // ),
+                        button,
+                    ]
+                    .padding_right(framebuffer_size.x as f64 * 0.02),
+                ) as Box<dyn geng::ui::Widget>
+            })
+            .collect();
+
         let block_ui = |block: &Block| {
             let unit = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
-            let (texture, geometry) = match block {
+            let (texture, uv) = match block {
                 Block::Tile(tile) => {
                     let set = self.assets.sprites.tiles.get_tile_set(tile);
                     (set.texture(), set.get_tile_connected([false; 8]))
@@ -256,25 +300,45 @@ impl geng::State for Editor {
                 Block::Coin => (&self.assets.sprites.coin, unit),
                 Block::Prop(prop) => (self.assets.sprites.props.get_texture(prop), unit),
             };
-            ui::TextureBox::new(&self.geng, &self.assets, texture, geometry).fixed_size(
-                vec2(framebuffer_size.y * 0.05, framebuffer_size.y * 0.05).map(|x| x as f64),
-            )
+            let texture_size = (uv[2] - uv[0]) * texture.size().map(|x| x as f32);
+            let scale = framebuffer_size.y / 90.0;
+            let max_size = framebuffer_size * 0.15;
+            let mut size = texture_size * scale;
+            if size.x > max_size.x {
+                size *= max_size.x / size.x;
+            }
+            if size.y > max_size.y {
+                size *= max_size.y / size.y;
+            }
+            ui::TextureBox::new(&self.geng, &self.assets, texture, uv)
+                .fixed_size(size.map(|x| x as f64))
         };
 
-        let selected_tile = if self.use_prop {
-            block_ui(&Block::Prop(self.props[self.selected_prop]))
-        } else {
-            block_ui(&self.block_options[self.selected_block])
-        };
+        let selected_block: Box<dyn geng::ui::Widget> = self
+            .selected_block()
+            .map_or(Box::new(geng::ui::Void), |block| Box::new(block_ui(&block)));
 
         let ui = geng::ui::stack![
             cell_pos.align(vec2(1.0, 1.0)),
-            geng::ui::column![selected_tile]
+            geng::ui::row(tabs)
+                .align(vec2(0.0, 1.0))
+                .padding_left(framebuffer_size.x as f64 * 0.02),
+            selected_block
                 .align(vec2(1.0, 0.0))
                 .uniform_padding(framebuffer_size.y as f64 * 0.05),
         ];
 
         Box::new(ui)
+    }
+}
+
+impl EditorTab {
+    pub fn new(name: impl Into<String>, blocks: Vec<Block>) -> Self {
+        Self {
+            selected: 0,
+            name: name.into(),
+            blocks,
+        }
     }
 }
 
