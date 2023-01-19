@@ -16,6 +16,22 @@ pub struct Level {
     pub next_level: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum BlockType {
+    Tile(Tile),
+    Hazard(HazardType),
+    Prop(PropType),
+    Coin,
+}
+
+#[derive(Debug, Clone)]
+pub enum Block {
+    Tile((Tile, Vec2<isize>)),
+    Hazard(Hazard),
+    Prop(Prop),
+    Coin(Coin),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Coin {
     pub collider: Collider,
@@ -150,10 +166,13 @@ impl Level {
         });
     }
 
-    pub fn remove_all_at(&mut self, pos: Vec2<Coord>) {
+    pub fn remove_all_at(&mut self, pos: Vec2<Coord>) -> Vec<Block> {
+        let mut removed = Vec::new();
+
         // Try hazards first
         if let Some(i) = self.props.iter().position(|prop| prop.sprite.contains(pos)) {
-            self.props.swap_remove(i);
+            let prop = self.props.swap_remove(i);
+            removed.push(Block::Prop(prop));
         }
         // Try hazards first
         while let Some(i) = self
@@ -161,7 +180,8 @@ impl Level {
             .iter()
             .position(|hazard| hazard.collider.contains(pos))
         {
-            self.hazards.swap_remove(i);
+            let hazard = self.hazards.swap_remove(i);
+            removed.push(Block::Hazard(hazard));
         }
         // Try coins
         while let Some(i) = self
@@ -169,12 +189,18 @@ impl Level {
             .iter()
             .position(|hazard| hazard.collider.contains(pos))
         {
-            self.coins.swap_remove(i);
+            let coin = self.coins.swap_remove(i);
+            removed.push(Block::Coin(coin));
         }
 
         // Try tiles
         let pos = self.grid.world_to_grid(pos).0;
-        self.tiles.set_tile_isize(pos, Tile::Air);
+        if let Some(tile) = self.tiles.get_tile_isize(pos) {
+            removed.push(Block::Tile((tile, pos)));
+            self.tiles.set_tile_isize(pos, Tile::Air);
+        }
+
+        removed
     }
 
     pub fn change_size(&mut self, size: Vec2<usize>) {
