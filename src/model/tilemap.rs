@@ -69,6 +69,7 @@ impl TileMap {
             return [false; 8];
         };
         let deltas = [
+            (-1, -1),
             (0, -1),
             (1, -1),
             (1, 0),
@@ -76,7 +77,6 @@ impl TileMap {
             (0, 1),
             (-1, 1),
             (-1, 0),
-            (-1, -1),
         ];
         let neighbours = deltas.map(|(x, y)| pos + vec2(x, y));
         neighbours.map(|pos| {

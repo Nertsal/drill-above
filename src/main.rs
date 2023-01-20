@@ -19,14 +19,7 @@ const FPS: f64 = 60.0;
 const PIXELS_PER_UNIT: f32 = 8.0;
 
 #[derive(clap::Parser)]
-enum Command {
-    Run(RunOpt),
-    #[cfg(not(target_arch = "wasm32"))]
-    TileSet(TileSetOpt),
-}
-
-#[derive(clap::Args)]
-struct RunOpt {
+struct Opt {
     #[clap(long)]
     editor: bool,
     #[clap(long)]
@@ -34,20 +27,26 @@ struct RunOpt {
     #[clap(long)]
     #[cfg(not(target_arch = "wasm32"))]
     change_size: Option<String>,
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(clap::Subcommand)]
+enum Command {
+    #[cfg(not(target_arch = "wasm32"))]
+    TileSet(TileSetOpt),
 }
 
 #[derive(clap::Args)]
 struct TileSetOpt {
-    #[clap(long)]
     tileset: String,
-    #[clap(long)]
     size: String,
 }
 
 fn main() {
     logger::init().unwrap();
     geng::setup_panic_handler();
-    let command: Command = program_args::parse();
+    let opt: Opt = program_args::parse();
 
     let geng = Geng::new_with(geng::ContextOptions {
         title: "Drill above".to_string(),
@@ -55,63 +54,65 @@ fn main() {
         ..Default::default()
     });
 
-    match command {
-        Command::Run(opt) => {
+    if let Some(command) = opt.command {
+        match command {
             #[cfg(not(target_arch = "wasm32"))]
-            if let Some(size) = &opt.change_size {
-                let level_path = opt
-                    .level
-                    .as_ref()
-                    .expect("expand requires a --level argument");
-                let size = parse_size(size).expect("Failed to parse size");
-                let mut level = Level::load(level_path).expect("Failed to load the level");
-                level.change_size(size);
-
-                let level_path = "new_level.json";
-                level.save(level_path).expect("Failed to save the level");
-                info!("Saved the changed level at {}", level_path);
-                return;
-            }
-
-            if opt.editor {
-                geng::run(&geng, editor::run(&geng, opt.level))
-            } else if let Some(level) = &opt.level {
-                geng::run(&geng, game::run(&geng, None, level))
-            } else {
-                geng::run(&geng, intro::run(&geng))
-            }
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        Command::TileSet(opt) => {
-            let size = parse_size(&opt.size).expect("Failed to parse size");
-            let state = {
-                let future = {
-                    async move {
-                        // let texture: ugli::Texture =
-                        //     geng::LoadAsset::load(&geng, &run_dir().join(opt.tileset))
-                        //         .await
-                        //         .expect("Failed to load texture");
-                        let path = run_dir().join(opt.tileset);
-                        let image = image::open(&path)
-                            .unwrap_or_else(|_| panic!("Failed to load {:?}", path));
-                        let texture = match image {
-                            image::DynamicImage::ImageRgba8(image) => image,
-                            _ => image.to_rgba8(),
-                        };
-                        let config = TileSetConfig::generate_from(&texture, size);
-                        let file =
-                            std::fs::File::create(run_dir().join("tileset_config.json")).unwrap();
-                        let writer = std::io::BufWriter::new(file);
-                        serde_json::to_writer_pretty(writer, &config).unwrap();
-                        std::process::exit(0);
-                        #[allow(unreachable_code)]
-                        geng::EmptyLoadingScreen
-                    }
+            Command::TileSet(opt) => {
+                let size = parse_size(&opt.size).expect("Failed to parse size");
+                let state = {
+                    let future = {
+                        async move {
+                            // let texture: ugli::Texture =
+                            //     geng::LoadAsset::load(&geng, &run_dir().join(opt.tileset))
+                            //         .await
+                            //         .expect("Failed to load texture");
+                            let path = run_dir().join(opt.tileset);
+                            let image = image::open(&path)
+                                .unwrap_or_else(|_| panic!("Failed to load {:?}", path));
+                            let texture = match image {
+                                image::DynamicImage::ImageRgba8(image) => image,
+                                _ => image.to_rgba8(),
+                            };
+                            let config = TileSetConfig::generate_from(&texture, size);
+                            let file = std::fs::File::create(run_dir().join("tileset_config.json"))
+                                .unwrap();
+                            let writer = std::io::BufWriter::new(file);
+                            serde_json::to_writer_pretty(writer, &config).unwrap();
+                            std::process::exit(0);
+                            #[allow(unreachable_code)]
+                            geng::EmptyLoadingScreen
+                        }
+                    };
+                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future, |state| state)
                 };
-                geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future, |state| state)
-            };
-            geng::run(&geng, state)
+                geng::run(&geng, state)
+            }
         }
+        return;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    if let Some(size) = &opt.change_size {
+        let level_path = opt
+            .level
+            .as_ref()
+            .expect("expand requires a --level argument");
+        let size = parse_size(size).expect("Failed to parse size");
+        let mut level = Level::load(level_path).expect("Failed to load the level");
+        level.change_size(size);
+
+        let level_path = "new_level.json";
+        level.save(level_path).expect("Failed to save the level");
+        info!("Saved the changed level at {}", level_path);
+        return;
+    }
+
+    if opt.editor {
+        geng::run(&geng, editor::run(&geng, opt.level))
+    } else if let Some(level) = &opt.level {
+        geng::run(&geng, game::run(&geng, None, level))
+    } else {
+        geng::run(&geng, intro::run(&geng))
     }
 }
 

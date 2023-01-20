@@ -39,12 +39,15 @@ impl TileSet {
                 .all(|(&con, pat)| pat.matches(con))
         };
 
-        *self
-            .config
+        self.config
             .tiles
             .iter()
-            .find_map(|(pattern, uv)| con_match(pattern).then_some(uv))
-            .expect("Failed to find a suitable tile")
+            .find_map(|(pattern, uv)| con_match(pattern).then_some(uv).copied())
+            .unwrap_or_else(|| {
+                error!("Failed to find the uv for {:?}", connections);
+                self.config.tiles.first().unwrap().1
+            })
+        // .expect("Failed to find a suitable tile")
     }
 }
 
@@ -88,7 +91,7 @@ impl TileSetConfig {
                         let pos = vec2(x, y) * tile_size;
                         let cons = positions.map(|d| {
                             let pos = pos + d;
-                            let pixel = texture.get_pixel(pos.x, pos.y);
+                            let pixel = texture.get_pixel(pos.x, texture_size.y - pos.y - 1);
                             match pixel.0 {
                                 [_, _, _, 0] => None,
                                 [0, 0, 0, 255] => Some(Connection::Some),
