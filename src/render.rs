@@ -84,7 +84,7 @@ impl Render {
 
         // Parallax background
         for i in (0..4).rev() {
-            let geometry = texture.get_tile_uv(i);
+            let geometry = get_tile_uv(i, texture.config.size);
             let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
             let vertices = [0, 1, 2, 3].map(|i| Vertex {
                 a_pos: vec2(vertices[i].0, vertices[i].1),
