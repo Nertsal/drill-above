@@ -47,7 +47,8 @@ pub struct Sprites {
     pub heart4: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub heart8: ugli::Texture,
-    pub background: TileSet,
+    #[asset(postprocess = "pixel")]
+    pub background: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub sun: ugli::Texture,
     #[asset(postprocess = "pixel")]

@@ -77,14 +77,14 @@ impl Render {
 
     pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
         let texture = &self.assets.sprites.background;
-        let size = texture.texture().size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
+        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
         let bounds = world.level.bounds().map(Coord::as_f32);
         let texture_bounds = bounds.extend_positive(vec2(0.5, 0.0) - size);
         let camera_bounds = world.camera_bounds().map(Coord::as_f32);
 
         // Parallax background
         for i in (0..4).rev() {
-            let geometry = get_tile_uv(i, texture.config.size);
+            let geometry = get_tile_uv(i, vec2(1, 4));
             let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
             let vertices = [0, 1, 2, 3].map(|i| Vertex {
                 a_pos: vec2(vertices[i].0, vertices[i].1),
@@ -138,7 +138,7 @@ impl Render {
                 (
                     ugli::uniforms! {
                         u_model_matrix: matrix,
-                        u_texture: texture.texture(),
+                        u_texture: texture,
                     },
                     geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
                 ),
