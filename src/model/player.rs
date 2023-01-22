@@ -16,6 +16,7 @@ pub struct Player {
     pub touching_wall: Option<(Tile, Vec2<Coord>)>,
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
+    pub can_hold_jump: bool,
     pub coyote_time: Option<(Coyote, Time)>,
     pub jump_buffer: Option<Time>,
 }
@@ -59,6 +60,7 @@ impl Player {
             touching_wall: None,
             control_timeout: None,
             facing_left: false,
+            can_hold_jump: false,
             coyote_time: None,
             jump_buffer: None,
         }

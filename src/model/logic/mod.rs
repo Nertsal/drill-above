@@ -95,6 +95,10 @@ impl Logic<'_> {
             }
         }
 
+        if self.world.player.can_hold_jump && !self.player_control.hold_jump {
+            self.world.player.can_hold_jump = false;
+        }
+
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
                 *time -= self.delta_time;
@@ -240,7 +244,9 @@ impl Logic<'_> {
                 _ => self.world.rules.free_fall_speed,
             };
             self.world.player.velocity.y = self.world.player.velocity.y.clamp_abs(cap);
-        } else if self.world.player.velocity.y > Coord::ZERO && !self.player_control.hold_jump {
+        } else if self.world.player.velocity.y > Coord::ZERO
+            && !(self.player_control.hold_jump && self.world.player.can_hold_jump)
+        {
             self.world.player.velocity.y += self.world.rules.gravity.y
                 * (self.world.rules.low_jump_multiplier - Coord::ONE)
                 * self.delta_time;
@@ -279,6 +285,7 @@ impl Logic<'_> {
             if let Some(jump) = jump {
                 self.world.player.coyote_time = None;
                 self.world.player.jump_buffer = None;
+                self.world.player.can_hold_jump = true;
                 match jump {
                     Coyote::Ground => {
                         let jump_vel = rules.normal_jump_strength;
