@@ -99,6 +99,16 @@ impl Logic<'_> {
             self.world.player.can_hold_jump = false;
         }
 
+        if let Some(time) = &mut self.world.player.jump_buffer {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.jump_buffer = None;
+            }
+        }
+        if self.player_control.jump {
+            self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
+        }
+
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
                 *time -= self.delta_time;
@@ -174,16 +184,6 @@ impl Logic<'_> {
                 }
             }
             _ => (),
-        }
-
-        if let Some(time) = &mut self.world.player.jump_buffer {
-            *time -= self.delta_time;
-            if *time <= Time::ZERO {
-                self.world.player.jump_buffer = None;
-            }
-        }
-        if self.player_control.jump {
-            self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
         }
 
         let player = &mut self.world.player;
