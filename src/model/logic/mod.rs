@@ -212,8 +212,12 @@ impl Logic<'_> {
             ];
             for drill_dir in dirs {
                 if Vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
-                    self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
-                        * self.world.rules.drill_speed;
+                    let dir = self.player_control.move_dir.normalize_or_zero();
+                    let rules = &self.world.rules;
+                    let acceleration = rules.drill_speed_inc;
+                    let current = Vec2::dot(self.world.player.velocity, dir);
+                    self.world.player.velocity =
+                        dir * (current + acceleration).max(rules.drill_speed_min);
                     self.world.player.state = PlayerState::Drilling;
                     let sound = self
                         .world
@@ -324,7 +328,11 @@ impl Logic<'_> {
                         );
                     }
                     Coyote::Drill { direction } => {
-                        self.world.player.velocity = direction * self.world.rules.drill_jump_speed;
+                        let rules = &self.world.rules;
+                        let acceleration = rules.drill_jump_speed_inc;
+                        let current = Vec2::dot(self.world.player.velocity, direction);
+                        self.world.player.velocity =
+                            direction * (current + acceleration).max(rules.drill_jump_speed_min);
                         self.play_sound(&self.world.assets.sounds.drill_jump);
                         self.spawn_particles(
                             Time::ONE,

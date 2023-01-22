@@ -16,6 +16,7 @@ pub struct Game {
     deaths: usize,
     show_time: bool,
     music: Option<geng::SoundEffect>,
+    show_debug: bool,
 }
 
 struct Controls {
@@ -58,6 +59,7 @@ impl Game {
                 texture
             },
             draw_hitboxes: false,
+            show_debug: false,
             fade: Time::ONE,
             control: PlayerControl::default(),
             controls: Controls {
@@ -113,6 +115,7 @@ impl Game {
 impl geng::State for Game {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.framebuffer_size = framebuffer.size();
+        let framebuffer_size = framebuffer.size().map(|x| x as f32);
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
         // Render the game onto the texture
@@ -159,7 +162,6 @@ impl geng::State for Game {
         }
 
         if is_credits {
-            let framebuffer_size = framebuffer.size().map(|x| x as f32);
             let center = framebuffer_size * vec2(0.5, 0.7);
 
             // Coins
@@ -231,6 +233,22 @@ impl geng::State for Game {
             );
         }
 
+        if self.show_debug {
+            let size = framebuffer_size.y * 0.02;
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("Speed: {:.2}", self.world.player.velocity.len()),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size)
+                .align_bounding_box(vec2(0.0, 0.0))
+                .translate(vec2(framebuffer_size.x - size * 20.0, size)),
+            );
+        }
+
         // Fade
         if self.fade > Time::ZERO {
             self.geng.draw_2d(
@@ -272,6 +290,9 @@ impl geng::State for Game {
                 }
                 geng::Key::F2 => {
                     self.show_time = !self.show_time;
+                }
+                geng::Key::F4 => {
+                    self.show_debug = !self.show_debug;
                 }
                 _ => (),
             }
