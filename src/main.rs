@@ -132,6 +132,6 @@ fn time_ms(mut time: Time) -> (u32, u32, Time) {
     (
         minutes.as_f32() as _,
         seconds.as_f32() as _,
-        time - seconds * Time::new(1e3),
+        (time - seconds) * Time::new(1e3),
     )
 }
