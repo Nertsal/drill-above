@@ -244,12 +244,7 @@ impl Render {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
-        for (i, tile) in tiles.tiles().iter().enumerate() {
-            if let Tile::Air = tile {
-                continue;
-            }
-
-            let connections = tiles.get_tile_connections(i);
+        let mut add_tile = |i: usize, tile: &Tile, connections: [Connection; 8]| {
             let pos = index_to_pos(i, level.size.x);
             let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
             let pos = AABB::point(pos)
@@ -281,8 +276,22 @@ impl Render {
                         ..vertex
                     }
                 }));
+        };
+        for (i, tile) in tiles.tiles().iter().enumerate() {
+            if let Tile::Air = tile {
+                continue;
+            }
+
+            let connections = tiles.get_tile_connections(i);
+            let neighbours = tiles.get_tile_neighbours(i);
+            if neighbours.contains(&Some(Tile::Grass)) {
+                add_tile(i, &Tile::Grass, connections);
+            }
+
+            add_tile(i, tile, connections);
         }
-        for (tile, geometry) in tiles_geometry {
+
+        let mut render_tiles = |tile: Tile, geometry: Vec<Vertex>| {
             let set = self.assets.sprites.tiles.get_tile_set(&tile);
             let texture = set.texture();
             let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
@@ -303,6 +312,12 @@ impl Render {
                     ..Default::default()
                 },
             );
+        };
+        if let Some((tile, geometry)) = tiles_geometry.remove_entry(&Tile::Grass) {
+            render_tiles(tile, geometry)
+        }
+        for (tile, geometry) in tiles_geometry {
+            render_tiles(tile, geometry)
         }
     }
 

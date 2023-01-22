@@ -151,7 +151,8 @@ impl geng::LoadAsset for TileSet {
         let path = path.to_owned();
         async move {
             let texture = ugli::Texture::load(&geng, &path).await?;
-            let path = path.parent().unwrap().join("config.json");
+            let name = path.file_stem().unwrap().to_str().unwrap();
+            let path = path.parent().unwrap().join(format!("{}_config.json", name));
             let config = TileSetConfig::load(&geng, &path).await?;
             Ok(Self::new(texture, config))
         }

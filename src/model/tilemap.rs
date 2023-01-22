@@ -63,11 +63,8 @@ impl TileMap {
         }
     }
 
-    pub fn get_tile_connections(&self, tile: usize) -> [Connection; 8] {
+    pub fn get_tile_neighbours(&self, tile: usize) -> [Option<Tile>; 8] {
         let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
-        let Some(center) = self.get_tile_isize(pos) else {
-            return [Connection::None; 8];
-        };
         let deltas = [
             (-1, -1),
             (0, -1),
@@ -78,19 +75,28 @@ impl TileMap {
             (-1, 1),
             (-1, 0),
         ];
-        let neighbours = deltas.map(|(x, y)| pos + vec2(x, y));
-        neighbours.map(|pos| {
+        deltas.map(|(x, y)| {
+            let pos = pos + vec2(x, y);
             self.get_tile_isize(pos)
-                .map(|tile| {
-                    if matches!(tile, Tile::Air) {
-                        Connection::None
-                    } else if tile == center {
-                        Connection::Same
-                    } else {
-                        Connection::Other
-                    }
-                })
-                .unwrap_or(Connection::Same)
+        })
+    }
+
+    pub fn get_tile_connections(&self, tile: usize) -> [Connection; 8] {
+        let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
+        let Some(center) = self.get_tile_isize(pos) else {
+            return [Connection::None; 8];
+        };
+        self.get_tile_neighbours(tile).map(|tile| {
+            tile.map(|tile| {
+                if matches!(tile, Tile::Air) {
+                    Connection::None
+                } else if tile == center {
+                    Connection::Same
+                } else {
+                    Connection::Other
+                }
+            })
+            .unwrap_or(Connection::Same)
         })
     }
 
