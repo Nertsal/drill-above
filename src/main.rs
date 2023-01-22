@@ -129,5 +129,9 @@ fn time_ms(mut time: Time) -> (u32, u32, Time) {
     let minutes = (time / Time::new(60.0)).floor();
     time -= minutes * Time::new(60.0);
     let seconds = time.floor();
-    (minutes.as_f32() as _, seconds.as_f32() as _, time - seconds)
+    (
+        minutes.as_f32() as _,
+        seconds.as_f32() as _,
+        time - seconds * Time::new(1e3),
+    )
 }

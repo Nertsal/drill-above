@@ -224,7 +224,7 @@ impl geng::State for Game {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::BLACK,
                 )
                 .scale_uniform(size)

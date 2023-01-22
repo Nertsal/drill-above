@@ -591,7 +591,7 @@ impl Render {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
                 )
                 .scale_uniform(size)
@@ -604,7 +604,7 @@ impl Render {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
                 )
                 .scale_uniform(size * 0.7)
