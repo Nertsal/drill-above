@@ -52,7 +52,7 @@ impl Editor {
             let (texture, uv) = match block {
                 BlockType::Tile(tile) => {
                     let set = self.assets.sprites.tiles.get_tile_set(tile);
-                    (set.texture(), set.get_tile_connected([false; 8]))
+                    (set.texture(), set.get_tile_connected([Connection::None; 8]))
                 }
                 BlockType::Hazard(hazard) => {
                     (self.assets.sprites.hazards.get_texture(hazard), unit)

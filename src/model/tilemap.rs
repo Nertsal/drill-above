@@ -63,10 +63,10 @@ impl TileMap {
         }
     }
 
-    pub fn get_tile_connections(&self, tile: usize) -> [bool; 8] {
+    pub fn get_tile_connections(&self, tile: usize) -> [Connection; 8] {
         let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
         let Some(center) = self.get_tile_isize(pos) else {
-            return [false; 8];
+            return [Connection::None; 8];
         };
         let deltas = [
             (-1, -1),
@@ -81,8 +81,16 @@ impl TileMap {
         let neighbours = deltas.map(|(x, y)| pos + vec2(x, y));
         neighbours.map(|pos| {
             self.get_tile_isize(pos)
-                .map(|tile| tile == center)
-                .unwrap_or(true)
+                .map(|tile| {
+                    if matches!(tile, Tile::Air) {
+                        Connection::None
+                    } else if tile == center {
+                        Connection::Same
+                    } else {
+                        Connection::Other
+                    }
+                })
+                .unwrap_or(Connection::Same)
         })
     }
 

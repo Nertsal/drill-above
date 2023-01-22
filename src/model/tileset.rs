@@ -9,16 +9,25 @@ pub struct TileSet {
 #[asset(json)]
 pub struct TileSetConfig {
     pub size: Vec2<usize>,
-    pub tiles: Vec<([Connection; 8], UvRect)>,
+    pub tiles: Vec<([ConnectionFilter; 8], UvRect)>,
 }
 
 type UvRect = [Vec2<f32>; 4];
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Connection {
+    None,
+    Same,
+    Other,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum ConnectionFilter {
     Some,
     None,
     Any,
+    Same,
+    Other,
 }
 
 impl TileSet {
@@ -31,8 +40,8 @@ impl TileSet {
         &self.texture
     }
 
-    pub fn get_tile_connected(&self, connections: [bool; 8]) -> UvRect {
-        let con_match = |pattern: &[Connection; 8]| {
+    pub fn get_tile_connected(&self, connections: [Connection; 8]) -> UvRect {
+        let con_match = |pattern: &[ConnectionFilter; 8]| {
             connections
                 .iter()
                 .zip(pattern)
@@ -92,15 +101,9 @@ impl TileSetConfig {
                         let cons = positions.map(|d| {
                             let pos = pos + d;
                             let pixel = texture.get_pixel(pos.x, texture_size.y - pos.y - 1);
-                            match pixel.0 {
-                                [_, _, _, 0] => None,
-                                [0, 0, 0, 255] => Some(Connection::Some),
-                                [255, 255, 255, 255] => Some(Connection::None),
-                                [0, 255, 0, 255] => Some(Connection::Any),
-                                _ => None,
-                            }
+                            ConnectionFilter::from_color(pixel.0)
                         });
-                        let mut connections = [Connection::None; 8];
+                        let mut connections = [ConnectionFilter::None; 8];
                         for i in 0..8 {
                             let Some(con) = cons[i] else {
                                 return None;
@@ -118,12 +121,26 @@ impl TileSetConfig {
     }
 }
 
-impl Connection {
-    fn matches(&self, connection: bool) -> bool {
+impl ConnectionFilter {
+    fn from_color(color: [u8; 4]) -> Option<Self> {
+        match color {
+            [_, _, _, 0] => None,
+            [255, 0, 255, _] => Some(Self::Some),
+            [255, 255, 255, _] => Some(Self::None),
+            [0, 255, 0, _] => Some(Self::Any),
+            [0, 0, 255, _] => Some(Self::Same),
+            [255, 0, 0, _] => Some(Self::Other),
+            _ => panic!("unknown color: {color:?}"),
+        }
+    }
+
+    fn matches(&self, connection: Connection) -> bool {
         match self {
-            Self::Some => connection,
-            Self::None => !connection,
+            Self::Some => !matches!(connection, Connection::None),
+            Self::None => matches!(connection, Connection::None),
             Self::Any => true,
+            Self::Same => matches!(connection, Connection::Same),
+            Self::Other => !matches!(connection, Connection::Same),
         }
     }
 }
