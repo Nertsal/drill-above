@@ -6,6 +6,23 @@ struct Vertex {
     a_uv: Vec2<f32>,
 }
 
+#[derive(ugli::Vertex, Debug, Clone, Copy)]
+struct MaskedVertex {
+    a_pos: Vec2<f32>,
+    a_uv: Vec2<f32>,
+    a_mask_uv: Vec2<f32>,
+}
+
+impl Vertex {
+    fn mask(self, a_mask_uv: Vec2<f32>) -> MaskedVertex {
+        MaskedVertex {
+            a_pos: self.a_pos,
+            a_uv: self.a_uv,
+            a_mask_uv,
+        }
+    }
+}
+
 pub struct Render {
     geng: Geng,
     assets: Rc<Assets>,
@@ -244,7 +261,8 @@ impl Render {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
-        let mut add_tile = |i: usize, tile: &Tile, connections: [Connection; 8]| {
+        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
+        let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
             let pos = index_to_pos(i, level.size.x);
             let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
             let pos = AABB::point(pos)
@@ -266,16 +284,13 @@ impl Render {
                 vertices[3],
             ];
             let matrix = Mat3::translate(pos.bottom_left()) * Mat3::scale(pos.size());
-            tiles_geometry
-                .entry(*tile)
-                .or_default()
-                .extend(geometry.into_iter().map(|vertex| {
-                    let pos = matrix * vertex.a_pos.extend(1.0);
-                    Vertex {
-                        a_pos: pos.xy() / pos.z,
-                        ..vertex
-                    }
-                }));
+            geometry.map(|vertex| {
+                let pos = matrix * vertex.a_pos.extend(1.0);
+                Vertex {
+                    a_pos: pos.xy() / pos.z,
+                    ..vertex
+                }
+            })
         };
         for (i, tile) in tiles.tiles().iter().enumerate() {
             if let Tile::Air = tile {
@@ -285,13 +300,52 @@ impl Render {
             let connections = tiles.get_tile_connections(i);
             let neighbours = tiles.get_tile_neighbours(i);
             if neighbours.contains(&Some(Tile::Grass)) {
-                add_tile(i, &Tile::Grass, connections);
+                let geometry = calc_geometry(i, &Tile::Grass, connections);
+                let mask = self
+                    .assets
+                    .sprites
+                    .tiles
+                    .mask
+                    .get_tile_connected(connections);
+                let idx = [0, 1, 2, 0, 2, 3];
+                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
+                masked_geometry
+                    .entry(Tile::Grass)
+                    .or_default()
+                    .extend(geometry);
             }
 
-            add_tile(i, tile, connections);
+            tiles_geometry
+                .entry(*tile)
+                .or_default()
+                .extend(calc_geometry(i, tile, connections));
         }
 
-        let mut render_tiles = |tile: Tile, geometry: Vec<Vertex>| {
+        let mask = self.assets.sprites.tiles.mask.texture();
+        for (tile, geometry) in masked_geometry {
+            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let texture = set.texture();
+            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
+            ugli::draw(
+                framebuffer,
+                &self.assets.shaders.texture_mask,
+                ugli::DrawMode::Triangles,
+                &geometry,
+                (
+                    ugli::uniforms! {
+                        u_model_matrix: Mat3::identity(),
+                        u_texture: texture,
+                        u_mask: mask,
+                    },
+                    geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
+                ),
+                ugli::DrawParameters {
+                    blend_mode: Some(ugli::BlendMode::default()),
+                    ..Default::default()
+                },
+            );
+        }
+        for (tile, geometry) in tiles_geometry {
             let set = self.assets.sprites.tiles.get_tile_set(&tile);
             let texture = set.texture();
             let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
@@ -312,12 +366,6 @@ impl Render {
                     ..Default::default()
                 },
             );
-        };
-        if let Some((tile, geometry)) = tiles_geometry.remove_entry(&Tile::Grass) {
-            render_tiles(tile, geometry)
-        }
-        for (tile, geometry) in tiles_geometry {
-            render_tiles(tile, geometry)
         }
     }
 

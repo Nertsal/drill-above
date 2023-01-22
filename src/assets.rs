@@ -15,6 +15,7 @@ pub struct Assets {
 #[derive(geng::Assets)]
 pub struct Shaders {
     pub texture: ugli::Program,
+    pub texture_mask: ugli::Program,
     pub grid: ugli::Program,
 }
 
@@ -61,6 +62,7 @@ pub struct Sprites {
 
 #[derive(geng::Assets)]
 pub struct TileSprites {
+    pub mask: TileSet,
     pub air: TileSet,
     pub grass: TileSet,
     pub stone: TileSet,
