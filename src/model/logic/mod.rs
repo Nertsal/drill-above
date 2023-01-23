@@ -216,7 +216,10 @@ impl Logic<'_> {
                     let dir = self.player_control.move_dir.normalize_or_zero();
                     let rules = &self.world.rules;
                     let acceleration = rules.drill_speed_inc;
-                    let current = Vec2::dot(self.world.player.last_velocity, dir);
+                    let last_len = self.world.player.last_velocity.len();
+                    let last_dir = self.world.player.last_velocity.normalize_or_zero();
+                    let angle = Coord::new(Vec2::dot(last_dir, dir).as_f32().acos() / 2.0);
+                    let current = last_len * angle.cos();
                     self.world.player.velocity =
                         dir * (current + acceleration).max(rules.drill_speed_min);
                     self.world.player.state = PlayerState::Drilling;
