@@ -11,6 +11,7 @@ pub struct PlayerControl {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     pub collider: Collider,
+    pub last_velocity: Vec2<Coord>,
     pub velocity: Vec2<Coord>,
     pub state: PlayerState,
     pub touching_wall: Option<(Tile, Vec2<Coord>)>,
@@ -55,6 +56,7 @@ impl Player {
                 feet_pos - vec2(half_width, Coord::ZERO),
                 feet_pos + vec2(half_width, height),
             )),
+            last_velocity: Vec2::ZERO,
             velocity: Vec2::ZERO,
             state: PlayerState::Airborn,
             touching_wall: None,

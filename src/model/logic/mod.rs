@@ -35,6 +35,7 @@ impl Logic<'_> {
     }
 
     fn kill_player(&mut self) {
+        self.world.player.last_velocity = Vec2::ZERO;
         self.world.player.velocity = Vec2::ZERO;
         self.world.player.state = PlayerState::Respawning { time: Time::ONE };
         self.world.deaths += 1;
@@ -215,7 +216,7 @@ impl Logic<'_> {
                     let dir = self.player_control.move_dir.normalize_or_zero();
                     let rules = &self.world.rules;
                     let acceleration = rules.drill_speed_inc;
-                    let current = Vec2::dot(self.world.player.velocity, dir);
+                    let current = Vec2::dot(self.world.player.last_velocity, dir);
                     self.world.player.velocity =
                         dir * (current + acceleration).max(rules.drill_speed_min);
                     self.world.player.state = PlayerState::Drilling;
@@ -352,6 +353,7 @@ impl Logic<'_> {
             .player
             .collider
             .translate(self.world.player.velocity * self.delta_time);
+        self.world.player.last_velocity = self.world.player.velocity;
     }
 
     fn process_collisions(&mut self) {

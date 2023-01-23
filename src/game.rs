@@ -245,6 +245,30 @@ impl geng::State for Game {
                 )
                 .scale_uniform(size)
                 .align_bounding_box(vec2(0.0, 0.0))
+                .translate(vec2(framebuffer_size.x - size * 20.0, size * 5.0)),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("x: {:6.2}", self.world.player.velocity.x),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size * 0.8)
+                .align_bounding_box(vec2(0.0, 0.0))
+                .translate(vec2(framebuffer_size.x - size * 20.0, size * 3.0)),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("y: {:6.2}", self.world.player.velocity.y),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size)
+                .align_bounding_box(vec2(0.0, 0.0))
                 .translate(vec2(framebuffer_size.x - size * 20.0, size)),
             );
         }
