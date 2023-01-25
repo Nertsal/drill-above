@@ -174,11 +174,11 @@ impl Logic<'_> {
             let vel_dir = self.world.player.velocity.normalize_or_zero();
             if dir != Vec2::ZERO {
                 let rules = &self.world.rules;
-                let acceleration = rules.drill_speed_inc;
+                let acceleration = rules.drill_dash_speed_inc;
                 let speed = self.world.player.velocity.len();
                 let angle = Coord::new(Vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
                 let current = speed * angle.cos();
-                let speed = (current + acceleration).max(rules.drill_speed_min);
+                let speed = (current + acceleration).max(rules.drill_dash_speed_min);
                 self.world.player.velocity = dir * speed;
             }
             self.world.player.can_drill = false;
@@ -250,24 +250,26 @@ impl Logic<'_> {
         // Apply gravity
         self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
-        // Variable jump height
-        if self.world.player.velocity.y < Coord::ZERO {
-            // Faster drop
-            self.world.player.velocity.y += self.world.rules.gravity.y
-                * (self.world.rules.fall_multiplier - Coord::ONE)
-                * self.delta_time;
-            let cap = match self.world.player.state {
-                PlayerState::WallSliding { .. } => self.world.rules.wall_slide_speed,
-                _ => self.world.rules.free_fall_speed,
-            };
-            self.world.player.velocity.y = self.world.player.velocity.y.clamp_abs(cap);
-        } else if self.world.player.velocity.y > Coord::ZERO
-            && !(self.player_control.hold_jump && self.world.player.can_hold_jump)
-        {
-            // Higher jump
-            self.world.player.velocity.y += self.world.rules.gravity.y
-                * (self.world.rules.low_jump_multiplier - Coord::ONE)
-                * self.delta_time;
+        if matches!(self.world.player.state, PlayerState::Airborn) {
+            // Variable jump height
+            if self.world.player.velocity.y < Coord::ZERO {
+                // Faster drop
+                self.world.player.velocity.y += self.world.rules.gravity.y
+                    * (self.world.rules.fall_multiplier - Coord::ONE)
+                    * self.delta_time;
+                let cap = match self.world.player.state {
+                    PlayerState::WallSliding { .. } => self.world.rules.wall_slide_speed,
+                    _ => self.world.rules.free_fall_speed,
+                };
+                self.world.player.velocity.y = self.world.player.velocity.y.clamp_abs(cap);
+            } else if self.world.player.velocity.y > Coord::ZERO
+                && !(self.player_control.hold_jump && self.world.player.can_hold_jump)
+            {
+                // Higher jump
+                self.world.player.velocity.y += self.world.rules.gravity.y
+                    * (self.world.rules.low_jump_multiplier - Coord::ONE)
+                    * self.delta_time;
+            }
         }
 
         if let Some(time) = &mut self.world.player.control_timeout {
