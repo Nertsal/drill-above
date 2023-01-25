@@ -106,8 +106,27 @@ impl Logic<'_> {
                 self.world.player.jump_buffer = None;
             }
         }
+        if let Some(time) = &mut self.world.player.drill_buffer {
+            *time -= self.delta_time;
+            if *time <= Time::ZERO {
+                self.world.player.drill_buffer = None;
+            }
+        }
+
         if self.player_control.jump {
             self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
+        }
+        if self.player_control.drill {
+            self.world.player.drill_buffer = Some(self.world.rules.drill_buffer_time);
+            // self.spawn_particles(
+            //     Time::ONE,
+            //     self.world.player.collider.pos(),
+            //     self.world.player.velocity.normalize_or_zero(),
+            //     Coord::new(0.5),
+            //     5,
+            //     Rgba::from_rgb(0.8, 0.25, 0.2),
+            //     Coord::new(0.1),
+            // );
         }
 
         match &mut self.world.player.state {
@@ -195,7 +214,7 @@ impl Logic<'_> {
         }
 
         if !matches!(self.world.player.state, PlayerState::Drilling)
-            && self.player_control.drill
+            && (self.world.player.drill_buffer.is_some() || self.player_control.hold_drill)
             && self.world.level.drill_allowed
         {
             let dirs = itertools::chain![
@@ -215,14 +234,31 @@ impl Logic<'_> {
                 if Vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
                     let dir = self.player_control.move_dir.normalize_or_zero();
                     let rules = &self.world.rules;
-                    let acceleration = rules.drill_speed_inc;
+                    let acceleration = if self.world.player.drill_buffer.is_some() {
+                        rules.drill_speed_inc
+                    } else {
+                        rules.drill_mistimed_inc
+                    };
                     let last_len = self.world.player.last_velocity.len();
                     let last_dir = self.world.player.last_velocity.normalize_or_zero();
                     let angle = Coord::new(Vec2::dot(last_dir, dir).as_f32().acos() / 2.0);
                     let current = last_len * angle.cos();
-                    self.world.player.velocity =
-                        dir * (current + acceleration).max(rules.drill_speed_min);
+                    let speed = (current + acceleration).max(rules.drill_speed_min);
+
+                    self.world.player.velocity = dir * speed;
                     self.world.player.state = PlayerState::Drilling;
+                    self.world.player.drill_buffer = None;
+
+                    self.spawn_particles(
+                        Time::ONE,
+                        self.world.player.collider.pos(),
+                        -dir,
+                        speed * Coord::new(0.1),
+                        5,
+                        Rgba::from_rgb(0.8, 0.25, 0.2),
+                        Coord::new(0.2),
+                    );
+
                     let sound = self
                         .world
                         .drill_sound
@@ -331,7 +367,7 @@ impl Logic<'_> {
                             Coord::new(0.1),
                         );
                     }
-                    Coyote::Drill { direction } => {
+                    Coyote::DrillJump { direction } => {
                         let rules = &self.world.rules;
                         let acceleration = rules.drill_jump_speed_inc;
                         let current = Vec2::dot(self.world.player.velocity, direction);
@@ -477,8 +513,10 @@ impl Logic<'_> {
             if !still_drilling {
                 self.world.player.state = PlayerState::Airborn;
                 let direction = self.world.player.velocity.normalize_or_zero();
-                self.world.player.coyote_time =
-                    Some((Coyote::Drill { direction }, self.world.rules.coyote_time));
+                self.world.player.coyote_time = Some((
+                    Coyote::DrillJump { direction },
+                    self.world.rules.coyote_time,
+                ));
                 self.spawn_particles(
                     Time::ONE,
                     self.world.player.collider.pos(),

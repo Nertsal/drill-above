@@ -92,7 +92,7 @@ impl Game {
         }
 
         if pressed!(self.controls.drill) {
-            self.control.drill = true;
+            self.control.hold_drill = true;
         }
 
         let mut dir = Vec2::ZERO;

@@ -6,6 +6,7 @@ pub struct PlayerControl {
     pub hold_jump: bool,
     pub move_dir: Vec2<Coord>,
     pub drill: bool,
+    pub hold_drill: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,6 +21,7 @@ pub struct Player {
     pub can_hold_jump: bool,
     pub coyote_time: Option<(Coyote, Time)>,
     pub jump_buffer: Option<Time>,
+    pub drill_buffer: Option<Time>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -44,7 +46,7 @@ pub enum PlayerState {
 pub enum Coyote {
     Ground,
     Wall { wall_normal: Vec2<Coord> },
-    Drill { direction: Vec2<Coord> },
+    DrillJump { direction: Vec2<Coord> },
 }
 
 impl Player {
@@ -65,6 +67,7 @@ impl Player {
             can_hold_jump: false,
             coyote_time: None,
             jump_buffer: None,
+            drill_buffer: None,
         }
     }
 }
@@ -82,6 +85,7 @@ impl Default for PlayerControl {
             hold_jump: false,
             move_dir: Vec2::ZERO,
             drill: false,
+            hold_drill: false,
         }
     }
 }
