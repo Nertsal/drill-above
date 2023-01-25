@@ -462,10 +462,10 @@ impl Render {
             let sprites = &self.assets.sprites.player;
             let mut flip = player.facing_left;
             let (texture, transform) = match player.state {
-                PlayerState::Drilling => {
+                PlayerState::Drilling | PlayerState::AirDrill => {
                     flip = false;
-                    let mut angle = player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
-                    let drill = if angle.floor() as i32 % 2 == 0 {
+                    let mut angle = (player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0).round();
+                    let drill = if angle as i32 % 2 == 0 {
                         // Vertical/horizontal
                         &sprites.drill.drill_v0
                     } else {
@@ -473,7 +473,7 @@ impl Render {
                         angle -= 1.0;
                         &sprites.drill.drill_d0
                     };
-                    (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
+                    (drill, Mat3::rotate(angle * f32::PI / 4.0))
                 }
                 PlayerState::WallSliding { wall_normal, .. } => {
                     flip = wall_normal.x < Coord::ZERO;

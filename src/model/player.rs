@@ -12,16 +12,15 @@ pub struct PlayerControl {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     pub collider: Collider,
-    pub last_velocity: Vec2<Coord>,
     pub velocity: Vec2<Coord>,
     pub state: PlayerState,
     pub touching_wall: Option<(Tile, Vec2<Coord>)>,
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
     pub can_hold_jump: bool,
+    pub can_drill: bool,
     pub coyote_time: Option<(Coyote, Time)>,
     pub jump_buffer: Option<Time>,
-    pub drill_buffer: Option<Time>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -35,6 +34,7 @@ pub enum PlayerState {
     Respawning {
         time: Time,
     },
+    AirDrill,
     Drilling,
     Finished {
         time: Time,
@@ -58,16 +58,15 @@ impl Player {
                 feet_pos - vec2(half_width, Coord::ZERO),
                 feet_pos + vec2(half_width, height),
             )),
-            last_velocity: Vec2::ZERO,
             velocity: Vec2::ZERO,
             state: PlayerState::Airborn,
             touching_wall: None,
             control_timeout: None,
             facing_left: false,
             can_hold_jump: false,
+            can_drill: false,
             coyote_time: None,
             jump_buffer: None,
-            drill_buffer: None,
         }
     }
 }

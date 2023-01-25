@@ -13,7 +13,7 @@
   "low_control_acc": 50.0,
   "jump_buffer_time": 0.15,
   "coyote_time": 0.15,
-  "drill_buffer_time": 0.3,
+  "predrill_time": 0.3,
   "normal_jump_strength": 12.0,
   "wall_jump_strength": 12.0,
   "wall_jump_angle": 1.0,
