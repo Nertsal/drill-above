@@ -375,6 +375,12 @@ impl Logic<'_> {
             return;
         }
 
+        let finished = matches!(self.world.player.state, PlayerState::Finished { .. })
+            .then_some(self.world.player.state);
+        let air_drill = matches!(self.world.player.state, PlayerState::AirDrill { .. });
+        let drilling = matches!(self.world.player.state, PlayerState::Drilling);
+        let was_grounded = matches!(self.world.player.state, PlayerState::Grounded(..));
+
         // Level bounds
         let level = &self.world.level;
         let level_bounds = level.bounds();
@@ -384,6 +390,11 @@ impl Logic<'_> {
                 Coord::ZERO,
                 level_bounds.y_max - player.collider.head().y,
             ));
+            player.velocity.y = if drilling {
+                -player.velocity.y
+            } else {
+                Coord::ZERO
+            };
         }
         let offset = player.collider.feet().x - level_bounds.center().x;
         if offset.abs() > level_bounds.width() / Coord::new(2.0) {
@@ -391,13 +402,9 @@ impl Logic<'_> {
                 offset.signum() * (level_bounds.width() / Coord::new(2.0) - offset.abs()),
                 Coord::ZERO,
             ));
+            player.velocity.x = Coord::ZERO;
         }
 
-        let finished = matches!(self.world.player.state, PlayerState::Finished { .. })
-            .then_some(self.world.player.state);
-        let air_drill = matches!(self.world.player.state, PlayerState::AirDrill { .. });
-        let drilling = matches!(self.world.player.state, PlayerState::Drilling);
-        let was_grounded = matches!(self.world.player.state, PlayerState::Grounded(..));
         let update_state = !drilling && !air_drill;
         if update_state {
             self.world.player.state = PlayerState::Airborn;
