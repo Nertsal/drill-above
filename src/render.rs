@@ -463,8 +463,18 @@ impl Render {
             let mut flip = player.facing_left;
             let (texture, transform) = match player.state {
                 PlayerState::Drilling | PlayerState::AirDrill => {
+                    let mut velocity = player.velocity.map(|x| {
+                        if x.as_f32().abs() < 1.0 {
+                            0.00
+                        } else {
+                            x.as_f32()
+                        }
+                    });
+                    if velocity == Vec2::ZERO {
+                        velocity.y = 1.0;
+                    }
                     flip = false;
-                    let mut angle = (player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0).round();
+                    let mut angle = (velocity.arg() / f32::PI * 4.0 + 2.0).round();
                     let drill = if angle as i32 % 2 == 0 {
                         // Vertical/horizontal
                         &sprites.drill.drill_v0
