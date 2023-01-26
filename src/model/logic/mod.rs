@@ -1,5 +1,9 @@
 use super::*;
 
+mod particles;
+
+use particles::*;
+
 struct Logic<'a> {
     world: &'a mut World,
     player_control: PlayerControl,
@@ -49,38 +53,6 @@ impl Logic<'_> {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    fn spawn_particles(
-        &mut self,
-        lifetime: Time,
-        position: Vec2<Coord>,
-        direction: Vec2<Coord>,
-        speed: Coord,
-        amount: usize,
-        base_color: Rgba<f32>,
-        base_radius: Coord,
-    ) {
-        let mut rng = thread_rng();
-        for _ in 0..amount {
-            let radius = base_radius * Coord::new(rng.gen_range(0.9..=1.1));
-            let color_delta = Rgba::new(
-                rng.gen_range(-0.05..=0.05),
-                rng.gen_range(-0.05..=0.05),
-                rng.gen_range(-0.05..=0.05),
-                0.0,
-            );
-            let color = base_color.zip_map(color_delta, |s, t| (s + t).clamp(0.0, 1.0));
-            let angle = Coord::new(rng.gen_range(-0.5..=0.5));
-            let direction = direction.rotate(angle);
-            self.world.particles.push(Particle {
-                lifetime,
-                position,
-                velocity: direction * speed,
-                particle_type: ParticleType::Circle { radius, color },
-            });
-        }
-    }
-
     fn process_player(&mut self) {
         if let Some((_, time)) = &mut self.world.player.coyote_time {
             *time -= self.delta_time;
@@ -114,7 +86,20 @@ impl Logic<'_> {
             } else if !self.player_control.hold_drill {
                 let mut player = &mut self.world.player;
                 player.state = PlayerState::Airborn;
-                player.velocity.x = player.velocity.x.clamp_abs(self.world.rules.move_speed);
+                if player.drill_release.take().is_none() {
+                    let spawn = ParticleSpawn {
+                        lifetime: Time::new(0.3),
+                        position: player.collider.pos(),
+                        velocity: player.velocity,
+                        amount: 5,
+                        color: Rgba::from_rgb(0.6, 0.6, 0.6),
+                        radius: Coord::new(0.4),
+                        angle_range: Coord::new(-0.1)..=Coord::new(0.1),
+                        ..Default::default()
+                    };
+                    player.velocity.x = player.velocity.x.clamp_abs(self.world.rules.move_speed);
+                    self.spawn_particles(spawn);
+                }
             }
         }
 
@@ -144,6 +129,7 @@ impl Logic<'_> {
                 if *next_heart <= Time::ZERO {
                     *next_heart += Time::new(0.5);
                     self.world.particles.push(Particle {
+                        initial_lifetime: Time::new(2.0),
                         lifetime: Time::new(2.0),
                         position: self.world.level.finish
                             + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
@@ -184,15 +170,15 @@ impl Logic<'_> {
                     self.world.player.can_drill_dash = false;
                     dash = Some(self.world.rules.drill_dash_time);
 
-                    self.spawn_particles(
-                        Time::ONE,
-                        self.world.player.collider.pos(),
-                        -vel_dir,
-                        Coord::new(0.5),
-                        5,
-                        Rgba::from_rgb(0.8, 0.25, 0.2),
-                        Coord::new(0.2),
-                    );
+                    self.spawn_particles(ParticleSpawn {
+                        lifetime: Time::ONE,
+                        position: self.world.player.collider.pos(),
+                        velocity: -vel_dir * Coord::new(0.5),
+                        amount: 5,
+                        color: Rgba::from_rgb(0.8, 0.25, 0.2),
+                        radius: Coord::new(0.2),
+                        ..Default::default()
+                    });
                 }
             }
             self.world.player.state = PlayerState::AirDrill { dash };
@@ -204,32 +190,34 @@ impl Logic<'_> {
                 if self.world.player.velocity.x.abs() > Coord::new(0.1)
                     && thread_rng().gen_bool(0.1)
                 {
-                    self.spawn_particles(
-                        Time::ONE,
-                        self.world.player.collider.feet(),
-                        vec2(self.world.player.velocity.x.signum(), Coord::ONE),
-                        Coord::new(0.5),
-                        2,
-                        Rgba::from_rgb(0.8, 0.8, 0.8),
-                        Coord::new(0.1),
-                    );
+                    self.spawn_particles(ParticleSpawn {
+                        lifetime: Time::ONE,
+                        position: self.world.player.collider.feet(),
+                        velocity: vec2(self.world.player.velocity.x.signum(), Coord::ONE)
+                            * Coord::new(0.5),
+                        amount: 2,
+                        color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                        radius: Coord::new(0.1),
+                        ..Default::default()
+                    });
                 }
             }
             PlayerState::WallSliding { wall_normal, .. } => {
                 self.world.player.can_drill_dash = true;
                 if self.world.player.velocity.y < Coord::new(-0.1) && thread_rng().gen_bool(0.1) {
-                    self.spawn_particles(
-                        Time::ONE,
-                        self.world.player.collider.pos()
+                    self.spawn_particles(ParticleSpawn {
+                        lifetime: Time::ONE,
+                        position: self.world.player.collider.pos()
                             - wall_normal
                                 * self.world.player.collider.raw().width()
                                 * Coord::new(0.5),
-                        vec2(wall_normal.x * Coord::new(0.2), Coord::ONE),
-                        Coord::new(0.5),
-                        2,
-                        Rgba::from_rgb(0.8, 0.8, 0.8),
-                        Coord::new(0.1),
-                    );
+                        velocity: vec2(wall_normal.x * Coord::new(0.2), Coord::ONE)
+                            * Coord::new(0.5),
+                        amount: 2,
+                        color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                        radius: Coord::new(0.1),
+                        ..Default::default()
+                    });
                 }
             }
             _ => (),
@@ -324,15 +312,15 @@ impl Logic<'_> {
                         self.world.player.velocity.y = jump_vel;
                         self.world.player.state = PlayerState::Airborn;
                         self.play_sound(&self.world.assets.sounds.jump);
-                        self.spawn_particles(
-                            Time::ONE,
-                            self.world.player.collider.feet(),
-                            vec2(Coord::ZERO, Coord::ONE),
-                            Coord::new(1.0),
-                            3,
-                            Rgba::WHITE,
-                            Coord::new(0.1),
-                        );
+                        self.spawn_particles(ParticleSpawn {
+                            lifetime: Time::ONE,
+                            position: self.world.player.collider.feet(),
+                            velocity: vec2(Coord::ZERO, Coord::ONE),
+                            amount: 3,
+                            color: Rgba::WHITE,
+                            radius: Coord::new(0.1),
+                            ..Default::default()
+                        });
                     }
                     Coyote::Wall { wall_normal } => {
                         let angle = rules.wall_jump_angle * wall_normal.x.signum();
@@ -342,18 +330,18 @@ impl Logic<'_> {
                             Some(self.world.rules.wall_jump_timeout);
                         self.world.player.state = PlayerState::Airborn;
                         self.play_sound(&self.world.assets.sounds.jump);
-                        self.spawn_particles(
-                            Time::ONE,
-                            self.world.player.collider.feet()
+                        self.spawn_particles(ParticleSpawn {
+                            lifetime: Time::ONE,
+                            position: self.world.player.collider.feet()
                                 - wall_normal
                                     * self.world.player.collider.raw().width()
                                     * Coord::new(0.5),
-                            jump_vel.normalize_or_zero(),
-                            Coord::new(1.0),
-                            3,
-                            Rgba::WHITE,
-                            Coord::new(0.1),
-                        );
+                            velocity: jump_vel.normalize_or_zero(),
+                            amount: 3,
+                            color: Rgba::WHITE,
+                            radius: Coord::new(0.1),
+                            ..Default::default()
+                        });
                     }
                     Coyote::DrillJump { direction } => {
                         let rules = &self.world.rules;
@@ -362,15 +350,15 @@ impl Logic<'_> {
                         self.world.player.velocity =
                             direction * (current + acceleration).max(rules.drill_jump_speed_min);
                         self.play_sound(&self.world.assets.sounds.drill_jump);
-                        self.spawn_particles(
-                            Time::ONE,
-                            self.world.player.collider.pos(),
-                            direction,
-                            Coord::new(1.0),
-                            5,
-                            Rgba::from_rgb(0.8, 0.25, 0.2),
-                            Coord::new(0.3),
-                        );
+                        self.spawn_particles(ParticleSpawn {
+                            lifetime: Time::ONE,
+                            position: self.world.player.collider.pos(),
+                            velocity: direction,
+                            amount: 5,
+                            color: Rgba::from_rgb(0.8, 0.25, 0.2),
+                            radius: Coord::new(0.3),
+                            ..Default::default()
+                        });
                     }
                 }
             }
@@ -466,15 +454,15 @@ impl Logic<'_> {
                         && collision.normal.y < Coord::ZERO
                     {
                         if !was_grounded && finished.is_none() {
-                            self.spawn_particles(
-                                Time::ONE,
-                                self.world.player.collider.feet(),
-                                vec2(Coord::ZERO, Coord::ONE),
-                                Coord::new(0.5),
-                                3,
-                                Rgba::WHITE,
-                                Coord::new(0.1),
-                            );
+                            self.spawn_particles(ParticleSpawn {
+                                lifetime: Time::ONE,
+                                position: self.world.player.collider.feet(),
+                                velocity: vec2(Coord::ZERO, Coord::ONE) * Coord::new(0.5),
+                                amount: 3,
+                                color: Rgba::WHITE,
+                                radius: Coord::new(0.1),
+                                ..Default::default()
+                            });
                         }
                         if update_state {
                             self.world.player.state = PlayerState::Grounded(tile);
@@ -504,6 +492,7 @@ impl Logic<'_> {
             if !can_drill {
                 self.world.player.can_drill_dash = true;
                 self.world.player.state = if self.player_control.hold_drill {
+                    self.world.player.drill_release = Some(self.world.rules.drill_release_time);
                     PlayerState::AirDrill { dash: None }
                 } else {
                     PlayerState::Airborn
@@ -514,25 +503,25 @@ impl Logic<'_> {
                     Coyote::DrillJump { direction },
                     self.world.rules.coyote_time,
                 ));
-                self.spawn_particles(
-                    Time::ONE,
-                    self.world.player.collider.pos(),
-                    direction,
-                    Coord::new(0.3),
-                    8,
-                    Rgba::from_rgb(0.7, 0.7, 0.7),
-                    Coord::new(0.2),
-                );
+                self.spawn_particles(ParticleSpawn {
+                    lifetime: Time::ONE,
+                    position: self.world.player.collider.pos(),
+                    velocity: direction * Coord::new(0.3),
+                    amount: 8,
+                    color: Rgba::from_rgb(0.7, 0.7, 0.7),
+                    radius: Coord::new(0.2),
+                    ..Default::default()
+                });
             } else if thread_rng().gen_bool(0.2) {
-                self.spawn_particles(
-                    Time::ONE,
-                    self.world.player.collider.pos(),
-                    -self.world.player.velocity.normalize_or_zero(),
-                    Coord::new(0.5),
-                    2,
-                    Rgba::from_rgb(0.8, 0.8, 0.8),
-                    Coord::new(0.1),
-                );
+                self.spawn_particles(ParticleSpawn {
+                    lifetime: Time::ONE,
+                    position: self.world.player.collider.pos(),
+                    velocity: -self.world.player.velocity.normalize_or_zero() * Coord::new(0.5),
+                    amount: 2,
+                    color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                    radius: Coord::new(0.1),
+                    ..Default::default()
+                });
             }
         } else if air_drill && can_drill {
             let speed = self.world.player.velocity.len();
@@ -541,15 +530,15 @@ impl Logic<'_> {
             self.world.player.velocity = dir * speed.max(self.world.rules.drill_speed_min);
             self.world.player.state = PlayerState::Drilling;
 
-            self.spawn_particles(
-                Time::ONE,
-                self.world.player.collider.pos(),
-                -dir,
-                Coord::new(0.3),
-                5,
-                Rgba::from_rgb(0.7, 0.7, 0.7),
-                Coord::new(0.2),
-            );
+            self.spawn_particles(ParticleSpawn {
+                lifetime: Time::ONE,
+                position: self.world.player.collider.pos(),
+                velocity: -dir * Coord::new(0.3),
+                amount: 5,
+                color: Rgba::from_rgb(0.7, 0.7, 0.7),
+                radius: Coord::new(0.2),
+                ..Default::default()
+            });
 
             let sound = self
                 .world
@@ -573,6 +562,7 @@ impl Logic<'_> {
                 next_heart: Time::new(0.5),
             };
             self.world.particles.push(Particle {
+                initial_lifetime: Time::new(2.0),
                 lifetime: Time::new(2.0),
                 position: self.world.player.collider.head()
                     + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
@@ -593,17 +583,17 @@ impl Logic<'_> {
             }
         }
         self.world.level.coins.retain(|coin| !coin.collected);
-        if let Some(pos) = collected {
+        if let Some(position) = collected {
             self.play_sound(&self.world.assets.sounds.coin);
-            self.spawn_particles(
-                Time::ONE,
-                pos,
-                vec2(Coord::ZERO, Coord::ONE),
-                Coord::new(0.5),
-                5,
-                Rgba::try_from("#e3a912").unwrap(),
-                Coord::new(0.2),
-            );
+            self.spawn_particles(ParticleSpawn {
+                lifetime: Time::ONE,
+                position,
+                velocity: vec2(Coord::ZERO, Coord::ONE) * Coord::new(0.5),
+                amount: 5,
+                color: Rgba::try_from("#e3a912").unwrap(),
+                radius: Coord::new(0.2),
+                ..Default::default()
+            });
         }
 
         // Screen edge
@@ -624,16 +614,6 @@ impl Logic<'_> {
                 break;
             }
         }
-    }
-
-    fn process_particles(&mut self) {
-        for particle in &mut self.world.particles {
-            particle.lifetime -= self.delta_time;
-            particle.position += particle.velocity * self.delta_time;
-        }
-        self.world
-            .particles
-            .retain(|particle| particle.lifetime > Time::ZERO);
     }
 
     fn process_camera(&mut self) {

@@ -21,6 +21,7 @@ pub struct Player {
     pub can_drill_dash: bool,
     pub coyote_time: Option<(Coyote, Time)>,
     pub jump_buffer: Option<Time>,
+    pub drill_release: Option<Time>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -69,6 +70,7 @@ impl Player {
             can_drill_dash: false,
             coyote_time: None,
             jump_buffer: None,
+            drill_release: None,
         }
     }
 }

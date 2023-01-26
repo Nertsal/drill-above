@@ -4,6 +4,7 @@
     "y": -20.0
   },
   "move_speed": 7.0,
+  "drill_release_time": 0.1,
   "drill_speed_min": 15.0,
   "drill_mistimed_inc": -5.0,
   "drill_speed_inc": 0.0,

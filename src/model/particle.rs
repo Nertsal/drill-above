@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct Particle {
+    pub initial_lifetime: Time,
     pub lifetime: Time,
     pub position: Vec2<Coord>,
     pub velocity: Vec2<Coord>,

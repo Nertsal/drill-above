@@ -530,7 +530,9 @@ impl Render {
                 ParticleType::Heart4 => &self.assets.sprites.heart4,
                 ParticleType::Heart8 => &self.assets.sprites.heart8,
                 ParticleType::Circle { radius, color } => {
-                    let radius = (radius * particle.lifetime.min(Time::ONE)).as_f32();
+                    let t =
+                        particle.lifetime.min(Time::ONE) / particle.initial_lifetime.min(Time::ONE);
+                    let radius = (radius * t).as_f32();
                     self.geng.draw_2d(
                         framebuffer,
                         camera,
