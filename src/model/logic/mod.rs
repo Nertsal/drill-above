@@ -107,21 +107,11 @@ impl Logic<'_> {
         }
         if let PlayerState::AirDrill = self.world.player.state {
             if !self.player_control.hold_drill {
-                self.world.player.state = PlayerState::Airborn;
-                // TODO: Punish with slowdown
+                let mut player = &mut self.world.player;
+                player.state = PlayerState::Airborn;
+                player.velocity.x = player.velocity.x.clamp_abs(self.world.rules.move_speed);
             }
         }
-        // if let PlayerState::AirDrill {
-        //     timeout: Some(time),
-        // } = &mut self.world.player.state
-        // {
-        //     *time -= self.delta_time;
-        //     if *time <= Time::ZERO {
-        //         self.world.player.state = PlayerState::Airborn;
-        //         // TODO: drill timeout
-        //         // TODO: Punish with slowdown
-        //     }
-        // }
 
         if self.player_control.jump {
             self.world.player.jump_buffer = Some(self.world.rules.jump_buffer_time);
@@ -203,7 +193,7 @@ impl Logic<'_> {
 
         match self.world.player.state {
             PlayerState::Grounded(..) => {
-                // self.world.player.can_drill_dash = true;
+                self.world.player.can_drill_dash = true;
                 if self.world.player.velocity.x.abs() > Coord::new(0.1)
                     && thread_rng().gen_bool(0.1)
                 {
@@ -219,7 +209,7 @@ impl Logic<'_> {
                 }
             }
             PlayerState::WallSliding { wall_normal, .. } => {
-                // self.world.player.can_drill_dash = true;
+                self.world.player.can_drill_dash = true;
                 if self.world.player.velocity.y < Coord::new(-0.1) && thread_rng().gen_bool(0.1) {
                     self.spawn_particles(
                         Time::ONE,
@@ -504,7 +494,11 @@ impl Logic<'_> {
         if drilling {
             if !can_drill {
                 self.world.player.can_drill_dash = true;
-                self.world.player.state = PlayerState::AirDrill;
+                self.world.player.state = if self.player_control.hold_drill {
+                    PlayerState::AirDrill
+                } else {
+                    PlayerState::Airborn
+                };
 
                 let direction = self.world.player.velocity.normalize_or_zero();
                 self.world.player.coyote_time = Some((
