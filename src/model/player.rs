@@ -34,7 +34,9 @@ pub enum PlayerState {
     Respawning {
         time: Time,
     },
-    AirDrill,
+    AirDrill {
+        dash: Option<Time>,
+    },
     Drilling,
     Finished {
         time: Time,

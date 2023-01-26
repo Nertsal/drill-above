@@ -105,8 +105,13 @@ impl Logic<'_> {
                 self.world.player.jump_buffer = None;
             }
         }
-        if let PlayerState::AirDrill = self.world.player.state {
-            if !self.player_control.hold_drill {
+        if let PlayerState::AirDrill { dash } = &mut self.world.player.state {
+            if let Some(time) = dash {
+                *time -= self.delta_time;
+                if *time <= Time::ZERO {
+                    *dash = None;
+                }
+            } else if !self.player_control.hold_drill {
                 let mut player = &mut self.world.player;
                 player.state = PlayerState::Airborn;
                 player.velocity.x = player.velocity.x.clamp_abs(self.world.rules.move_speed);
@@ -162,9 +167,9 @@ impl Logic<'_> {
         if let PlayerState::Drilling = self.world.player.state {
             self.world.player.can_drill_dash = false;
         } else if self.player_control.drill
-            && !matches!(self.world.player.state, PlayerState::AirDrill)
+            && !matches!(self.world.player.state, PlayerState::AirDrill { .. })
         {
-            self.world.player.state = PlayerState::AirDrill;
+            let mut dash = None;
             if self.world.player.can_drill_dash {
                 let dir = self.player_control.move_dir.normalize_or_zero();
                 if dir != Vec2::ZERO {
@@ -177,6 +182,7 @@ impl Logic<'_> {
                     let speed = (current + acceleration).max(rules.drill_dash_speed_min);
                     self.world.player.velocity = dir * speed;
                     self.world.player.can_drill_dash = false;
+                    dash = Some(self.world.rules.drill_dash_time);
 
                     self.spawn_particles(
                         Time::ONE,
@@ -189,6 +195,7 @@ impl Logic<'_> {
                     );
                 }
             }
+            self.world.player.state = PlayerState::AirDrill { dash };
         }
 
         match self.world.player.state {
@@ -235,7 +242,9 @@ impl Logic<'_> {
             player.facing_left = !player.facing_left;
         }
 
-        if let PlayerState::Drilling = self.world.player.state {
+        if let PlayerState::Drilling | PlayerState::AirDrill { dash: Some(_) } =
+            self.world.player.state
+        {
             self.world
                 .player
                 .collider
@@ -246,7 +255,7 @@ impl Logic<'_> {
         // Apply gravity
         self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
-        if !matches!(self.world.player.state, PlayerState::AirDrill) {
+        if !matches!(self.world.player.state, PlayerState::AirDrill { .. }) {
             // Variable jump height
             if self.world.player.velocity.y < Coord::ZERO {
                 // Faster drop
@@ -274,7 +283,7 @@ impl Logic<'_> {
             if *time <= Time::ZERO {
                 self.world.player.control_timeout = None;
             }
-        } else if let PlayerState::AirDrill = self.world.player.state {
+        } else if let PlayerState::AirDrill { .. } = self.world.player.state {
             // You cannot control your drill LUL
         } else {
             // Horizontal speed control
@@ -300,7 +309,7 @@ impl Logic<'_> {
             let jump = match self.world.player.state {
                 PlayerState::Grounded { .. } => Some(Coyote::Ground),
                 PlayerState::WallSliding { wall_normal, .. } => Some(Coyote::Wall { wall_normal }),
-                PlayerState::Airborn | PlayerState::AirDrill => {
+                PlayerState::Airborn | PlayerState::AirDrill { .. } => {
                     self.world.player.coyote_time.map(|(coyote, _)| coyote)
                 }
                 _ => None,
@@ -495,7 +504,7 @@ impl Logic<'_> {
             if !can_drill {
                 self.world.player.can_drill_dash = true;
                 self.world.player.state = if self.player_control.hold_drill {
-                    PlayerState::AirDrill
+                    PlayerState::AirDrill { dash: None }
                 } else {
                     PlayerState::Airborn
                 };

@@ -462,7 +462,7 @@ impl Render {
             let sprites = &self.assets.sprites.player;
             let mut flip = player.facing_left;
             let (texture, transform) = match player.state {
-                PlayerState::Drilling | PlayerState::AirDrill => {
+                PlayerState::Drilling | PlayerState::AirDrill { .. } => {
                     let mut velocity = player.velocity.map(|x| {
                         if x.as_f32().abs() < 1.0 {
                             0.00
