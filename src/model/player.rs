@@ -18,7 +18,7 @@ pub struct Player {
     pub control_timeout: Option<Time>,
     pub facing_left: bool,
     pub can_hold_jump: bool,
-    pub can_drill: bool,
+    pub can_drill_dash: bool,
     pub coyote_time: Option<(Coyote, Time)>,
     pub jump_buffer: Option<Time>,
 }
@@ -64,7 +64,7 @@ impl Player {
             control_timeout: None,
             facing_left: false,
             can_hold_jump: false,
-            can_drill: false,
+            can_drill_dash: false,
             coyote_time: None,
             jump_buffer: None,
         }

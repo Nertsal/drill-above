@@ -170,38 +170,40 @@ impl Logic<'_> {
         }
 
         if let PlayerState::Drilling = self.world.player.state {
-            self.world.player.can_drill = false;
-        }
-
-        if self.player_control.drill && self.world.player.can_drill {
-            let dir = self.player_control.move_dir.normalize_or_zero();
-            let vel_dir = self.world.player.velocity.normalize_or_zero();
-            if dir != Vec2::ZERO {
-                let rules = &self.world.rules;
-                let acceleration = rules.drill_dash_speed_inc;
-                let speed = self.world.player.velocity.len();
-                let angle = Coord::new(Vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
-                let current = speed * angle.cos();
-                let speed = (current + acceleration).max(rules.drill_dash_speed_min);
-                self.world.player.velocity = dir * speed;
-            }
-            self.world.player.can_drill = false;
+            self.world.player.can_drill_dash = false;
+        } else if self.player_control.drill
+            && !matches!(self.world.player.state, PlayerState::AirDrill)
+        {
             self.world.player.state = PlayerState::AirDrill;
+            if self.world.player.can_drill_dash {
+                let dir = self.player_control.move_dir.normalize_or_zero();
+                if dir != Vec2::ZERO {
+                    let vel_dir = self.world.player.velocity.normalize_or_zero();
+                    let rules = &self.world.rules;
+                    let acceleration = rules.drill_dash_speed_inc;
+                    let speed = self.world.player.velocity.len();
+                    let angle = Coord::new(Vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
+                    let current = speed * angle.cos();
+                    let speed = (current + acceleration).max(rules.drill_dash_speed_min);
+                    self.world.player.velocity = dir * speed;
+                    self.world.player.can_drill_dash = false;
 
-            self.spawn_particles(
-                Time::ONE,
-                self.world.player.collider.pos(),
-                -vel_dir,
-                Coord::new(0.5),
-                5,
-                Rgba::from_rgb(0.8, 0.25, 0.2),
-                Coord::new(0.2),
-            );
+                    self.spawn_particles(
+                        Time::ONE,
+                        self.world.player.collider.pos(),
+                        -vel_dir,
+                        Coord::new(0.5),
+                        5,
+                        Rgba::from_rgb(0.8, 0.25, 0.2),
+                        Coord::new(0.2),
+                    );
+                }
+            }
         }
 
         match self.world.player.state {
             PlayerState::Grounded(..) => {
-                self.world.player.can_drill = true;
+                // self.world.player.can_drill_dash = true;
                 if self.world.player.velocity.x.abs() > Coord::new(0.1)
                     && thread_rng().gen_bool(0.1)
                 {
@@ -217,7 +219,7 @@ impl Logic<'_> {
                 }
             }
             PlayerState::WallSliding { wall_normal, .. } => {
-                self.world.player.can_drill = true;
+                // self.world.player.can_drill_dash = true;
                 if self.world.player.velocity.y < Coord::new(-0.1) && thread_rng().gen_bool(0.1) {
                     self.spawn_particles(
                         Time::ONE,
@@ -501,7 +503,7 @@ impl Logic<'_> {
 
         if drilling {
             if !can_drill {
-                self.world.player.can_drill = true;
+                self.world.player.can_drill_dash = true;
                 self.world.player.state = PlayerState::AirDrill;
 
                 let direction = self.world.player.velocity.normalize_or_zero();
