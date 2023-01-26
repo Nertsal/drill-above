@@ -169,6 +169,10 @@ impl Logic<'_> {
             _ => (),
         }
 
+        if let PlayerState::Drilling = self.world.player.state {
+            self.world.player.can_drill = false;
+        }
+
         if self.player_control.drill && self.world.player.can_drill {
             let dir = self.player_control.move_dir.normalize_or_zero();
             let vel_dir = self.world.player.velocity.normalize_or_zero();
@@ -250,7 +254,7 @@ impl Logic<'_> {
         // Apply gravity
         self.world.player.velocity += self.world.rules.gravity * self.delta_time;
 
-        if matches!(self.world.player.state, PlayerState::Airborn) {
+        if !matches!(self.world.player.state, PlayerState::AirDrill) {
             // Variable jump height
             if self.world.player.velocity.y < Coord::ZERO {
                 // Faster drop
@@ -471,9 +475,11 @@ impl Logic<'_> {
                                 Coord::new(0.1),
                             );
                         }
-                        self.world.player.state = PlayerState::Grounded(tile);
-                        self.world.player.coyote_time =
-                            Some((Coyote::Ground, self.world.rules.coyote_time));
+                        if update_state {
+                            self.world.player.state = PlayerState::Grounded(tile);
+                            self.world.player.coyote_time =
+                                Some((Coyote::Ground, self.world.rules.coyote_time));
+                        }
                     } else if collision.normal.y.approx_eq(&Coord::ZERO) {
                         let wall_normal = -collision.normal;
                         self.world.player.touching_wall = Some((tile, wall_normal));
