@@ -97,6 +97,37 @@ impl Logic<'_> {
             .translate(self.world.player.velocity * self.delta_time);
     }
 
+    pub fn player_collisions(&mut self) {
+        if let PlayerState::Respawning { .. } = self.world.player.state {
+            return;
+        }
+
+        let finished = self.world.player.state.finished_state();
+        let can_drill = self.player_tiles();
+
+        // Level bounds
+        if self.level_bounds() {
+            return;
+        }
+
+        // Stay in finish state
+        if let Some(state) = finished {
+            self.world.player.state = state;
+            return;
+        }
+
+        self.update_drill_state(can_drill);
+
+        self.player_coins();
+
+        // Finish
+        if self.check_finish() {
+            return;
+        }
+
+        self.player_hazards();
+    }
+
     fn pause_state(&mut self) -> bool {
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
@@ -152,7 +183,8 @@ impl Logic<'_> {
             return;
         }
 
-        if !self.player_control.drill
+        if !self.world.level.drill_allowed
+            || !self.player_control.drill
             || matches!(self.world.player.state, PlayerState::AirDrill { .. })
         {
             return;
@@ -391,5 +423,270 @@ impl Logic<'_> {
                 });
             }
         }
+    }
+
+    fn player_tiles(&mut self) -> bool {
+        let player = &mut self.world.player;
+        let was_grounded = player.state.is_grounded();
+        let has_finished = player.state.has_finished();
+        let using_drill = player.state.using_drill();
+        let update_state = !using_drill;
+
+        if update_state {
+            player.state = PlayerState::Airborn;
+        }
+
+        let mut particles = Vec::new();
+        let mut can_drill = false;
+        player.touching_wall = None;
+
+        for _ in 0..2 {
+            // Player-tiles
+            let player_aabb = player.collider.grid_aabb(&self.world.level.grid);
+            let collisions = (player_aabb.x_min..=player_aabb.x_max)
+                .flat_map(move |x| (player_aabb.y_min..=player_aabb.y_max).map(move |y| vec2(x, y)))
+                .filter_map(|pos| {
+                    self.world
+                        .level
+                        .tiles
+                        .get_tile_isize(pos)
+                        .filter(|tile| {
+                            let air = matches!(tile, Tile::Air);
+                            let drill = using_drill && tile.is_drillable();
+                            if !air && drill {
+                                can_drill = true;
+                            }
+                            !air && !drill
+                        })
+                        .and_then(|tile| {
+                            let collider = Collider::new(
+                                AABB::point(self.world.level.grid.grid_to_world(pos))
+                                    .extend_positive(self.world.level.grid.cell_size),
+                            );
+                            player.collider.check(&collider).and_then(|collision| {
+                                (Vec2::dot(collision.normal, player.velocity) >= Coord::ZERO)
+                                    .then_some((tile, collision))
+                            })
+                        })
+                });
+            if let Some((tile, collision)) =
+                collisions.max_by_key(|(_, collision)| collision.penetration)
+            {
+                player
+                    .collider
+                    .translate(-collision.normal * collision.penetration);
+                let bounciness = Coord::new(if using_drill { 1.0 } else { 0.0 });
+                player.velocity -= collision.normal
+                    * Vec2::dot(player.velocity, collision.normal)
+                    * (Coord::ONE + bounciness);
+                if !using_drill {
+                    if collision.normal.x.approx_eq(&Coord::ZERO)
+                        && collision.normal.y < Coord::ZERO
+                    {
+                        if !was_grounded && !has_finished {
+                            particles.push(ParticleSpawn {
+                                lifetime: Time::ONE,
+                                position: player.collider.feet(),
+                                velocity: vec2(Coord::ZERO, Coord::ONE) * Coord::new(0.5),
+                                amount: 3,
+                                color: Rgba::WHITE,
+                                radius: Coord::new(0.1),
+                                ..Default::default()
+                            });
+                        }
+                        if update_state {
+                            player.state = PlayerState::Grounded(tile);
+                            player.coyote_time =
+                                Some((Coyote::Ground, self.world.rules.coyote_time));
+                        }
+                    } else if collision.normal.y.approx_eq(&Coord::ZERO) {
+                        let wall_normal = -collision.normal;
+                        player.touching_wall = Some((tile, wall_normal));
+                        if update_state {
+                            player.state = PlayerState::WallSliding { tile, wall_normal };
+                            player.coyote_time =
+                                Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
+                        }
+                    }
+                }
+            }
+        }
+
+        for spawn in particles {
+            self.spawn_particles(spawn);
+        }
+
+        can_drill
+    }
+
+    fn update_drill_state(&mut self, can_drill: bool) {
+        if self.world.player.state.is_drilling() {
+            if !can_drill {
+                // Exited the ground in drill mode
+                self.world.player.can_drill_dash = true;
+                self.world.player.state = if self.player_control.hold_drill {
+                    self.world.player.drill_release = Some(self.world.rules.drill_release_time);
+                    PlayerState::AirDrill { dash: None }
+                } else {
+                    PlayerState::Airborn
+                };
+
+                let direction = self.world.player.velocity.normalize_or_zero();
+                self.world.player.coyote_time = Some((
+                    Coyote::DrillJump { direction },
+                    self.world.rules.coyote_time,
+                ));
+                self.spawn_particles(ParticleSpawn {
+                    lifetime: Time::ONE,
+                    position: self.world.player.collider.pos(),
+                    velocity: direction * Coord::new(0.3),
+                    amount: 8,
+                    color: Rgba::from_rgb(0.7, 0.7, 0.7),
+                    radius: Coord::new(0.2),
+                    ..Default::default()
+                });
+            } else if thread_rng().gen_bool(0.2) {
+                // Drilling through the ground
+                self.spawn_particles(ParticleSpawn {
+                    lifetime: Time::ONE,
+                    position: self.world.player.collider.pos(),
+                    velocity: -self.world.player.velocity.normalize_or_zero() * Coord::new(0.5),
+                    amount: 2,
+                    color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                    radius: Coord::new(0.1),
+                    ..Default::default()
+                });
+            }
+        } else if self.world.player.state.is_air_drilling() && can_drill {
+            // Entered the ground in drill mode
+            let speed = self.world.player.velocity.len();
+            let dir = self.world.player.velocity.normalize_or_zero();
+
+            self.world.player.velocity = dir * speed.max(self.world.rules.drill_speed_min);
+            self.world.player.state = PlayerState::Drilling;
+
+            self.spawn_particles(ParticleSpawn {
+                lifetime: Time::ONE,
+                position: self.world.player.collider.pos(),
+                velocity: -dir * Coord::new(0.3),
+                amount: 5,
+                color: Rgba::from_rgb(0.7, 0.7, 0.7),
+                radius: Coord::new(0.2),
+                ..Default::default()
+            });
+
+            let sound = self
+                .world
+                .drill_sound
+                .get_or_insert_with(|| self.world.assets.sounds.drill.play());
+            sound.set_volume(self.world.volume);
+        }
+    }
+
+    fn check_finish(&mut self) -> bool {
+        if self.world.player.state.is_drilling()
+            || self.world.player.state.has_finished()
+            || self
+                .world
+                .player
+                .collider
+                .check(&self.world.level.finish())
+                .is_none()
+        {
+            return false;
+        }
+
+        self.world.player.state = PlayerState::Finished {
+            time: Time::new(2.0),
+            next_heart: Time::new(0.5),
+        };
+        self.world.particles.push(Particle {
+            initial_lifetime: Time::new(2.0),
+            lifetime: Time::new(2.0),
+            position: self.world.player.collider.head()
+                + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
+            velocity: vec2(0.0, 1.5).map(Coord::new),
+            particle_type: ParticleType::Heart8,
+        });
+        self.play_sound(&self.world.assets.sounds.charm);
+
+        true
+    }
+
+    fn player_coins(&mut self) {
+        // Collect coins
+        let mut collected = None;
+        for coin in &mut self.world.level.coins {
+            if !coin.collected && self.world.player.collider.check(&coin.collider).is_some() {
+                self.world.coins_collected += 1;
+                coin.collected = true;
+                collected = Some(coin.collider.pos());
+            }
+        }
+        self.world.level.coins.retain(|coin| !coin.collected);
+        if let Some(position) = collected {
+            self.play_sound(&self.world.assets.sounds.coin);
+            self.spawn_particles(ParticleSpawn {
+                lifetime: Time::ONE,
+                position,
+                velocity: vec2(Coord::ZERO, Coord::ONE) * Coord::new(0.5),
+                amount: 5,
+                color: Rgba::try_from("#e3a912").unwrap(),
+                radius: Coord::new(0.2),
+                ..Default::default()
+            });
+        }
+    }
+
+    fn player_hazards(&mut self) {
+        // Die from hazards
+        for hazard in &self.world.level.hazards {
+            if self.world.player.collider.check(&hazard.collider).is_some()
+                && hazard.direction.map_or(true, |dir| {
+                    Vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
+                })
+            {
+                self.kill_player();
+                break;
+            }
+        }
+    }
+
+    fn level_bounds(&mut self) -> bool {
+        let level = &self.world.level;
+        let level_bounds = level.bounds();
+        let player = &mut self.world.player;
+
+        // Top
+        if player.collider.head().y > level_bounds.y_max {
+            player.collider.translate(vec2(
+                Coord::ZERO,
+                level_bounds.y_max - player.collider.head().y,
+            ));
+            player.velocity.y = if player.state.is_drilling() {
+                -player.velocity.y
+            } else {
+                Coord::ZERO
+            };
+        }
+
+        // Horizontal
+        let offset = player.collider.feet().x - level_bounds.center().x;
+        if offset.abs() > level_bounds.width() / Coord::new(2.0) {
+            player.collider.translate(vec2(
+                offset.signum() * (level_bounds.width() / Coord::new(2.0) - offset.abs()),
+                Coord::ZERO,
+            ));
+            player.velocity.x = Coord::ZERO;
+        }
+
+        // Bottom
+        let player = &mut self.world.player;
+        if player.collider.feet().y < level_bounds.y_min {
+            self.kill_player();
+            return true;
+        }
+
+        false
     }
 }

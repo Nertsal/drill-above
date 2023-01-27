@@ -75,6 +75,32 @@ impl Player {
     }
 }
 
+impl PlayerState {
+    pub fn is_grounded(&self) -> bool {
+        matches!(self, Self::Grounded(..))
+    }
+
+    pub fn is_drilling(&self) -> bool {
+        matches!(self, Self::Drilling)
+    }
+
+    pub fn is_air_drilling(&self) -> bool {
+        matches!(self, Self::AirDrill { .. })
+    }
+
+    pub fn using_drill(&self) -> bool {
+        self.is_drilling() || self.is_air_drilling()
+    }
+
+    pub fn finished_state(&self) -> Option<Self> {
+        self.has_finished().then_some(*self)
+    }
+
+    pub fn has_finished(&self) -> bool {
+        matches!(self, Self::Finished { .. })
+    }
+}
+
 impl PlayerControl {
     pub fn take(&mut self) -> Self {
         std::mem::take(self)
