@@ -1,12 +1,12 @@
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct GlobalLightSource {
     pub color: Rgba<f32>,
     pub intensity: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SpotlightSource {
     pub position: vec2<Coord>,
     pub angle: f32,

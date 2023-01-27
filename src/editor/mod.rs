@@ -34,8 +34,18 @@ pub struct Editor {
 #[derive(Debug, Clone)]
 struct EditorTab {
     pub name: String,
-    pub blocks: Vec<BlockType>,
-    pub selected: usize,
+    pub mode: EditorMode,
+}
+
+#[derive(Debug, Clone)]
+enum EditorMode {
+    Block {
+        blocks: Vec<BlockType>,
+        selected: usize,
+    },
+    Spotlight {
+        config: SpotlightSource,
+    },
 }
 
 impl Editor {
@@ -63,7 +73,7 @@ impl Editor {
             cursor_world_pos: vec2::ZERO,
             dragging: None,
             tabs: vec![
-                EditorTab::new(
+                EditorTab::block(
                     "Tiles",
                     Tile::all()
                         .into_iter()
@@ -71,19 +81,22 @@ impl Editor {
                         .map(BlockType::Tile)
                         .collect(),
                 ),
-                EditorTab::new("Collectables", vec![BlockType::Coin]),
-                EditorTab::new(
+                EditorTab::block("Collectables", vec![BlockType::Coin]),
+                EditorTab::block(
                     "Hazards",
                     HazardType::all()
                         .into_iter()
                         .map(BlockType::Hazard)
                         .collect(),
                 ),
-                EditorTab::new(
+                EditorTab::block(
                     "Props",
                     PropType::all().into_iter().map(BlockType::Prop).collect(),
                 ),
-                EditorTab::new("Lights", vec![BlockType::Spotlight]),
+                EditorTab {
+                    name: "Lights".into(),
+                    mode: EditorMode::Spotlight { config: default() },
+                },
             ],
             active_tab: 0,
             undo_actions: default(),
@@ -93,17 +106,21 @@ impl Editor {
 
     fn scroll_selected(&mut self, delta: isize) {
         if let Some(tab) = self.tabs.get_mut(self.active_tab) {
-            let current = tab.selected as isize;
-            let target = current + delta;
-            tab.selected = target.rem_euclid(tab.blocks.len() as isize) as usize;
+            if let EditorMode::Block { selected, blocks } = &mut tab.mode {
+                let current = *selected as isize;
+                let target = current + delta;
+                *selected = target.rem_euclid(blocks.len() as isize) as usize;
+            }
         }
     }
 
     fn selected_block(&self) -> Option<BlockType> {
         self.tabs
             .get(self.active_tab)
-            .and_then(|tab| tab.blocks.get(tab.selected))
-            .copied()
+            .and_then(|tab| match &tab.mode {
+                EditorMode::Block { blocks, selected } => blocks.get(*selected).copied(),
+                EditorMode::Spotlight { config } => Some(BlockType::Spotlight(*config)),
+            })
     }
 
     fn place_block(&mut self) {
@@ -271,11 +288,13 @@ impl geng::State for Editor {
 }
 
 impl EditorTab {
-    pub fn new(name: impl Into<String>, blocks: Vec<BlockType>) -> Self {
+    pub fn block(name: impl Into<String>, blocks: Vec<BlockType>) -> Self {
         Self {
-            selected: 0,
             name: name.into(),
-            blocks,
+            mode: EditorMode::Block {
+                selected: 0,
+                blocks,
+            },
         }
     }
 }

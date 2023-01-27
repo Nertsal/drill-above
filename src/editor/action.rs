@@ -59,10 +59,11 @@ impl Editor {
                     .map(Coord::new);
                 self.level.place_prop(grid_pos, size, prop);
             }
-            BlockType::Spotlight => self.level.spotlights.push(SpotlightSource {
-                position,
-                ..Default::default()
-            }),
+            BlockType::Spotlight(light) => {
+                self.level
+                    .spotlights
+                    .push(SpotlightSource { position, ..light })
+            }
         }
         vec![]
     }

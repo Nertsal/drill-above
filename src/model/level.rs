@@ -28,7 +28,7 @@ pub enum BlockType {
     Tile(Tile),
     Hazard(HazardType),
     Prop(PropType),
-    Spotlight,
+    Spotlight(SpotlightSource),
     Coin,
 }
 
