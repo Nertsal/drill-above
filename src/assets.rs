@@ -15,6 +15,7 @@ pub struct Assets {
 #[derive(geng::Assets)]
 pub struct Shaders {
     pub texture: ugli::Program,
+    pub texture_mask: ugli::Program,
     pub grid: ugli::Program,
 }
 
@@ -47,7 +48,8 @@ pub struct Sprites {
     pub heart4: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub heart8: ugli::Texture,
-    pub background: TileSet<1, 4>,
+    #[asset(postprocess = "pixel")]
+    pub background: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub sun: ugli::Texture,
     #[asset(postprocess = "pixel")]
@@ -60,9 +62,10 @@ pub struct Sprites {
 
 #[derive(geng::Assets)]
 pub struct TileSprites {
-    pub air: TileSet<7, 7>,
-    pub grass: TileSet<7, 7>,
-    pub stone: TileSet<7, 7>,
+    pub mask: TileSet,
+    pub air: TileSet,
+    pub grass: TileSet,
+    pub stone: TileSet,
 }
 
 #[derive(geng::Assets)]
@@ -103,7 +106,7 @@ pub struct Animation {
 }
 
 impl TileSprites {
-    pub fn get_tile_set(&self, tile: &Tile) -> &TileSet<7, 7> {
+    pub fn get_tile_set(&self, tile: &Tile) -> &TileSet {
         match tile {
             Tile::Air => &self.air,
             Tile::Grass => &self.grass,

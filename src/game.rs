@@ -4,7 +4,7 @@ pub struct Game {
     geng: Geng,
     assets: Rc<Assets>,
     render: Render,
-    framebuffer_size: Vec2<usize>,
+    framebuffer_size: vec2<usize>,
     pixel_texture: ugli::Texture,
     level_name: String,
     world: World,
@@ -16,6 +16,7 @@ pub struct Game {
     deaths: usize,
     show_time: bool,
     music: Option<geng::SoundEffect>,
+    show_debug: bool,
 }
 
 struct Controls {
@@ -58,6 +59,7 @@ impl Game {
                 texture
             },
             draw_hitboxes: false,
+            show_debug: false,
             fade: Time::ONE,
             control: PlayerControl::default(),
             controls: Controls {
@@ -90,10 +92,10 @@ impl Game {
         }
 
         if pressed!(self.controls.drill) {
-            self.control.drill = true;
+            self.control.hold_drill = true;
         }
 
-        let mut dir = Vec2::ZERO;
+        let mut dir = vec2::ZERO;
         if pressed!(self.controls.left) {
             dir.x -= Coord::ONE;
         }
@@ -113,6 +115,7 @@ impl Game {
 impl geng::State for Game {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.framebuffer_size = framebuffer.size();
+        let framebuffer_size = framebuffer.size().map(|x| x as f32);
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
         // Render the game onto the texture
@@ -129,7 +132,7 @@ impl geng::State for Game {
         let ratio = framebuffer.size().map(|x| x as f32) / reference_size;
         let ratio = ratio.x.min(ratio.y);
         let target_size = reference_size * ratio;
-        let screen = AABB::point(framebuffer.size().map(|x| x as f32) / 2.0)
+        let screen = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
             .extend_symmetric(target_size / 2.0);
         self.geng.draw_2d(
             framebuffer,
@@ -138,7 +141,7 @@ impl geng::State for Game {
         );
 
         // Render the texture onto the screen
-        // let target = AABB::from_corners(
+        // let target = Aabb2::from_corners(
         //     screen.size() * vec2(50.0, 180.0 - 111.0) / vec2(320.0, 180.0),
         //     screen.size() * vec2(163.0, 180.0 - 47.0) / vec2(320.0, 180.0),
         // )
@@ -159,7 +162,6 @@ impl geng::State for Game {
         }
 
         if is_credits {
-            let framebuffer_size = framebuffer.size().map(|x| x as f32);
             let center = framebuffer_size * vec2(0.5, 0.7);
 
             // Coins
@@ -173,7 +175,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(pos).extend_left(size.x).extend_up(size.y),
+                    Aabb2::point(pos).extend_left(size.x).extend_up(size.y),
                     texture,
                 ),
             );
@@ -201,7 +203,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(pos).extend_left(size.x).extend_up(size.y),
+                    Aabb2::point(pos).extend_left(size.x).extend_up(size.y),
                     texture,
                 ),
             );
@@ -222,12 +224,52 @@ impl geng::State for Game {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::BLACK,
                 )
                 .scale_uniform(size)
                 .align_bounding_box(vec2(0.5, 1.0))
                 .translate(center),
+            );
+        }
+
+        if self.show_debug {
+            let size = framebuffer_size.y * 0.02;
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("Speed: {:.2}", self.world.player.velocity.len()),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size)
+                .align_bounding_box(vec2(0.0, 0.0))
+                .translate(vec2(framebuffer_size.x - size * 20.0, size * 5.0)),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("x: {:6.2}", self.world.player.velocity.x),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size * 0.8)
+                .align_bounding_box(vec2(0.0, 0.0))
+                .translate(vec2(framebuffer_size.x - size * 20.0, size * 3.0)),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw_2d::Text::unit(
+                    &*self.assets.font,
+                    format!("y: {:6.2}", self.world.player.velocity.y),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size)
+                .align_bounding_box(vec2(0.0, 0.0))
+                .translate(vec2(framebuffer_size.x - size * 20.0, size)),
             );
         }
 
@@ -272,6 +314,9 @@ impl geng::State for Game {
                 }
                 geng::Key::F2 => {
                     self.show_time = !self.show_time;
+                }
+                geng::Key::F4 => {
+                    self.show_debug = !self.show_debug;
                 }
                 _ => (),
             }

@@ -1,32 +1,32 @@
 {
   "drill_allowed": true,
   "grid": {
-    "cell_size": {
-      "x": 1.0,
-      "y": 1.0
-    },
-    "offset": {
-      "x": 20.0,
-      "y": 11.5
-    }
+    "cell_size": [
+      1.0,
+      1.0
+    ],
+    "offset": [
+      20.0,
+      11.5
+    ]
   },
-  "size": {
-    "x": 80,
-    "y": 23
-  },
-  "spawn_point": {
-    "x": -11.982498,
-    "y": 1.4844075
-  },
-  "finish": {
-    "x": 57.991753,
-    "y": -1.472964
-  },
+  "size": [
+    80,
+    23
+  ],
+  "spawn_point": [
+    -11.982498,
+    1.4844075
+  ],
+  "finish": [
+    57.991753,
+    -1.472964
+  ],
   "tiles": {
-    "size": {
-      "x": 80,
-      "y": 23
-    },
+    "size": [
+      80,
+      23
+    ],
     "tiles": [
       "Air",
       "Air",
@@ -1873,96 +1873,136 @@
   "hazards": [
     {
       "sprite": {
-        "x_min": 34.0,
-        "x_max": 35.0,
-        "y_min": 9.5,
-        "y_max": 10.5
+        "min": [
+          34.0,
+          9.5
+        ],
+        "max": [
+          35.0,
+          10.5
+        ]
       },
-      "direction": {
-        "x": 1.0,
-        "y": -0.0
-      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
       "collider": {
-        "x_min": 34.0,
-        "x_max": 34.4,
-        "y_min": 9.6,
-        "y_max": 10.4
+        "min": [
+          34.0,
+          9.6
+        ],
+        "max": [
+          34.4,
+          10.4
+        ]
       },
       "hazard_type": "Spikes"
     },
     {
       "sprite": {
-        "x_min": 34.0,
-        "x_max": 35.0,
-        "y_min": 8.5,
-        "y_max": 9.5
+        "min": [
+          34.0,
+          8.5
+        ],
+        "max": [
+          35.0,
+          9.5
+        ]
       },
-      "direction": {
-        "x": 1.0,
-        "y": -0.0
-      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
       "collider": {
-        "x_min": 34.0,
-        "x_max": 34.4,
-        "y_min": 8.6,
-        "y_max": 9.4
+        "min": [
+          34.0,
+          8.6
+        ],
+        "max": [
+          34.4,
+          9.4
+        ]
       },
       "hazard_type": "Spikes"
     },
     {
       "sprite": {
-        "x_min": 34.0,
-        "x_max": 35.0,
-        "y_min": 7.5,
-        "y_max": 8.5
+        "min": [
+          34.0,
+          7.5
+        ],
+        "max": [
+          35.0,
+          8.5
+        ]
       },
-      "direction": {
-        "x": 1.0,
-        "y": -0.0
-      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
       "collider": {
-        "x_min": 34.0,
-        "x_max": 34.4,
-        "y_min": 7.6,
-        "y_max": 8.4
+        "min": [
+          34.0,
+          7.6
+        ],
+        "max": [
+          34.4,
+          8.4
+        ]
       },
       "hazard_type": "Spikes"
     },
     {
       "sprite": {
-        "x_min": 34.0,
-        "x_max": 35.0,
-        "y_min": 6.5,
-        "y_max": 7.5
+        "min": [
+          34.0,
+          6.5
+        ],
+        "max": [
+          35.0,
+          7.5
+        ]
       },
-      "direction": {
-        "x": 1.0,
-        "y": -0.0
-      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
       "collider": {
-        "x_min": 34.0,
-        "x_max": 34.4,
-        "y_min": 6.6,
-        "y_max": 7.4
+        "min": [
+          34.0,
+          6.6
+        ],
+        "max": [
+          34.4,
+          7.4
+        ]
       },
       "hazard_type": "Spikes"
     },
     {
       "sprite": {
-        "x_min": 34.0,
-        "x_max": 35.0,
-        "y_min": 6.5,
-        "y_max": 7.5
+        "min": [
+          34.0,
+          6.5
+        ],
+        "max": [
+          35.0,
+          7.5
+        ]
       },
-      "direction": {
-        "x": 1.0,
-        "y": -0.0
-      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
       "collider": {
-        "x_min": 34.0,
-        "x_max": 34.4,
-        "y_min": 6.6,
-        "y_max": 7.4
+        "min": [
+          34.0,
+          6.6
+        ],
+        "max": [
+          34.4,
+          7.4
+        ]
       },
       "hazard_type": "Spikes"
     }
@@ -1970,10 +2010,14 @@
   "coins": [
     {
       "collider": {
-        "x_min": 9.0,
-        "x_max": 10.0,
-        "y_min": 1.5,
-        "y_max": 2.5
+        "min": [
+          9.0,
+          1.5
+        ],
+        "max": [
+          10.0,
+          2.5
+        ]
       },
       "collected": false
     }

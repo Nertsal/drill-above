@@ -4,23 +4,23 @@ use geng::ui::*;
 
 #[derive(ugli::Vertex)]
 struct Vertex {
-    a_pos: Vec2<f32>,
-    a_uv: Vec2<f32>,
+    a_pos: vec2<f32>,
+    a_uv: vec2<f32>,
 }
 
 pub struct TextureBox<T: std::borrow::Borrow<ugli::Texture>> {
     pub texture: T,
     assets: Rc<Assets>,
-    pub size: Vec2<f32>,
+    pub size: vec2<f32>,
     geometry: ugli::VertexBuffer<Vertex>,
 }
 
 impl<T: std::borrow::Borrow<ugli::Texture>> TextureBox<T> {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, texture: T, geometry: [Vec2<f32>; 4]) -> Self {
-        let quad = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)].map(|(x, y)| vec2(x, y));
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, texture: T, geometry: [vec2<f32>; 4]) -> Self {
+        let quad = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
         Self {
             assets: assets.clone(),
-            size: Vec2::ZERO,
+            size: vec2::ZERO,
             geometry: ugli::VertexBuffer::new_dynamic(
                 geng.ugli(),
                 geometry
@@ -36,6 +36,8 @@ impl<T: std::borrow::Borrow<ugli::Texture>> TextureBox<T> {
 
 impl<T: std::borrow::Borrow<ugli::Texture>> Widget for TextureBox<T> {
     fn draw(&mut self, cx: &mut DrawContext) {
+        let matrix = (mat3::translate(cx.position.bottom_left()) * mat3::scale(cx.position.size()))
+            .map(|x| x as f32);
         ugli::draw(
             cx.framebuffer,
             &self.assets.shaders.texture,
@@ -43,7 +45,7 @@ impl<T: std::borrow::Borrow<ugli::Texture>> Widget for TextureBox<T> {
             &self.geometry,
             (
                 ugli::uniforms! {
-                    u_model_matrix: (Mat3::translate(cx.position.bottom_left()) * Mat3::scale(cx.position.size())).map(|x| x as f32),
+                    u_model_matrix: matrix,
                     u_texture: self.texture.borrow(),
                 },
                 geng::camera2d_uniforms(

@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-geng = { git = "https://github.com/kuviman/geng", rev = "f3ec8b799bac37ca5a07f8fcf61de5938d18f647" }
+geng = { git = "https://github.com/kuviman/geng", rev = "59af078c4bcdf43d8edfe992e3b347fef1f5d408" }
 image = "0.24.5"
 serde = { version = "1.0.152", features = ["derive"] }

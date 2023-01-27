@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TileMap {
-    size: Vec2<usize>,
-    tiles: Vec<Tile>,
+    pub size: vec2<usize>,
+    pub tiles: Vec<Tile>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -29,7 +29,7 @@ impl Tile {
 }
 
 impl TileMap {
-    pub fn new(size: Vec2<usize>) -> Self {
+    pub fn new(size: vec2<usize>) -> Self {
         Self {
             tiles: (0..size.y * size.x).map(|_| Tile::Air).collect(),
             size,
@@ -40,21 +40,21 @@ impl TileMap {
         &self.tiles
     }
 
-    pub fn set_tile(&mut self, pos: Vec2<usize>, tile: Tile) {
+    pub fn set_tile(&mut self, pos: vec2<usize>, tile: Tile) {
         if let Some(t) = pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get_mut(index))
         {
             *t = tile;
         }
     }
 
-    pub fn set_tile_isize(&mut self, pos: Vec2<isize>, tile: Tile) {
+    pub fn set_tile_isize(&mut self, pos: vec2<isize>, tile: Tile) {
         if pos.x < 0 || pos.y < 0 {
             return;
         }
         self.set_tile(pos.map(|x| x as usize), tile);
     }
 
-    pub fn get_tile_isize(&self, pos: Vec2<isize>) -> Option<Tile> {
+    pub fn get_tile_isize(&self, pos: vec2<isize>) -> Option<Tile> {
         if pos.x < 0 || pos.y < 0 {
             None
         } else {
@@ -63,12 +63,10 @@ impl TileMap {
         }
     }
 
-    pub fn get_tile_connections(&self, tile: usize) -> [bool; 8] {
+    pub fn get_tile_neighbours(&self, tile: usize) -> [Option<Tile>; 8] {
         let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
-        let Some(center) = self.get_tile_isize(pos) else {
-            return [false; 8];
-        };
         let deltas = [
+            (-1, -1),
             (0, -1),
             (1, -1),
             (1, 0),
@@ -76,17 +74,33 @@ impl TileMap {
             (0, 1),
             (-1, 1),
             (-1, 0),
-            (-1, -1),
         ];
-        let neighbours = deltas.map(|(x, y)| pos + vec2(x, y));
-        neighbours.map(|pos| {
+        deltas.map(|(x, y)| {
+            let pos = pos + vec2(x, y);
             self.get_tile_isize(pos)
-                .map(|tile| tile == center)
-                .unwrap_or(true)
         })
     }
 
-    pub fn change_size(&mut self, size: Vec2<usize>) {
+    pub fn get_tile_connections(&self, tile: usize) -> [Connection; 8] {
+        let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
+        let Some(center) = self.get_tile_isize(pos) else {
+            return [Connection::None; 8];
+        };
+        self.get_tile_neighbours(tile).map(|tile| {
+            tile.map(|tile| {
+                if matches!(tile, Tile::Air) {
+                    Connection::None
+                } else if tile == center {
+                    Connection::Same
+                } else {
+                    Connection::Other
+                }
+            })
+            .unwrap_or(Connection::Same)
+        })
+    }
+
+    pub fn change_size(&mut self, size: vec2<usize>) {
         let mut tiles = vec![Tile::Air; size.x * size.y];
         for y in 0..size.y {
             for x in 0..size.x {
@@ -101,7 +115,7 @@ impl TileMap {
     }
 }
 
-pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> Option<usize> {
+pub fn pos_to_index(pos: vec2<usize>, width: usize) -> Option<usize> {
     if pos.x >= width {
         None
     } else {
@@ -109,6 +123,6 @@ pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> Option<usize> {
     }
 }
 
-pub fn index_to_pos(index: usize, width: usize) -> Vec2<usize> {
+pub fn index_to_pos(index: usize, width: usize) -> vec2<usize> {
     vec2(index % width, index / width)
 }

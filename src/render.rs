@@ -2,8 +2,25 @@ use super::*;
 
 #[derive(ugli::Vertex, Debug, Clone, Copy)]
 struct Vertex {
-    a_pos: Vec2<f32>,
-    a_uv: Vec2<f32>,
+    a_pos: vec2<f32>,
+    a_uv: vec2<f32>,
+}
+
+#[derive(ugli::Vertex, Debug, Clone, Copy)]
+struct MaskedVertex {
+    a_pos: vec2<f32>,
+    a_uv: vec2<f32>,
+    a_mask_uv: vec2<f32>,
+}
+
+impl Vertex {
+    fn mask(self, a_mask_uv: vec2<f32>) -> MaskedVertex {
+        MaskedVertex {
+            a_pos: self.a_pos,
+            a_uv: self.a_uv,
+            a_mask_uv,
+        }
+    }
 }
 
 pub struct Render {
@@ -40,7 +57,7 @@ impl Render {
     pub fn draw_grid(
         &self,
         grid: &Grid,
-        size: Vec2<usize>,
+        size: vec2<usize>,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -77,14 +94,14 @@ impl Render {
 
     pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
         let texture = &self.assets.sprites.background;
-        let size = texture.texture().size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
+        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
         let bounds = world.level.bounds().map(Coord::as_f32);
         let texture_bounds = bounds.extend_positive(vec2(0.5, 0.0) - size);
         let camera_bounds = world.camera_bounds().map(Coord::as_f32);
 
         // Parallax background
         for i in (0..4).rev() {
-            let geometry = texture.get_tile_uv(i);
+            let geometry = get_tile_uv(i, vec2(1, 4));
             let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
             let vertices = [0, 1, 2, 3].map(|i| Vertex {
                 a_pos: vec2(vertices[i].0, vertices[i].1),
@@ -128,7 +145,7 @@ impl Render {
             ]
             .collect();
 
-            let matrix = Mat3::translate(pos) * Mat3::scale(size);
+            let matrix = mat3::translate(pos) * mat3::scale(size);
             let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
             ugli::draw(
                 framebuffer,
@@ -138,7 +155,7 @@ impl Render {
                 (
                     ugli::uniforms! {
                         u_model_matrix: matrix,
-                        u_texture: texture.texture(),
+                        u_texture: texture,
                     },
                     geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
                 ),
@@ -154,7 +171,7 @@ impl Render {
         let move_speed = 0.9;
         let mut pos = bounds.bottom_left();
         pos += (world.camera.center - camera_bounds.bottom_left()) * move_speed;
-        let matrix = Mat3::translate(pos) * Mat3::scale(size);
+        let matrix = mat3::translate(pos) * mat3::scale(size);
         let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
         let vertices = vertices.map(|(x, y)| Vertex {
             a_pos: vec2(x, y),
@@ -198,7 +215,7 @@ impl Render {
             framebuffer,
             camera,
             &draw_2d::TexturedQuad::new(
-                AABB::ZERO
+                Aabb2::ZERO
                     .extend_symmetric(finish.size() / 2.0 * vec2(-1.0, 1.0))
                     .translate(finish.center()),
                 &self.assets.sprites.partner,
@@ -244,15 +261,11 @@ impl Render {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
-        for (i, tile) in tiles.tiles().iter().enumerate() {
-            if let Tile::Air = tile {
-                continue;
-            }
-
-            let connections = tiles.get_tile_connections(i);
+        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
+        let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
             let pos = index_to_pos(i, level.size.x);
             let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
-            let pos = AABB::point(pos)
+            let pos = Aabb2::point(pos)
                 .extend_positive(level.grid.cell_size)
                 .map(Coord::as_f32);
             let set = self.assets.sprites.tiles.get_tile_set(tile);
@@ -270,17 +283,67 @@ impl Render {
                 vertices[2],
                 vertices[3],
             ];
-            let matrix = Mat3::translate(pos.bottom_left()) * Mat3::scale(pos.size());
+            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
+            geometry.map(|vertex| {
+                let pos = matrix * vertex.a_pos.extend(1.0);
+                Vertex {
+                    a_pos: pos.xy() / pos.z,
+                    ..vertex
+                }
+            })
+        };
+        for (i, tile) in tiles.tiles().iter().enumerate() {
+            if let Tile::Air = tile {
+                continue;
+            }
+
+            let connections = tiles.get_tile_connections(i);
+            let neighbours = tiles.get_tile_neighbours(i);
+            if neighbours.contains(&Some(Tile::Grass)) {
+                let geometry = calc_geometry(i, &Tile::Grass, connections);
+                let mask = self
+                    .assets
+                    .sprites
+                    .tiles
+                    .mask
+                    .get_tile_connected(connections);
+                let idx = [0, 1, 2, 0, 2, 3];
+                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
+                masked_geometry
+                    .entry(Tile::Grass)
+                    .or_default()
+                    .extend(geometry);
+            }
+
             tiles_geometry
                 .entry(*tile)
                 .or_default()
-                .extend(geometry.into_iter().map(|vertex| {
-                    let pos = matrix * vertex.a_pos.extend(1.0);
-                    Vertex {
-                        a_pos: pos.xy() / pos.z,
-                        ..vertex
-                    }
-                }));
+                .extend(calc_geometry(i, tile, connections));
+        }
+
+        let mask = self.assets.sprites.tiles.mask.texture();
+        for (tile, geometry) in masked_geometry {
+            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let texture = set.texture();
+            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
+            ugli::draw(
+                framebuffer,
+                &self.assets.shaders.texture_mask,
+                ugli::DrawMode::Triangles,
+                &geometry,
+                (
+                    ugli::uniforms! {
+                        u_model_matrix: mat3::identity(),
+                        u_texture: texture,
+                        u_mask: mask,
+                    },
+                    geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
+                ),
+                ugli::DrawParameters {
+                    blend_mode: Some(ugli::BlendMode::default()),
+                    ..Default::default()
+                },
+            );
         }
         for (tile, geometry) in tiles_geometry {
             let set = self.assets.sprites.tiles.get_tile_set(&tile);
@@ -293,7 +356,7 @@ impl Render {
                 &geometry,
                 (
                     ugli::uniforms! {
-                        u_model_matrix: Mat3::identity(),
+                        u_model_matrix: mat3::identity(),
                         u_texture: texture,
                     },
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
@@ -331,8 +394,8 @@ impl Render {
     ) {
         for hazard in hazards {
             let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
-            let transform = (Mat3::translate(hazard.sprite.center())
-                * Mat3::rotate(
+            let transform = (mat3::translate(hazard.sprite.center())
+                * mat3::rotate(
                     hazard
                         .direction
                         .map_or(Coord::ZERO, |dir| dir.arg() - Coord::PI / Coord::new(2.0)),
@@ -342,7 +405,7 @@ impl Render {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
+                    Aabb2::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
                     texture,
                 ),
                 transform,
@@ -399,10 +462,20 @@ impl Render {
             let sprites = &self.assets.sprites.player;
             let mut flip = player.facing_left;
             let (texture, transform) = match player.state {
-                PlayerState::Drilling => {
+                PlayerState::Drilling | PlayerState::AirDrill { .. } => {
+                    let mut velocity = player.velocity.map(|x| {
+                        if x.as_f32().abs() < 1.0 {
+                            0.00
+                        } else {
+                            x.as_f32()
+                        }
+                    });
+                    if velocity == vec2::ZERO {
+                        velocity.y = 1.0;
+                    }
                     flip = false;
-                    let mut angle = player.velocity.arg().as_f32() / f32::PI * 4.0 + 2.0;
-                    let drill = if angle.floor() as i32 % 2 == 0 {
+                    let mut angle = (velocity.arg() / f32::PI * 4.0 + 2.0).round();
+                    let drill = if angle as i32 % 2 == 0 {
                         // Vertical/horizontal
                         &sprites.drill.drill_v0
                     } else {
@@ -410,24 +483,24 @@ impl Render {
                         angle -= 1.0;
                         &sprites.drill.drill_d0
                     };
-                    (drill, Mat3::rotate(angle.floor() * f32::PI / 4.0))
+                    (drill, mat3::rotate(angle * f32::PI / 4.0))
                 }
                 PlayerState::WallSliding { wall_normal, .. } => {
                     flip = wall_normal.x < Coord::ZERO;
-                    (&sprites.slide0, Mat3::identity())
+                    (&sprites.slide0, mat3::identity())
                 }
-                _ => (&sprites.idle0, Mat3::identity()),
+                _ => (&sprites.idle0, mat3::identity()),
             };
 
             let pos = player.collider.feet();
             let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
             let pos = pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
-            let transform = Mat3::translate(pos) * transform;
+            let transform = mat3::translate(pos) * transform;
             self.geng.draw_2d_transformed(
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::ZERO
+                    Aabb2::ZERO
                         .extend_symmetric(size / 2.0 * vec2(if flip { -1.0 } else { 1.0 }, 1.0)),
                     texture,
                 ),
@@ -457,7 +530,9 @@ impl Render {
                 ParticleType::Heart4 => &self.assets.sprites.heart4,
                 ParticleType::Heart8 => &self.assets.sprites.heart8,
                 ParticleType::Circle { radius, color } => {
-                    let radius = (radius * particle.lifetime.min(Time::ONE)).as_f32();
+                    let t =
+                        particle.lifetime.min(Time::ONE) / particle.initial_lifetime.min(Time::ONE);
+                    let radius = (radius * t).as_f32();
                     self.geng.draw_2d(
                         framebuffer,
                         camera,
@@ -475,7 +550,7 @@ impl Render {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
+                    Aabb2::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
                     texture,
                 ),
             );
@@ -501,7 +576,7 @@ impl Render {
             framebuffer,
             &geng::PixelPerfectCamera,
             &draw_2d::TexturedQuad::new(
-                AABB::point(pos).extend_right(size.x).extend_down(size.y),
+                Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
                 texture,
             ),
         );
@@ -528,7 +603,7 @@ impl Render {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
                 )
                 .scale_uniform(size)
@@ -541,7 +616,7 @@ impl Render {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("{:02}:{:02}.{:.3}", m, s, ms),
+                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
                 )
                 .scale_uniform(size * 0.7)
@@ -552,7 +627,7 @@ impl Render {
     }
 }
 
-fn pixel_perfect_pos(pos: Vec2<Coord>) -> Vec2<f32> {
+fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
     let pos = pos.map(Coord::as_f32);
     let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
     pixel / PIXELS_PER_UNIT
