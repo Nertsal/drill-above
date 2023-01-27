@@ -209,6 +209,18 @@ impl WorldRender {
                 Rgba::new(0.0, 1.0, 0.0, 0.5),
             ),
         );
+
+        // Spotlights
+        for spotlight in &level.spotlights {
+            let pos = pixel_perfect_pos(spotlight.position);
+            let size = vec2(1.0, 1.0);
+            let aabb = Aabb2::point(pos).extend_symmetric(size / 2.0);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(aabb, &self.assets.sprites.spotlight),
+            );
+        }
     }
 
     pub fn draw_tiles(

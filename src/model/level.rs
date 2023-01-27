@@ -184,7 +184,7 @@ impl Level {
         if let Some(i) = self
             .spotlights
             .iter()
-            .position(|spotlight| (spotlight.position - pos).len() < Coord::new(0.1))
+            .position(|spotlight| (spotlight.position - pos).len() < Coord::new(0.5))
         {
             let spotlight = self.spotlights.swap_remove(i);
             removed.push(Block::Spotlight(spotlight));
