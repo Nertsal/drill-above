@@ -36,17 +36,17 @@ impl Editor {
         }
     }
 
-    fn action_place(&mut self, block: BlockType, pos: vec2<Coord>) -> Vec<Action> {
-        let pos = self.level.grid.world_to_grid(pos).0;
+    fn action_place(&mut self, block: BlockType, position: vec2<Coord>) -> Vec<Action> {
+        let grid_pos = self.level.grid.world_to_grid(position).0;
         match block {
             BlockType::Tile(tile) => {
-                self.level.tiles.set_tile_isize(pos, tile);
+                self.level.tiles.set_tile_isize(grid_pos, tile);
             }
             BlockType::Hazard(hazard) => {
-                self.level.place_hazard(pos, hazard);
+                self.level.place_hazard(grid_pos, hazard);
             }
             BlockType::Coin => {
-                self.level.place_coin(pos);
+                self.level.place_coin(grid_pos);
             }
             BlockType::Prop(prop) => {
                 let size = self
@@ -57,8 +57,12 @@ impl Editor {
                     .size()
                     .map(|x| x as f32 / PIXELS_PER_UNIT)
                     .map(Coord::new);
-                self.level.place_prop(pos, size, prop);
+                self.level.place_prop(grid_pos, size, prop);
             }
+            BlockType::Spotlight => self.level.spotlights.push(SpotlightSource {
+                position,
+                ..Default::default()
+            }),
         }
         vec![]
     }
@@ -77,6 +81,7 @@ impl Editor {
             Block::Prop(prop) => {
                 self.level.props.push(prop);
             }
+            Block::Spotlight(spotlight) => self.level.spotlights.push(spotlight),
         }
         vec![]
     }

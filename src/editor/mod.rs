@@ -7,6 +7,11 @@ use action::*;
 
 const CAMERA_MOVE_SPEED: f32 = 20.0;
 
+struct Render {
+    world: WorldRender,
+    util: UtilRender,
+}
+
 pub struct Editor {
     geng: Geng,
     assets: Rc<Assets>,
@@ -38,7 +43,10 @@ impl Editor {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
-            render: Render::new(geng, assets),
+            render: Render {
+                world: WorldRender::new(geng, assets),
+                util: UtilRender::new(geng, assets),
+            },
             camera: Camera2d {
                 center: vec2(0.0, 0.25),
                 rotation: 0.0,
@@ -73,6 +81,7 @@ impl Editor {
                     "Props",
                     PropType::all().into_iter().map(BlockType::Prop).collect(),
                 ),
+                EditorTab::new("Lights", vec![BlockType::Spotlight]),
             ],
             active_tab: 0,
             undo_actions: default(),
@@ -164,11 +173,16 @@ impl geng::State for Editor {
         ugli::clear(framebuffer, Some(color), None, None);
 
         self.render
+            .world
             .draw_level_editor(&self.level, true, &self.camera, framebuffer);
 
         if self.draw_grid {
-            self.render
-                .draw_grid(&self.level.grid, self.level.size, &self.camera, framebuffer);
+            self.render.util.draw_grid(
+                &self.level.grid,
+                self.level.size,
+                &self.camera,
+                framebuffer,
+            );
         }
     }
 

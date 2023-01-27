@@ -4,15 +4,22 @@ use super::*;
 #[asset(json)]
 pub struct Level {
     pub drill_allowed: bool,
+    #[serde(default)]
     pub grid: Grid,
     pub size: vec2<usize>,
     pub spawn_point: vec2<Coord>,
     pub finish: vec2<Coord>,
     pub tiles: TileMap,
+    #[serde(default)]
     pub hazards: Vec<Hazard>,
+    #[serde(default)]
     pub coins: Vec<Coin>,
     #[serde(default)]
     pub props: Vec<Prop>,
+    #[serde(default)]
+    pub global_light: GlobalLightSource,
+    #[serde(default)]
+    pub spotlights: Vec<SpotlightSource>,
     pub next_level: Option<String>,
 }
 
@@ -21,6 +28,7 @@ pub enum BlockType {
     Tile(Tile),
     Hazard(HazardType),
     Prop(PropType),
+    Spotlight,
     Coin,
 }
 
@@ -30,6 +38,7 @@ pub enum Block {
     Hazard(Hazard),
     Prop(Prop),
     Coin(Coin),
+    Spotlight(SpotlightSource),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +99,8 @@ impl Level {
             props: Vec::new(),
             next_level: None,
             drill_allowed: true,
+            global_light: default(),
+            spotlights: Vec::new(),
             grid,
             size,
         }
@@ -169,13 +180,24 @@ impl Level {
     pub fn remove_all_at(&mut self, pos: vec2<Coord>) -> Vec<Block> {
         let mut removed = Vec::new();
 
-        // Try hazards first
+        // Try spotlights
+        if let Some(i) = self
+            .spotlights
+            .iter()
+            .position(|spotlight| (spotlight.position - pos).len() < Coord::new(0.1))
+        {
+            let spotlight = self.spotlights.swap_remove(i);
+            removed.push(Block::Spotlight(spotlight));
+        }
+
+        // Try props
         if let Some(i) = self.props.iter().position(|prop| prop.sprite.contains(pos)) {
             let prop = self.props.swap_remove(i);
             removed.push(Block::Prop(prop));
         }
+
         // Try hazards first
-        while let Some(i) = self
+        if let Some(i) = self
             .hazards
             .iter()
             .position(|hazard| hazard.collider.contains(pos))
@@ -183,8 +205,9 @@ impl Level {
             let hazard = self.hazards.swap_remove(i);
             removed.push(Block::Hazard(hazard));
         }
+
         // Try coins
-        while let Some(i) = self
+        if let Some(i) = self
             .coins
             .iter()
             .position(|hazard| hazard.collider.contains(pos))

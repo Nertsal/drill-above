@@ -59,6 +59,7 @@ impl Editor {
                 }
                 BlockType::Coin => (&self.assets.sprites.coin, unit),
                 BlockType::Prop(prop) => (self.assets.sprites.props.get_texture(prop), unit),
+                BlockType::Spotlight => (&self.assets.sprites.spotlight, unit),
             };
             let texture_size = (uv[2] - uv[0]) * texture.size().map(|x| x as f32);
             let scale = framebuffer_size.y / 90.0;
