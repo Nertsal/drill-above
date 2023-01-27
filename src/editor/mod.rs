@@ -9,6 +9,7 @@ const CAMERA_MOVE_SPEED: f32 = 20.0;
 
 struct Render {
     world: WorldRender,
+    lights: LightsRender,
     util: UtilRender,
 }
 
@@ -45,6 +46,7 @@ impl Editor {
             assets: assets.clone(),
             render: Render {
                 world: WorldRender::new(geng, assets),
+                lights: LightsRender::new(geng, assets),
                 util: UtilRender::new(geng, assets),
             },
             camera: Camera2d {
@@ -172,9 +174,21 @@ impl geng::State for Editor {
         let color = Rgba::try_from("#341a22").unwrap();
         ugli::clear(framebuffer, Some(color), None, None);
 
+        // Draw the world and normals ignoring lighting
+        let (mut world_framebuffer, _normal_framebuffer) =
+            self.render.lights.start_render(framebuffer);
+
+        // Render level
+        self.render.world.draw_level_editor(
+            &self.level,
+            true,
+            &self.camera,
+            &mut world_framebuffer,
+        );
+
         self.render
-            .world
-            .draw_level_editor(&self.level, true, &self.camera, framebuffer);
+            .lights
+            .finish_render(&self.level, &self.camera, framebuffer);
 
         if self.draw_grid {
             self.render.util.draw_grid(

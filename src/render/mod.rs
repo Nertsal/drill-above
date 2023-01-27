@@ -31,15 +31,8 @@ impl GameRender {
         draw_hitboxes: bool,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        self.lights.buffers.update(framebuffer.size(), &self.geng);
-
         // Draw the world and normals ignoring lighting
-        let mut world_framebuffer =
-            attach_texture(&mut self.lights.buffers.world_texture, &self.geng);
-        let mut normal_framebuffer =
-            attach_texture(&mut self.lights.buffers.normal_texture, &self.geng);
-        ugli::clear(&mut world_framebuffer, Some(Rgba::BLACK), None, None);
-        ugli::clear(&mut normal_framebuffer, Some(Rgba::BLACK), None, None);
+        let (mut world_framebuffer, _normal_framebuffer) = self.lights.start_render(framebuffer);
 
         // Render world
         self.world.draw_world(
@@ -50,24 +43,8 @@ impl GameRender {
             // Some(&mut normal_framebuffer),
         );
 
-        // Calculate geometry
-        let geometry = self.lights.calculate_light_geometry(world);
-
-        // Render normal map
-        self.lights.render_normal_map(world, &geometry);
-
-        // Render lights
-        self.lights.render_lights(world, &geometry);
-
-        // Draw the texture to the screen
-        self.geng.draw_2d(
-            framebuffer,
-            &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(
-                Aabb2::ZERO.extend_positive(framebuffer.size().map(|x| x as f32)),
-                &self.lights.buffers.postprocess_texture,
-            ),
-        );
+        self.lights
+            .finish_render(&world.level, &world.camera, framebuffer);
     }
 
     pub fn draw_ui(

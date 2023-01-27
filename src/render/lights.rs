@@ -31,15 +31,55 @@ impl LightsRender {
         }
     }
 
+    pub fn start_render(
+        &mut self,
+        framebuffer: &mut ugli::Framebuffer,
+    ) -> (ugli::Framebuffer, ugli::Framebuffer) {
+        self.buffers.update(framebuffer.size(), &self.geng);
+
+        let mut world_framebuffer = attach_texture(&mut self.buffers.world_texture, &self.geng);
+        let mut normal_framebuffer = attach_texture(&mut self.buffers.normal_texture, &self.geng);
+        ugli::clear(&mut world_framebuffer, Some(Rgba::BLACK), None, None);
+        ugli::clear(&mut normal_framebuffer, Some(Rgba::BLACK), None, None);
+
+        (world_framebuffer, normal_framebuffer)
+    }
+
+    pub fn finish_render(
+        &mut self,
+        level: &Level,
+        camera: &Camera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        // Calculate geometry
+        let geometry = self.calculate_light_geometry(level);
+
+        // Render normal map
+        self.render_normal_map(camera, &geometry);
+
+        // Render lights
+        self.render_lights(level, camera, &geometry);
+
+        // Draw the texture to the screen
+        self.geng.draw_2d(
+            framebuffer,
+            &geng::PixelPerfectCamera,
+            &draw_2d::TexturedQuad::new(
+                Aabb2::ZERO.extend_positive(framebuffer.size().map(|x| x as f32)),
+                &self.buffers.postprocess_texture,
+            ),
+        );
+    }
+
     /// Renders the world for each light separately onto the postprocessing texture.
-    pub fn render_lights(&mut self, world: &World, geometry: &[StaticPolygon]) {
-        self.render_global_light(world);
-        self.render_spotlights(world, geometry);
+    pub fn render_lights(&mut self, level: &Level, camera: &Camera2d, geometry: &[StaticPolygon]) {
+        self.render_global_light(level);
+        self.render_spotlights(level, camera, geometry);
     }
 
     /// Renders the world for the global light onto the postprocessing texture.
     /// Should be called as the first light render as it clears the texture.
-    pub fn render_global_light(&mut self, world: &World) {
+    pub fn render_global_light(&mut self, level: &Level) {
         let mut world_framebuffer =
             attach_texture(&mut self.buffers.postprocess_texture, &self.geng);
         let framebuffer_size = world_framebuffer.size();
@@ -54,8 +94,8 @@ impl LightsRender {
             ugli::uniforms! {
                 u_framebuffer_size: framebuffer_size,
                 u_source_texture: &self.buffers.world_texture,
-                u_light_color: world.level.global_light.color,
-                u_light_intensity: world.level.global_light.intensity,
+                u_light_color: level.global_light.color,
+                u_light_intensity: level.global_light.intensity,
             },
             ugli::DrawParameters {
                 blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
@@ -67,8 +107,13 @@ impl LightsRender {
         );
     }
 
-    pub fn render_spotlights(&mut self, world: &World, geometry: &[StaticPolygon]) {
-        for spotlight in &world.level.spotlights {
+    pub fn render_spotlights(
+        &mut self,
+        level: &Level,
+        camera: &Camera2d,
+        geometry: &[StaticPolygon],
+    ) {
+        for spotlight in &level.spotlights {
             // Using `world_texture` here but it is not actually used by the shader
             let mut light_framebuffer = ugli::Framebuffer::new(
                 self.geng.ugli(),
@@ -91,7 +136,7 @@ impl LightsRender {
                             u_model_matrix: mat3::identity(),
                             u_light_pos: spotlight.position.map(Coord::as_f32),
                         },
-                        geng::camera2d_uniforms(&world.camera, framebuffer_size),
+                        geng::camera2d_uniforms(camera, framebuffer_size),
                     ),
                     ugli::DrawParameters {
                         // Just in case the shader writes something in the texture,
@@ -123,7 +168,7 @@ impl LightsRender {
                             u_model_matrix: mat3::identity(),
                             u_color: Rgba::TRANSPARENT_BLACK,
                         },
-                        geng::camera2d_uniforms(&world.camera, framebuffer_size),
+                        geng::camera2d_uniforms(camera, framebuffer_size),
                     ),
                     ugli::DrawParameters {
                         // Decrement the shadow casters count
@@ -166,7 +211,7 @@ impl LightsRender {
                         u_source_texture: &self.buffers.world_texture,
                         u_framebuffer_size: self.buffers.normal_texture.size(),
                     },
-                    geng::camera2d_uniforms(&world.camera, framebuffer_size),
+                    geng::camera2d_uniforms(camera, framebuffer_size),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
@@ -188,7 +233,7 @@ impl LightsRender {
         }
     }
 
-    pub fn render_normal_map(&mut self, world: &World, geometry: &[StaticPolygon]) {
+    pub fn render_normal_map(&mut self, camera: &Camera2d, geometry: &[StaticPolygon]) {
         let mut normal_framebuffer = attach_texture(&mut self.buffers.normal_texture, &self.geng);
         let framebuffer_size = normal_framebuffer.size().map(|x| x as f32);
 
@@ -204,7 +249,7 @@ impl LightsRender {
                         u_model_matrix: mat3::identity(),
                         u_normal_influence: 1.0,
                     },
-                    geng::camera2d_uniforms(&world.camera, framebuffer_size),
+                    geng::camera2d_uniforms(camera, framebuffer_size),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::default()),
@@ -214,19 +259,18 @@ impl LightsRender {
         }
     }
 
-    pub fn calculate_light_geometry(&self, world: &World) -> Vec<StaticPolygon> {
-        itertools::chain![world
-            .level
+    pub fn calculate_light_geometry(&self, level: &Level) -> Vec<StaticPolygon> {
+        itertools::chain![level
             .tiles
             .tiles()
             .iter()
             .enumerate()
             .filter_map(|(i, tile)| {
                 (!matches!(tile, Tile::Air)).then(|| {
-                    let pos = index_to_pos(i, world.level.size.x);
-                    let pos = world.level.grid.grid_to_world(pos.map(|x| x as isize));
+                    let pos = index_to_pos(i, level.size.x);
+                    let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
                     let pos = Aabb2::point(pos)
-                        .extend_positive(world.level.grid.cell_size)
+                        .extend_positive(level.grid.cell_size)
                         .map(Coord::as_f32);
                     let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
                     StaticPolygon::new(
