@@ -3,7 +3,7 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
 #[asset(json)]
 pub struct Rules {
-    pub gravity: Vec2<Coord>,
+    pub gravity: vec2<Coord>,
     pub move_speed: Coord,
     pub full_control_acc: Coord,
     pub low_control_acc: Coord,
@@ -66,12 +66,12 @@ impl World {
         }
     }
 
-    pub fn camera_bounds(&self) -> AABB<Coord> {
+    pub fn camera_bounds(&self) -> Aabb2<Coord> {
         let mut level_bounds = self.level.bounds();
-        level_bounds.y_min += self.level.grid.cell_size.y * Coord::new(0.5);
+        level_bounds.min.y += self.level.grid.cell_size.y * Coord::new(0.5);
         let camera_view =
             (vec2(self.camera.fov * (16.0 / 9.0), self.camera.fov) / 2.0).map(Coord::new); // TODO: remove hardcode
-        AABB::from_corners(
+        Aabb2::from_corners(
             level_bounds.bottom_left() + camera_view,
             level_bounds.top_right() - camera_view,
         )

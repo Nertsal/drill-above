@@ -8,11 +8,11 @@ pub struct TileSet {
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
 #[asset(json)]
 pub struct TileSetConfig {
-    pub size: Vec2<usize>,
+    pub size: vec2<usize>,
     pub tiles: Vec<([ConnectionFilter; 8], UvRect)>,
 }
 
-type UvRect = [Vec2<f32>; 4];
+type UvRect = [vec2<f32>; 4];
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Connection {
@@ -60,12 +60,12 @@ impl TileSet {
     }
 }
 
-pub fn get_tile_uv(index: usize, set_size: Vec2<usize>) -> UvRect {
+pub fn get_tile_uv(index: usize, set_size: vec2<usize>) -> UvRect {
     let pos = vec2(index % set_size.x, index / set_size.x);
     get_tile_uv_xy(pos, set_size)
 }
 
-pub fn get_tile_uv_xy(pos: Vec2<usize>, set_size: Vec2<usize>) -> UvRect {
+pub fn get_tile_uv_xy(pos: vec2<usize>, set_size: vec2<usize>) -> UvRect {
     let tile_size = set_size.map(|x| 1.0 / x as f32);
     let pos = pos.map(|x| x as f32) * tile_size;
     [
@@ -77,7 +77,7 @@ pub fn get_tile_uv_xy(pos: Vec2<usize>, set_size: Vec2<usize>) -> UvRect {
 }
 
 impl TileSetConfig {
-    pub fn generate_from(texture: &image::RgbaImage, size: Vec2<usize>) -> Self {
+    pub fn generate_from(texture: &image::RgbaImage, size: vec2<usize>) -> Self {
         let tiles = {
             let size = size.map(|x| x as u32);
             let (w, h) = texture.dimensions();

@@ -7,9 +7,9 @@ pub struct Intro {
     time: Time,
     zoom: R32,
     transition: Option<geng::Transition>,
-    play_button: Option<AABB<f32>>,
+    play_button: Option<Aabb2<f32>>,
     hit_play: bool,
-    cursor_pos: Vec2<f32>,
+    cursor_pos: vec2<f32>,
     animation_frame: usize,
     next_frame: Time,
 }
@@ -29,7 +29,7 @@ impl Intro {
             transition: None,
             play_button: None,
             hit_play: false,
-            cursor_pos: Vec2::ZERO,
+            cursor_pos: vec2::ZERO,
             animation_frame: 0,
             next_frame: Time::new(intro.first().unwrap().1),
             intro,
@@ -59,16 +59,16 @@ impl geng::State for Intro {
         self.zoom = self.time.max(Time::ONE);
         let zoom = (self.zoom.as_f32() - 1.0).min(1.0);
         let zoom = 3.0 * zoom * zoom - 2.0 * zoom * zoom * zoom; // Smoothstep
-        let screen = AABB::from_corners(
+        let screen = Aabb2::from_corners(
             vec2(112.0, 180.0 - 97.0) / vec2(320.0, 180.0) * target_size,
             vec2(207.0, 180.0 - 41.0) / vec2(320.0, 180.0) * target_size,
         );
         let scale = 1.0 + (target_size.y - screen.height()) * zoom / screen.height();
         let offset = (screen.center() - target_size / 2.0) * zoom;
 
-        let aabb = AABB::point(framebuffer_size / 2.0 - offset * scale)
+        let aabb = Aabb2::point(framebuffer_size / 2.0 - offset * scale)
             .extend_symmetric(target_size / 2.0 * scale);
-        let screen = AABB::from_corners(
+        let screen = Aabb2::from_corners(
             screen.bottom_left() / target_size * aabb.size(),
             screen.top_right() / target_size * aabb.size(),
         )
@@ -81,7 +81,7 @@ impl geng::State for Intro {
                 .map(|(texture, _)| texture)
         } else {
             self.play_button = Some(
-                AABB::from_corners(
+                Aabb2::from_corners(
                     aabb.size() * vec2(161.0, 180.0 - 85.0) / vec2(320.0, 180.0),
                     aabb.size() * vec2(169.0, 180.0 - 71.0) / vec2(320.0, 180.0),
                 )
@@ -112,7 +112,7 @@ impl geng::State for Intro {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(pos).extend_right(size.x).extend_down(size.y),
+                    Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
                     texture,
                 ),
             );

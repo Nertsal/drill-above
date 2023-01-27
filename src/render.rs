@@ -2,19 +2,19 @@ use super::*;
 
 #[derive(ugli::Vertex, Debug, Clone, Copy)]
 struct Vertex {
-    a_pos: Vec2<f32>,
-    a_uv: Vec2<f32>,
+    a_pos: vec2<f32>,
+    a_uv: vec2<f32>,
 }
 
 #[derive(ugli::Vertex, Debug, Clone, Copy)]
 struct MaskedVertex {
-    a_pos: Vec2<f32>,
-    a_uv: Vec2<f32>,
-    a_mask_uv: Vec2<f32>,
+    a_pos: vec2<f32>,
+    a_uv: vec2<f32>,
+    a_mask_uv: vec2<f32>,
 }
 
 impl Vertex {
-    fn mask(self, a_mask_uv: Vec2<f32>) -> MaskedVertex {
+    fn mask(self, a_mask_uv: vec2<f32>) -> MaskedVertex {
         MaskedVertex {
             a_pos: self.a_pos,
             a_uv: self.a_uv,
@@ -57,7 +57,7 @@ impl Render {
     pub fn draw_grid(
         &self,
         grid: &Grid,
-        size: Vec2<usize>,
+        size: vec2<usize>,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -145,7 +145,7 @@ impl Render {
             ]
             .collect();
 
-            let matrix = Mat3::translate(pos) * Mat3::scale(size);
+            let matrix = mat3::translate(pos) * mat3::scale(size);
             let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
             ugli::draw(
                 framebuffer,
@@ -171,7 +171,7 @@ impl Render {
         let move_speed = 0.9;
         let mut pos = bounds.bottom_left();
         pos += (world.camera.center - camera_bounds.bottom_left()) * move_speed;
-        let matrix = Mat3::translate(pos) * Mat3::scale(size);
+        let matrix = mat3::translate(pos) * mat3::scale(size);
         let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
         let vertices = vertices.map(|(x, y)| Vertex {
             a_pos: vec2(x, y),
@@ -215,7 +215,7 @@ impl Render {
             framebuffer,
             camera,
             &draw_2d::TexturedQuad::new(
-                AABB::ZERO
+                Aabb2::ZERO
                     .extend_symmetric(finish.size() / 2.0 * vec2(-1.0, 1.0))
                     .translate(finish.center()),
                 &self.assets.sprites.partner,
@@ -265,7 +265,7 @@ impl Render {
         let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
             let pos = index_to_pos(i, level.size.x);
             let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
-            let pos = AABB::point(pos)
+            let pos = Aabb2::point(pos)
                 .extend_positive(level.grid.cell_size)
                 .map(Coord::as_f32);
             let set = self.assets.sprites.tiles.get_tile_set(tile);
@@ -283,7 +283,7 @@ impl Render {
                 vertices[2],
                 vertices[3],
             ];
-            let matrix = Mat3::translate(pos.bottom_left()) * Mat3::scale(pos.size());
+            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
             geometry.map(|vertex| {
                 let pos = matrix * vertex.a_pos.extend(1.0);
                 Vertex {
@@ -333,7 +333,7 @@ impl Render {
                 &geometry,
                 (
                     ugli::uniforms! {
-                        u_model_matrix: Mat3::identity(),
+                        u_model_matrix: mat3::identity(),
                         u_texture: texture,
                         u_mask: mask,
                     },
@@ -356,7 +356,7 @@ impl Render {
                 &geometry,
                 (
                     ugli::uniforms! {
-                        u_model_matrix: Mat3::identity(),
+                        u_model_matrix: mat3::identity(),
                         u_texture: texture,
                     },
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
@@ -394,8 +394,8 @@ impl Render {
     ) {
         for hazard in hazards {
             let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
-            let transform = (Mat3::translate(hazard.sprite.center())
-                * Mat3::rotate(
+            let transform = (mat3::translate(hazard.sprite.center())
+                * mat3::rotate(
                     hazard
                         .direction
                         .map_or(Coord::ZERO, |dir| dir.arg() - Coord::PI / Coord::new(2.0)),
@@ -405,7 +405,7 @@ impl Render {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
+                    Aabb2::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
                     texture,
                 ),
                 transform,
@@ -470,7 +470,7 @@ impl Render {
                             x.as_f32()
                         }
                     });
-                    if velocity == Vec2::ZERO {
+                    if velocity == vec2::ZERO {
                         velocity.y = 1.0;
                     }
                     flip = false;
@@ -483,24 +483,24 @@ impl Render {
                         angle -= 1.0;
                         &sprites.drill.drill_d0
                     };
-                    (drill, Mat3::rotate(angle * f32::PI / 4.0))
+                    (drill, mat3::rotate(angle * f32::PI / 4.0))
                 }
                 PlayerState::WallSliding { wall_normal, .. } => {
                     flip = wall_normal.x < Coord::ZERO;
-                    (&sprites.slide0, Mat3::identity())
+                    (&sprites.slide0, mat3::identity())
                 }
-                _ => (&sprites.idle0, Mat3::identity()),
+                _ => (&sprites.idle0, mat3::identity()),
             };
 
             let pos = player.collider.feet();
             let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
             let pos = pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
-            let transform = Mat3::translate(pos) * transform;
+            let transform = mat3::translate(pos) * transform;
             self.geng.draw_2d_transformed(
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::ZERO
+                    Aabb2::ZERO
                         .extend_symmetric(size / 2.0 * vec2(if flip { -1.0 } else { 1.0 }, 1.0)),
                     texture,
                 ),
@@ -550,7 +550,7 @@ impl Render {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
+                    Aabb2::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
                     texture,
                 ),
             );
@@ -576,7 +576,7 @@ impl Render {
             framebuffer,
             &geng::PixelPerfectCamera,
             &draw_2d::TexturedQuad::new(
-                AABB::point(pos).extend_right(size.x).extend_down(size.y),
+                Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
                 texture,
             ),
         );
@@ -627,7 +627,7 @@ impl Render {
     }
 }
 
-fn pixel_perfect_pos(pos: Vec2<Coord>) -> Vec2<f32> {
+fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
     let pos = pos.map(Coord::as_f32);
     let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
     pixel / PIXELS_PER_UNIT

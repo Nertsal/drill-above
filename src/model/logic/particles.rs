@@ -3,8 +3,8 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct ParticleSpawn {
     pub lifetime: Time,
-    pub position: Vec2<Coord>,
-    pub velocity: Vec2<Coord>,
+    pub position: vec2<Coord>,
+    pub velocity: vec2<Coord>,
     pub amount: usize,
     pub color: Rgba<f32>,
     pub radius: Coord,
@@ -17,8 +17,8 @@ impl Default for ParticleSpawn {
     fn default() -> Self {
         Self {
             lifetime: Time::ONE,
-            position: Vec2::ZERO,
-            velocity: Vec2::ZERO,
+            position: vec2::ZERO,
+            velocity: vec2::ZERO,
             amount: 1,
             color: Rgba::WHITE,
             radius: Coord::ONE,

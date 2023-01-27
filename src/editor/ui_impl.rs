@@ -23,7 +23,7 @@ impl Editor {
             .enumerate()
             .map(|(i, tab)| {
                 let color = if i == self.active_tab {
-                    Rgba::from_rgb(0.1, 0.1, 0.3)
+                    Rgba::opaque(0.1, 0.1, 0.3)
                 } else {
                     Rgba::GRAY
                 };

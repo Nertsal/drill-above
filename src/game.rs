@@ -4,7 +4,7 @@ pub struct Game {
     geng: Geng,
     assets: Rc<Assets>,
     render: Render,
-    framebuffer_size: Vec2<usize>,
+    framebuffer_size: vec2<usize>,
     pixel_texture: ugli::Texture,
     level_name: String,
     world: World,
@@ -95,7 +95,7 @@ impl Game {
             self.control.hold_drill = true;
         }
 
-        let mut dir = Vec2::ZERO;
+        let mut dir = vec2::ZERO;
         if pressed!(self.controls.left) {
             dir.x -= Coord::ONE;
         }
@@ -132,7 +132,7 @@ impl geng::State for Game {
         let ratio = framebuffer.size().map(|x| x as f32) / reference_size;
         let ratio = ratio.x.min(ratio.y);
         let target_size = reference_size * ratio;
-        let screen = AABB::point(framebuffer.size().map(|x| x as f32) / 2.0)
+        let screen = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
             .extend_symmetric(target_size / 2.0);
         self.geng.draw_2d(
             framebuffer,
@@ -141,7 +141,7 @@ impl geng::State for Game {
         );
 
         // Render the texture onto the screen
-        // let target = AABB::from_corners(
+        // let target = Aabb2::from_corners(
         //     screen.size() * vec2(50.0, 180.0 - 111.0) / vec2(320.0, 180.0),
         //     screen.size() * vec2(163.0, 180.0 - 47.0) / vec2(320.0, 180.0),
         // )
@@ -175,7 +175,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(pos).extend_left(size.x).extend_up(size.y),
+                    Aabb2::point(pos).extend_left(size.x).extend_up(size.y),
                     texture,
                 ),
             );
@@ -203,7 +203,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::TexturedQuad::new(
-                    AABB::point(pos).extend_left(size.x).extend_up(size.y),
+                    Aabb2::point(pos).extend_left(size.x).extend_up(size.y),
                     texture,
                 ),
             );

@@ -27,6 +27,9 @@ struct Opt {
     #[clap(long)]
     #[cfg(not(target_arch = "wasm32"))]
     change_size: Option<String>,
+    #[clap(long)]
+    #[cfg(not(target_arch = "wasm32"))]
+    format: bool,
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -35,11 +38,20 @@ struct Opt {
 enum Command {
     #[cfg(not(target_arch = "wasm32"))]
     TileSet(TileSetOpt),
+    #[cfg(not(target_arch = "wasm32"))]
+    ChangeSize(ChangeSizeOpt),
+    #[cfg(not(target_arch = "wasm32"))]
+    Format,
 }
 
 #[derive(clap::Args)]
 struct TileSetOpt {
     tileset: String,
+    size: String,
+}
+
+#[derive(clap::Args)]
+struct ChangeSizeOpt {
     size: String,
 }
 
@@ -87,23 +99,31 @@ fn main() {
                 };
                 geng::run(&geng, state)
             }
+            #[cfg(not(target_arch = "wasm32"))]
+            Command::ChangeSize(config) => {
+                let level_path = opt
+                    .level
+                    .as_ref()
+                    .expect("change size requires a --level argument");
+                let size = parse_size(&config.size).expect("Failed to parse size");
+                let mut level = Level::load(level_path).expect("Failed to load the level");
+                level.change_size(size);
+
+                let level_path = "new_level.json";
+                level.save(level_path).expect("Failed to save the level");
+                info!("Saved the changed level at {}", level_path);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            Command::Format => {
+                let level_path = opt
+                    .level
+                    .as_ref()
+                    .expect("format requires a --level argument");
+                let level = Level::load(level_path).expect("Failed to load the level");
+                level.save(level_path).expect("Failed to save the level");
+                info!("Saved the changed level at {}", level_path);
+            }
         }
-        return;
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    if let Some(size) = &opt.change_size {
-        let level_path = opt
-            .level
-            .as_ref()
-            .expect("expand requires a --level argument");
-        let size = parse_size(size).expect("Failed to parse size");
-        let mut level = Level::load(level_path).expect("Failed to load the level");
-        level.change_size(size);
-
-        let level_path = "new_level.json";
-        level.save(level_path).expect("Failed to save the level");
-        info!("Saved the changed level at {}", level_path);
         return;
     }
 
@@ -116,7 +136,7 @@ fn main() {
     }
 }
 
-fn parse_size(input: &str) -> Option<Vec2<usize>> {
+fn parse_size(input: &str) -> Option<vec2<usize>> {
     let mut xs = input.split('x');
     let pos = vec2(xs.next()?.parse().ok()?, xs.next()?.parse().ok()?);
     if xs.next().is_some() {

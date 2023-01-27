@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TileMap {
-    size: Vec2<usize>,
+    size: vec2<usize>,
     tiles: Vec<Tile>,
 }
 
@@ -29,7 +29,7 @@ impl Tile {
 }
 
 impl TileMap {
-    pub fn new(size: Vec2<usize>) -> Self {
+    pub fn new(size: vec2<usize>) -> Self {
         Self {
             tiles: (0..size.y * size.x).map(|_| Tile::Air).collect(),
             size,
@@ -40,21 +40,21 @@ impl TileMap {
         &self.tiles
     }
 
-    pub fn set_tile(&mut self, pos: Vec2<usize>, tile: Tile) {
+    pub fn set_tile(&mut self, pos: vec2<usize>, tile: Tile) {
         if let Some(t) = pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get_mut(index))
         {
             *t = tile;
         }
     }
 
-    pub fn set_tile_isize(&mut self, pos: Vec2<isize>, tile: Tile) {
+    pub fn set_tile_isize(&mut self, pos: vec2<isize>, tile: Tile) {
         if pos.x < 0 || pos.y < 0 {
             return;
         }
         self.set_tile(pos.map(|x| x as usize), tile);
     }
 
-    pub fn get_tile_isize(&self, pos: Vec2<isize>) -> Option<Tile> {
+    pub fn get_tile_isize(&self, pos: vec2<isize>) -> Option<Tile> {
         if pos.x < 0 || pos.y < 0 {
             None
         } else {
@@ -100,7 +100,7 @@ impl TileMap {
         })
     }
 
-    pub fn change_size(&mut self, size: Vec2<usize>) {
+    pub fn change_size(&mut self, size: vec2<usize>) {
         let mut tiles = vec![Tile::Air; size.x * size.y];
         for y in 0..size.y {
             for x in 0..size.x {
@@ -115,7 +115,7 @@ impl TileMap {
     }
 }
 
-pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> Option<usize> {
+pub fn pos_to_index(pos: vec2<usize>, width: usize) -> Option<usize> {
     if pos.x >= width {
         None
     } else {
@@ -123,6 +123,6 @@ pub fn pos_to_index(pos: Vec2<usize>, width: usize) -> Option<usize> {
     }
 }
 
-pub fn index_to_pos(index: usize, width: usize) -> Vec2<usize> {
+pub fn index_to_pos(index: usize, width: usize) -> vec2<usize> {
     vec2(index % width, index / width)
 }

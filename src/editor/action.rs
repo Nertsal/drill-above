@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub enum Action {
-    Place { block: BlockType, pos: Vec2<Coord> },
-    Remove { pos: Vec2<Coord> },
+    Place { block: BlockType, pos: vec2<Coord> },
+    Remove { pos: vec2<Coord> },
     Replace(Block),
 }
 
@@ -36,7 +36,7 @@ impl Editor {
         }
     }
 
-    fn action_place(&mut self, block: BlockType, pos: Vec2<Coord>) -> Vec<Action> {
+    fn action_place(&mut self, block: BlockType, pos: vec2<Coord>) -> Vec<Action> {
         let pos = self.level.grid.world_to_grid(pos).0;
         match block {
             BlockType::Tile(tile) => {
@@ -81,7 +81,7 @@ impl Editor {
         vec![]
     }
 
-    fn action_remove(&mut self, pos: Vec2<Coord>) -> Vec<Action> {
+    fn action_remove(&mut self, pos: vec2<Coord>) -> Vec<Action> {
         self.level
             .remove_all_at(pos)
             .into_iter()

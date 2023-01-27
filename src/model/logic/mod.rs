@@ -40,7 +40,7 @@ impl Logic<'_> {
     }
 
     fn kill_player(&mut self) {
-        self.world.player.velocity = Vec2::ZERO;
+        self.world.player.velocity = vec2::ZERO;
         self.world.player.state = PlayerState::Respawning { time: Time::ONE };
         self.world.deaths += 1;
         self.play_sound(&self.world.assets.sounds.death);

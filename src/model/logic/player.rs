@@ -135,7 +135,7 @@ impl Logic<'_> {
                 if *time <= Time::ZERO {
                     // Respawn
                     self.world.player.state = PlayerState::Airborn;
-                    self.world.player.velocity = Vec2::ZERO;
+                    self.world.player.velocity = vec2::ZERO;
                     self.world
                         .player
                         .collider
@@ -192,14 +192,14 @@ impl Logic<'_> {
 
         let mut dash = None;
         let dir = self.player_control.move_dir;
-        if self.world.player.can_drill_dash && dir != Vec2::ZERO {
+        if self.world.player.can_drill_dash && dir != vec2::ZERO {
             // Dash
             let dir = dir.normalize_or_zero();
             let vel_dir = self.world.player.velocity.normalize_or_zero();
             let rules = &self.world.rules;
             let acceleration = rules.drill_dash_speed_inc;
             let speed = self.world.player.velocity.len();
-            let angle = Coord::new(Vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
+            let angle = Coord::new(vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
             let current = speed * angle.cos();
             let speed = (current + acceleration).max(rules.drill_dash_speed_min);
             self.world.player.velocity = dir * speed;
@@ -211,7 +211,7 @@ impl Logic<'_> {
                 position: self.world.player.collider.pos(),
                 velocity: -vel_dir * Coord::new(0.5),
                 amount: 5,
-                color: Rgba::from_rgb(0.8, 0.25, 0.2),
+                color: Rgba::opaque(0.8, 0.25, 0.2),
                 radius: Coord::new(0.2),
                 ..Default::default()
             });
@@ -247,7 +247,7 @@ impl Logic<'_> {
             position: player.collider.pos(),
             velocity: player.velocity,
             amount: 5,
-            color: Rgba::from_rgb(0.6, 0.6, 0.6),
+            color: Rgba::opaque(0.6, 0.6, 0.6),
             radius: Coord::new(0.4),
             angle_range: Coord::new(-0.1)..=Coord::new(0.1),
             ..Default::default()
@@ -271,7 +271,7 @@ impl Logic<'_> {
                         velocity: vec2(self.world.player.velocity.x.signum(), Coord::ONE)
                             * Coord::new(0.5),
                         amount: 2,
-                        color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                        color: Rgba::opaque(0.8, 0.8, 0.8),
                         radius: Coord::new(0.1),
                         ..Default::default()
                     });
@@ -289,7 +289,7 @@ impl Logic<'_> {
                         velocity: vec2(wall_normal.x * Coord::new(0.2), Coord::ONE)
                             * Coord::new(0.5),
                         amount: 2,
-                        color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                        color: Rgba::opaque(0.8, 0.8, 0.8),
                         radius: Coord::new(0.1),
                         ..Default::default()
                     });
@@ -408,7 +408,7 @@ impl Logic<'_> {
             Coyote::DrillJump { direction } => {
                 let rules = &self.world.rules;
                 let acceleration = rules.drill_jump_speed_inc;
-                let current = Vec2::dot(self.world.player.velocity, direction);
+                let current = vec2::dot(self.world.player.velocity, direction);
                 self.world.player.velocity =
                     direction * (current + acceleration).max(rules.drill_jump_speed_min);
                 self.play_sound(&self.world.assets.sounds.drill_jump);
@@ -417,7 +417,7 @@ impl Logic<'_> {
                     position: self.world.player.collider.pos(),
                     velocity: direction,
                     amount: 5,
-                    color: Rgba::from_rgb(0.8, 0.25, 0.2),
+                    color: Rgba::opaque(0.8, 0.25, 0.2),
                     radius: Coord::new(0.3),
                     ..Default::default()
                 });
@@ -443,8 +443,8 @@ impl Logic<'_> {
         for _ in 0..2 {
             // Player-tiles
             let player_aabb = player.collider.grid_aabb(&self.world.level.grid);
-            let collisions = (player_aabb.x_min..=player_aabb.x_max)
-                .flat_map(move |x| (player_aabb.y_min..=player_aabb.y_max).map(move |y| vec2(x, y)))
+            let collisions = (player_aabb.min.x..=player_aabb.max.x)
+                .flat_map(move |x| (player_aabb.min.y..=player_aabb.max.y).map(move |y| vec2(x, y)))
                 .filter_map(|pos| {
                     self.world
                         .level
@@ -460,11 +460,11 @@ impl Logic<'_> {
                         })
                         .and_then(|tile| {
                             let collider = Collider::new(
-                                AABB::point(self.world.level.grid.grid_to_world(pos))
+                                Aabb2::point(self.world.level.grid.grid_to_world(pos))
                                     .extend_positive(self.world.level.grid.cell_size),
                             );
                             player.collider.check(&collider).and_then(|collision| {
-                                (Vec2::dot(collision.normal, player.velocity) >= Coord::ZERO)
+                                (vec2::dot(collision.normal, player.velocity) >= Coord::ZERO)
                                     .then_some((tile, collision))
                             })
                         })
@@ -477,7 +477,7 @@ impl Logic<'_> {
                     .translate(-collision.normal * collision.penetration);
                 let bounciness = Coord::new(if using_drill { 1.0 } else { 0.0 });
                 player.velocity -= collision.normal
-                    * Vec2::dot(player.velocity, collision.normal)
+                    * vec2::dot(player.velocity, collision.normal)
                     * (Coord::ONE + bounciness);
                 if !using_drill {
                     if collision.normal.x.approx_eq(&Coord::ZERO)
@@ -541,7 +541,7 @@ impl Logic<'_> {
                     position: self.world.player.collider.pos(),
                     velocity: direction * Coord::new(0.3),
                     amount: 8,
-                    color: Rgba::from_rgb(0.7, 0.7, 0.7),
+                    color: Rgba::opaque(0.7, 0.7, 0.7),
                     radius: Coord::new(0.2),
                     ..Default::default()
                 });
@@ -552,7 +552,7 @@ impl Logic<'_> {
                     position: self.world.player.collider.pos(),
                     velocity: -self.world.player.velocity.normalize_or_zero() * Coord::new(0.5),
                     amount: 2,
-                    color: Rgba::from_rgb(0.8, 0.8, 0.8),
+                    color: Rgba::opaque(0.8, 0.8, 0.8),
                     radius: Coord::new(0.1),
                     ..Default::default()
                 });
@@ -570,7 +570,7 @@ impl Logic<'_> {
                 position: self.world.player.collider.pos(),
                 velocity: -dir * Coord::new(0.3),
                 amount: 5,
-                color: Rgba::from_rgb(0.7, 0.7, 0.7),
+                color: Rgba::opaque(0.7, 0.7, 0.7),
                 radius: Coord::new(0.2),
                 ..Default::default()
             });
@@ -643,7 +643,7 @@ impl Logic<'_> {
         for hazard in &self.world.level.hazards {
             if self.world.player.collider.check(&hazard.collider).is_some()
                 && hazard.direction.map_or(true, |dir| {
-                    Vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
+                    vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
                 })
             {
                 self.kill_player();
@@ -658,10 +658,10 @@ impl Logic<'_> {
         let player = &mut self.world.player;
 
         // Top
-        if player.collider.head().y > level_bounds.y_max {
+        if player.collider.head().y > level_bounds.max.y {
             player.collider.translate(vec2(
                 Coord::ZERO,
-                level_bounds.y_max - player.collider.head().y,
+                level_bounds.max.y - player.collider.head().y,
             ));
             player.velocity.y = if player.state.is_drilling() {
                 -player.velocity.y
@@ -682,7 +682,7 @@ impl Logic<'_> {
 
         // Bottom
         let player = &mut self.world.player;
-        if player.collider.feet().y < level_bounds.y_min {
+        if player.collider.feet().y < level_bounds.min.y {
             self.kill_player();
             return true;
         }

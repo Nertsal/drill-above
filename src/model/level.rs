@@ -5,9 +5,9 @@ use super::*;
 pub struct Level {
     pub drill_allowed: bool,
     pub grid: Grid,
-    pub size: Vec2<usize>,
-    pub spawn_point: Vec2<Coord>,
-    pub finish: Vec2<Coord>,
+    pub size: vec2<usize>,
+    pub spawn_point: vec2<Coord>,
+    pub finish: vec2<Coord>,
     pub tiles: TileMap,
     pub hazards: Vec<Hazard>,
     pub coins: Vec<Coin>,
@@ -26,7 +26,7 @@ pub enum BlockType {
 
 #[derive(Debug, Clone)]
 pub enum Block {
-    Tile((Tile, Vec2<isize>)),
+    Tile((Tile, vec2<isize>)),
     Hazard(Hazard),
     Prop(Prop),
     Coin(Coin),
@@ -40,15 +40,15 @@ pub struct Coin {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hazard {
-    pub sprite: AABB<Coord>,
-    pub direction: Option<Vec2<Coord>>,
+    pub sprite: Aabb2<Coord>,
+    pub direction: Option<vec2<Coord>>,
     pub collider: Collider,
     pub hazard_type: HazardType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Prop {
-    pub sprite: AABB<Coord>,
+    pub sprite: Aabb2<Coord>,
     pub prop_type: PropType,
 }
 
@@ -78,7 +78,7 @@ impl PropType {
 }
 
 impl Level {
-    pub fn new(size: Vec2<usize>) -> Self {
+    pub fn new(size: vec2<usize>) -> Self {
         let mut grid = Grid::default();
         grid.offset = size.map(|x| Coord::new(x as f32 / 2.0)) * grid.cell_size;
         Self {
@@ -96,17 +96,17 @@ impl Level {
     }
 
     pub fn finish(&self) -> Collider {
-        Collider::new(AABB::point(self.finish).extend_positive(self.grid.cell_size))
+        Collider::new(Aabb2::point(self.finish).extend_positive(self.grid.cell_size))
     }
 
-    pub fn bounds(&self) -> AABB<Coord> {
-        AABB::from_corners(
+    pub fn bounds(&self) -> Aabb2<Coord> {
+        Aabb2::from_corners(
             self.grid.grid_to_world(vec2(0, 0)),
             self.grid.grid_to_world(self.size.map(|x| x as isize)),
         )
     }
 
-    pub fn place_hazard(&mut self, pos: Vec2<isize>, hazard: HazardType) {
+    pub fn place_hazard(&mut self, pos: vec2<isize>, hazard: HazardType) {
         let connect = |pos| {
             self.tiles
                 .get_tile_isize(pos)
@@ -122,7 +122,7 @@ impl Level {
                     .unwrap_or(vec2(0, -1))
                     .map(|x| x as f32);
                 let pos = vec2(0.5, 0.5) - direction * 0.5;
-                let aabb = AABB::from_corners(
+                let aabb = Aabb2::from_corners(
                     pos + vec2(-size.x * direction.y * 0.5, -size.x * direction.x * 0.5),
                     pos + vec2(
                         size.x * direction.y * 0.5 + size.y * direction.x,
@@ -132,7 +132,7 @@ impl Level {
                 let aabb = aabb.map(Coord::new);
                 (
                     Some(direction.map(Coord::new)),
-                    AABB::point(aabb.bottom_left() * self.grid.cell_size)
+                    Aabb2::point(aabb.bottom_left() * self.grid.cell_size)
                         .extend_positive(aabb.size() * self.grid.cell_size),
                 )
             }
@@ -140,24 +140,24 @@ impl Level {
         let pos = self.grid.grid_to_world(pos);
         let collider = Collider::new(collider.translate(pos));
         self.hazards.push(Hazard {
-            sprite: AABB::point(pos).extend_positive(self.grid.cell_size),
+            sprite: Aabb2::point(pos).extend_positive(self.grid.cell_size),
             collider,
             direction,
             hazard_type: hazard,
         });
     }
 
-    pub fn place_prop(&mut self, pos: Vec2<isize>, size: Vec2<Coord>, prop: PropType) {
+    pub fn place_prop(&mut self, pos: vec2<isize>, size: vec2<Coord>, prop: PropType) {
         let pos = self.grid.grid_to_world(pos);
-        let sprite = AABB::point(pos).extend_symmetric(size / Coord::new(2.0));
+        let sprite = Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0));
         self.props.push(Prop {
             sprite,
             prop_type: prop,
         });
     }
 
-    pub fn place_coin(&mut self, pos: Vec2<isize>) {
-        let collider = AABB::ZERO.extend_positive(self.grid.cell_size);
+    pub fn place_coin(&mut self, pos: vec2<isize>) {
+        let collider = Aabb2::ZERO.extend_positive(self.grid.cell_size);
         let pos = self.grid.grid_to_world(pos);
         let collider = Collider::new(collider.translate(pos));
         self.coins.push(Coin {
@@ -166,7 +166,7 @@ impl Level {
         });
     }
 
-    pub fn remove_all_at(&mut self, pos: Vec2<Coord>) -> Vec<Block> {
+    pub fn remove_all_at(&mut self, pos: vec2<Coord>) -> Vec<Block> {
         let mut removed = Vec::new();
 
         // Try hazards first
@@ -203,7 +203,7 @@ impl Level {
         removed
     }
 
-    pub fn change_size(&mut self, size: Vec2<usize>) {
+    pub fn change_size(&mut self, size: vec2<usize>) {
         self.tiles.change_size(size);
         self.size = size;
     }

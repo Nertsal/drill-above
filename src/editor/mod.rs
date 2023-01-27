@@ -12,12 +12,12 @@ pub struct Editor {
     assets: Rc<Assets>,
     render: Render,
     camera: Camera2d,
-    framebuffer_size: Vec2<usize>,
+    framebuffer_size: vec2<usize>,
     level_name: String,
     level: Level,
     draw_grid: bool,
-    cursor_pos: Vec2<f64>,
-    cursor_world_pos: Vec2<Coord>,
+    cursor_pos: vec2<f64>,
+    cursor_world_pos: vec2<Coord>,
     dragging: Option<geng::MouseButton>,
     tabs: Vec<EditorTab>,
     active_tab: usize,
@@ -49,8 +49,8 @@ impl Editor {
                 .unwrap_or_default(),
             level_name,
             draw_grid: true,
-            cursor_pos: Vec2::ZERO,
-            cursor_world_pos: Vec2::ZERO,
+            cursor_pos: vec2::ZERO,
+            cursor_world_pos: vec2::ZERO,
             dragging: None,
             tabs: vec![
                 EditorTab::new(
@@ -110,7 +110,7 @@ impl Editor {
         });
     }
 
-    fn update_cursor(&mut self, cursor_pos: Vec2<f64>) {
+    fn update_cursor(&mut self, cursor_pos: vec2<f64>) {
         self.cursor_pos = cursor_pos;
         self.cursor_world_pos = self
             .camera
@@ -133,7 +133,7 @@ impl Editor {
         }
     }
 
-    fn click(&mut self, position: Vec2<f64>, button: geng::MouseButton) {
+    fn click(&mut self, position: vec2<f64>, button: geng::MouseButton) {
         self.update_cursor(position);
         self.dragging = Some(button);
 
@@ -175,7 +175,7 @@ impl geng::State for Editor {
     fn update(&mut self, delta_time: f64) {
         let delta_time = delta_time as f32;
         let window = self.geng.window();
-        let mut dir = Vec2::ZERO;
+        let mut dir = vec2::ZERO;
         if window.is_key_pressed(geng::Key::A) {
             dir.x -= 1.0;
         }
