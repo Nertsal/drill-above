@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TileMap {
-    size: vec2<usize>,
-    tiles: Vec<Tile>,
+    pub size: vec2<usize>,
+    pub tiles: Vec<Tile>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
