@@ -16,6 +16,7 @@ struct Render {
 pub struct Editor {
     geng: Geng,
     assets: Rc<Assets>,
+    pixel_texture: ugli::Texture,
     render: Render,
     camera: Camera2d,
     framebuffer_size: vec2<usize>,
@@ -74,6 +75,12 @@ impl Editor {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
+            pixel_texture: {
+                let mut texture =
+                    ugli::Texture::new_with(geng.ugli(), SCREEN_RESOLUTION, |_| Rgba::BLACK);
+                texture.set_filter(ugli::Filter::Nearest);
+                texture
+            },
             render: Render {
                 world: WorldRender::new(geng, assets),
                 lights: LightsRender::new(geng, assets),
@@ -313,9 +320,16 @@ impl geng::State for Editor {
         let color = Rgba::try_from("#341a22").unwrap();
         ugli::clear(framebuffer, Some(color), None, None);
 
+        // Render the game onto the texture
+        let mut pixel_framebuffer = ugli::Framebuffer::new_color(
+            self.geng.ugli(),
+            ugli::ColorAttachment::Texture(&mut self.pixel_texture),
+        );
+        ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
+
         // Draw the world and normals ignoring lighting
         let (mut world_framebuffer, _normal_framebuffer) =
-            self.render.lights.start_render(framebuffer);
+            self.render.lights.start_render(&mut pixel_framebuffer);
 
         // Render level
         self.render.world.draw_level_editor(
@@ -327,7 +341,20 @@ impl geng::State for Editor {
 
         self.render
             .lights
-            .finish_render(&self.level, &self.camera, framebuffer);
+            .finish_render(&self.level, &self.camera, &mut pixel_framebuffer);
+
+        // Render the texture onto the screen
+        let reference_size = vec2(16.0, 9.0);
+        let ratio = framebuffer.size().map(|x| x as f32) / reference_size;
+        let ratio = ratio.x.min(ratio.y);
+        let target_size = reference_size * ratio;
+        let target = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
+            .extend_symmetric(target_size / 2.0);
+        self.geng.draw_2d(
+            framebuffer,
+            &geng::PixelPerfectCamera,
+            &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
+        );
 
         // Draw hovered
         let mut colliders = Vec::new();

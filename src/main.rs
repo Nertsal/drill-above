@@ -17,6 +17,7 @@ use render::*;
 const FPS: f64 = 60.0;
 
 const PIXELS_PER_UNIT: f32 = 8.0;
+const SCREEN_RESOLUTION: vec2<usize> = vec2(320, 180);
 
 #[derive(clap::Parser)]
 struct Opt {

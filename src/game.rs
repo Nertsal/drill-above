@@ -54,7 +54,7 @@ impl Game {
             framebuffer_size: vec2(1, 1),
             pixel_texture: {
                 let mut texture =
-                    ugli::Texture::new_with(geng.ugli(), vec2(320, 180), |_| Rgba::BLACK);
+                    ugli::Texture::new_with(geng.ugli(), SCREEN_RESOLUTION, |_| Rgba::BLACK);
                 texture.set_filter(ugli::Filter::Nearest);
                 texture
             },
