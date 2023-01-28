@@ -216,6 +216,19 @@ impl Level {
         .collect()
     }
 
+    pub fn get_block(&self, id: BlockId) -> Option<Block> {
+        match id {
+            BlockId::Tile(pos) => self
+                .tiles
+                .get_tile_isize(pos)
+                .map(|tile| Block::Tile((tile, pos))),
+            BlockId::Hazard(id) => self.hazards.get(id).cloned().map(Block::Hazard),
+            BlockId::Prop(id) => self.props.get(id).cloned().map(Block::Prop),
+            BlockId::Coin(id) => self.coins.get(id).cloned().map(Block::Coin),
+            BlockId::Spotlight(id) => self.spotlights.get(id).cloned().map(Block::Spotlight),
+        }
+    }
+
     pub fn remove_blocks(&mut self, blocks: &[BlockId]) -> Vec<Block> {
         let mut spotlights = Vec::new();
         let mut props = Vec::new();
@@ -295,6 +308,18 @@ impl Level {
         #[cfg(target_arch = "wasm32")]
         {
             anyhow::bail!("unimplemented")
+        }
+    }
+}
+
+impl Block {
+    pub fn position(&self) -> vec2<Coord> {
+        match self {
+            Block::Tile(_) => unimplemented!(),
+            Block::Hazard(hazard) => hazard.collider.pos(),
+            Block::Prop(prop) => prop.sprite.center(),
+            Block::Coin(coin) => coin.collider.pos(),
+            Block::Spotlight(light) => light.position,
         }
     }
 }

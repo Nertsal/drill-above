@@ -25,6 +25,7 @@ pub struct Editor {
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
     dragging: Option<Dragging>,
+    selected_block: Option<BlockId>,
     tabs: Vec<EditorTab>,
     active_tab: usize,
     undo_actions: Vec<Action>,
@@ -35,6 +36,7 @@ pub struct Editor {
 #[derive(Debug)]
 struct Dragging {
     pub initial_cursor_pos: vec2<f64>,
+    pub initial_world_pos: vec2<Coord>,
     pub action: Option<DragAction>,
 }
 
@@ -42,7 +44,10 @@ struct Dragging {
 enum DragAction {
     PlaceTile,
     RemoveTile,
-    MoveBlock(BlockId),
+    MoveBlock {
+        id: BlockId,
+        initial_pos: vec2<Coord>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -87,6 +92,7 @@ impl Editor {
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
             dragging: None,
+            selected_block: None,
             tabs: vec![
                 EditorTab::block(
                     "Tiles",
@@ -155,8 +161,7 @@ impl Editor {
         });
     }
 
-    fn move_block(&mut self, id: BlockId) {
-        let pos = self.cursor_world_pos;
+    fn move_block(&mut self, id: BlockId, pos: vec2<Coord>) {
         match id {
             BlockId::Tile(_) => unimplemented!(),
             BlockId::Hazard(id) => {
@@ -177,6 +182,35 @@ impl Editor {
             BlockId::Spotlight(id) => {
                 if let Some(light) = self.level.spotlights.get_mut(id) {
                     light.position = pos;
+                }
+            }
+        }
+    }
+
+    fn select_block(&mut self, id: BlockId) {
+        self.selected_block = Some(id);
+        let Some(block) = self.level.get_block(id) else {
+            return;
+        };
+        if let Block::Spotlight(light) = block {
+            if let Some(tab) = self.tabs.get_mut(self.active_tab) {
+                if let EditorMode::Spotlight { config } = &mut tab.mode {
+                    *config = light;
+                }
+            }
+        }
+    }
+
+    fn update_selected_block(&mut self) {
+        let Some(id) = self.selected_block else {
+            return;
+        };
+        if let BlockId::Spotlight(id) = id {
+            if let Some(light) = self.level.spotlights.get_mut(id) {
+                if let Some(tab) = self.tabs.get(self.active_tab) {
+                    if let &EditorMode::Spotlight { config } = &tab.mode {
+                        *light = config;
+                    }
                 }
             }
         }
@@ -203,7 +237,10 @@ impl Editor {
                 match action {
                     DragAction::PlaceTile => self.place_block(),
                     DragAction::RemoveTile => self.remove_block(),
-                    &DragAction::MoveBlock(id) => self.move_block(id),
+                    &DragAction::MoveBlock { id, initial_pos } => self.move_block(
+                        id,
+                        initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
+                    ),
                 }
             }
         }
@@ -218,7 +255,10 @@ impl Editor {
                 if let Some(BlockType::Tile(_)) = self.selected_block() {
                     Some(DragAction::PlaceTile)
                 } else if let Some(&id) = self.hovered.first() {
-                    Some(DragAction::MoveBlock(id))
+                    self.level.get_block(id).map(|block| DragAction::MoveBlock {
+                        id,
+                        initial_pos: block.position(),
+                    })
                 } else {
                     None
                 }
@@ -232,8 +272,11 @@ impl Editor {
             }
             geng::MouseButton::Middle => None,
         };
+
+        self.selected_block = None;
         self.dragging = Some(Dragging {
             initial_cursor_pos: position,
+            initial_world_pos: self.cursor_world_pos,
             action,
         });
 
@@ -245,7 +288,13 @@ impl Editor {
             if dragging.initial_cursor_pos == self.cursor_pos {
                 // Click
                 match button {
-                    geng::MouseButton::Left => self.place_block(),
+                    geng::MouseButton::Left => {
+                        if let Some(&id) = self.hovered.first() {
+                            self.select_block(id);
+                        } else {
+                            self.place_block()
+                        }
+                    }
                     geng::MouseButton::Right => self.remove_block(),
                     geng::MouseButton::Middle => {}
                 }
@@ -282,7 +331,7 @@ impl geng::State for Editor {
 
         // Draw hovered
         let mut colliders = Vec::new();
-        for &block in &self.hovered {
+        for &block in itertools::chain![&self.hovered, &self.selected_block] {
             match block {
                 BlockId::Tile(_) => {}
                 BlockId::Hazard(id) => {
@@ -340,6 +389,8 @@ impl geng::State for Editor {
             dir.y += 1.0;
         }
         self.camera.center += dir * CAMERA_MOVE_SPEED * delta_time;
+
+        self.update_selected_block();
     }
 
     fn handle_event(&mut self, event: geng::Event) {
