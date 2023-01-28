@@ -3,23 +3,23 @@ use super::*;
 pub struct LightsRender {
     geng: Geng,
     assets: Rc<Assets>,
-    pub buffers: Buffers,
+    buffers: Buffers,
 }
 
 /// All buffers used in the lighting pipeline.
-pub struct Buffers {
+struct Buffers {
     /// Current size of all the buffers.
     framebuffer_size: vec2<usize>,
     /// Constant unit quad geometry.
     quad_geometry: ugli::VertexBuffer<draw_2d::Vertex>,
     /// Texture for the render of the world ignoring lighting.
-    pub world_texture: ugli::Texture,
+    world_texture: ugli::Texture,
     /// Texture of normal vectors.
-    pub normal_texture: ugli::Texture,
+    normal_texture: ugli::Texture,
     /// Stencil buffer to count shadow casters.
     shadow_stencil: ugli::Renderbuffer<ugli::DepthStencilValue>,
     /// Final texture available for postprocessing.
-    pub postprocess_texture: ugli::Texture,
+    postprocess_texture: ugli::Texture,
 }
 
 impl LightsRender {
@@ -40,7 +40,12 @@ impl LightsRender {
         let mut world_framebuffer = attach_texture(&mut self.buffers.world_texture, &self.geng);
         let mut normal_framebuffer = attach_texture(&mut self.buffers.normal_texture, &self.geng);
         ugli::clear(&mut world_framebuffer, Some(Rgba::BLACK), None, None);
-        ugli::clear(&mut normal_framebuffer, Some(Rgba::BLACK), None, None);
+        ugli::clear(
+            &mut normal_framebuffer,
+            Some(Rgba::TRANSPARENT_BLACK),
+            None,
+            None,
+        );
 
         (world_framebuffer, normal_framebuffer)
     }
@@ -121,7 +126,7 @@ impl LightsRender {
                 ugli::DepthAttachment::RenderbufferWithStencil(&mut self.buffers.shadow_stencil),
             );
             let framebuffer_size = light_framebuffer.size().map(|x| x as f32);
-            ugli::clear(&mut light_framebuffer, Some(Rgba::BLACK), None, Some(0));
+            ugli::clear(&mut light_framebuffer, None, None, Some(0));
 
             // Shadow map
             for polygon in geometry {
@@ -160,7 +165,7 @@ impl LightsRender {
                 // Remove self-shadow
                 ugli::draw(
                     &mut light_framebuffer,
-                    &self.assets.shaders.solid,
+                    &self.assets.shaders.shadow_remove,
                     ugli::DrawMode::TriangleFan,
                     &polygon.vertices,
                     (

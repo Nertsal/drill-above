@@ -20,7 +20,7 @@ pub struct Shaders {
     pub global_light: ugli::Program,
     pub spotlight: ugli::Program,
     pub point_light_shadow_map: ugli::Program,
-    pub solid: ugli::Program,
+    pub shadow_remove: ugli::Program,
     pub normal_map: ugli::Program,
 }
 

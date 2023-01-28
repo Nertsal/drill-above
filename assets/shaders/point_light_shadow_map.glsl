@@ -21,7 +21,5 @@ void main() {
 #endif
 
 #ifdef FRAGMENT_SHADER
-void main() {
-    // gl_FragColor = vec4(1.0);
-}
+void main() { }
 #endif

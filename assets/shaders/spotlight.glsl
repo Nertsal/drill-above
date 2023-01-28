@@ -57,12 +57,15 @@ void main() {
     vec2 light_dir = -position / distance;
     vec2 texture_pos = gl_FragCoord.xy / vec2(u_framebuffer_size);
     vec4 normal_value = texture2D(u_normal_texture, texture_pos);
-    vec2 normal = normal_value.xy;
-    float normal_influence = normal_value.z;
+    vec2 normal = normal_value.rg * 2.0 - 1.0;
+    float normal_influence = normal_value.b;
     float normal_falloff = clamp(dot(normal, light_dir), 0.0, 1.0) * normal_influence;
+    if (normal_value.a == 0.0) {
+        normal_falloff = 1.0;
+    }
 
     // Adjust light intensity based on radial and angular falloff
-    float intensity = u_light_intensity * radial_falloff * angular_falloff;
+    float intensity = u_light_intensity * radial_falloff * angular_falloff * normal_falloff;
 
     // Get the base color of the world
     vec3 base_color = texture2D(u_source_texture, texture_pos).rgb;
@@ -70,10 +73,14 @@ void main() {
     // Adjust light color based on the new intensity
     vec3 light_color = u_light_color.xyz * intensity;
     // Shade the world with the normal falloff
-    vec3 shaded_color = base_color * light_color * normal_falloff;
+    vec3 shaded_color = base_color * light_color;
     // Add volumetric lighting
     shaded_color += light_color * u_light_volume;
 
     gl_FragColor = vec4(shaded_color, 1.0);
+    // gl_FragColor = vec4(base_color, 1.0);
+    // gl_FragColor = vec4(normal_falloff, 0.0, 0.0, 1.0);
+    // gl_FragColor = vec4(light_dir * 0.5 + 0.5, 0.0, 1.0);
+    // gl_FragColor = vec4(normal * 0.5 + 0.5, 0.0, 1.0);
 }
 #endif

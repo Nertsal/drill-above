@@ -960,15 +960,15 @@
   "spotlights": [
     {
       "position": [
-        4.615338,
-        3.4612358
+        -2.5034347,
+        7.008714
       ],
-      "angle": 0.0,
-      "angle_range": 1.0,
+      "angle": 5.210481,
+      "angle_range": 1.7264584,
       "color": "#ffffff",
-      "intensity": 0.5,
-      "max_distance": 5.0,
-      "volume": 0.5
+      "intensity": 1.0,
+      "max_distance": 50.0,
+      "volume": 0.27536434
     }
   ],
   "next_level": null
