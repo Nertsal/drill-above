@@ -43,8 +43,12 @@ impl GameRender {
             // Some(&mut normal_framebuffer),
         );
 
-        self.lights
-            .finish_render(&world.level, &world.camera, framebuffer);
+        self.lights.finish_render(
+            &world.level,
+            &world.light_geometry,
+            &world.camera,
+            framebuffer,
+        );
     }
 
     pub fn draw_ui(

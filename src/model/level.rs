@@ -302,6 +302,104 @@ impl Level {
         }
     }
 
+    pub fn calculate_geometry(
+        &self,
+        geng: &Geng,
+        assets: &Assets,
+    ) -> (
+        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+    ) {
+        let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
+        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
+        let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
+            let pos = index_to_pos(i, self.size.x);
+            let pos = self.grid.grid_to_world(pos.map(|x| x as isize));
+            let pos = Aabb2::point(pos)
+                .extend_positive(self.grid.cell_size)
+                .map(Coord::as_f32);
+            let set = assets.sprites.tiles.get_tile_set(tile);
+            let geometry = set.get_tile_connected(connections);
+            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+            let vertices = [0, 1, 2, 3].map(|i| Vertex {
+                a_pos: vec2(vertices[i].0, vertices[i].1),
+                a_uv: geometry[i],
+            });
+            let geometry = [
+                vertices[0],
+                vertices[1],
+                vertices[2],
+                vertices[0],
+                vertices[2],
+                vertices[3],
+            ];
+            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
+            geometry.map(|vertex| {
+                let pos = matrix * vertex.a_pos.extend(1.0);
+                Vertex {
+                    a_pos: pos.xy() / pos.z,
+                    ..vertex
+                }
+            })
+        };
+        for (i, tile) in self.tiles.tiles().iter().enumerate() {
+            if let Tile::Air = tile {
+                continue;
+            }
+
+            let connections = self.tiles.get_tile_connections(i);
+            let neighbours = self.tiles.get_tile_neighbours(i);
+            if neighbours.contains(&Some(Tile::Grass)) {
+                let geometry = calc_geometry(i, &Tile::Grass, connections);
+                let mask = assets.sprites.tiles.mask.get_tile_connected(connections);
+                let idx = [0, 1, 2, 0, 2, 3];
+                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
+                masked_geometry
+                    .entry(Tile::Grass)
+                    .or_default()
+                    .extend(geometry);
+            }
+
+            tiles_geometry
+                .entry(*tile)
+                .or_default()
+                .extend(calc_geometry(i, tile, connections));
+        }
+        let tiles = tiles_geometry
+            .into_iter()
+            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
+            .collect();
+        let masked = masked_geometry
+            .into_iter()
+            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
+            .collect();
+        (tiles, masked)
+    }
+
+    pub fn calculate_light_geometry(&self, geng: &Geng) -> Vec<StaticPolygon> {
+        itertools::chain![self
+            .tiles
+            .tiles()
+            .iter()
+            .enumerate()
+            .filter_map(|(i, tile)| {
+                (!matches!(tile, Tile::Air)).then(|| {
+                    let pos = index_to_pos(i, self.size.x);
+                    let pos = self.grid.grid_to_world(pos.map(|x| x as isize));
+                    let pos = Aabb2::point(pos)
+                        .extend_positive(self.grid.cell_size)
+                        .map(Coord::as_f32);
+                    let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
+                    StaticPolygon::new(
+                        geng,
+                        &[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+                            .map(|(x, y)| (matrix * vec2(x, y).extend(1.0)).into_2d()),
+                    )
+                })
+            })]
+        .collect()
+    }
+
     pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
         let path = run_dir().join("assets").join("levels").join(path);
         #[cfg(not(target_arch = "wasm32"))]
@@ -392,5 +490,28 @@ impl BlockId {
 impl Default for Level {
     fn default() -> Self {
         Self::new(vec2(40, 23))
+    }
+}
+
+#[derive(ugli::Vertex, Debug, Clone, Copy)]
+pub struct Vertex {
+    pub a_pos: vec2<f32>,
+    pub a_uv: vec2<f32>,
+}
+
+#[derive(ugli::Vertex, Debug, Clone, Copy)]
+pub struct MaskedVertex {
+    pub a_pos: vec2<f32>,
+    pub a_uv: vec2<f32>,
+    pub a_mask_uv: vec2<f32>,
+}
+
+impl Vertex {
+    pub fn mask(self, a_mask_uv: vec2<f32>) -> MaskedVertex {
+        MaskedVertex {
+            a_pos: self.a_pos,
+            a_uv: self.a_uv,
+            a_mask_uv,
+        }
     }
 }

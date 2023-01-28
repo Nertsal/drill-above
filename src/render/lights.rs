@@ -53,17 +53,15 @@ impl LightsRender {
     pub fn finish_render(
         &mut self,
         level: &Level,
+        geometry: &[StaticPolygon],
         camera: &Camera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        // Calculate geometry
-        let geometry = self.calculate_light_geometry(level);
-
         // Render normal map
-        self.render_normal_map(camera, &geometry);
+        self.render_normal_map(camera, geometry);
 
         // Render lights
-        self.render_lights(level, camera, &geometry);
+        self.render_lights(level, camera, geometry);
 
         // Draw the texture to the screen
         self.geng.draw_2d(
@@ -262,30 +260,6 @@ impl LightsRender {
                 },
             );
         }
-    }
-
-    pub fn calculate_light_geometry(&self, level: &Level) -> Vec<StaticPolygon> {
-        itertools::chain![level
-            .tiles
-            .tiles()
-            .iter()
-            .enumerate()
-            .filter_map(|(i, tile)| {
-                (!matches!(tile, Tile::Air)).then(|| {
-                    let pos = index_to_pos(i, level.size.x);
-                    let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
-                    let pos = Aabb2::point(pos)
-                        .extend_positive(level.grid.cell_size)
-                        .map(Coord::as_f32);
-                    let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
-                    StaticPolygon::new(
-                        &self.geng,
-                        &[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
-                            .map(|(x, y)| (matrix * vec2(x, y).extend(1.0)).into_2d()),
-                    )
-                })
-            })]
-        .collect()
     }
 }
 

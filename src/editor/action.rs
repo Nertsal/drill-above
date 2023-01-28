@@ -15,11 +15,14 @@ impl Editor {
     }
 
     fn action_impl(&mut self, action: Action) -> Vec<Action> {
-        match action {
+        let actions = match action {
             Action::Place { block, pos } => self.action_place(block, pos),
+
             Action::Remove { pos } => self.action_remove(pos),
             Action::Replace(block) => self.action_replace(block),
-        }
+        };
+        self.geometry = self.level.calculate_geometry(&self.geng, &self.assets);
+        actions
     }
 
     pub fn undo(&mut self) {

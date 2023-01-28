@@ -1,28 +1,5 @@
 use super::*;
 
-#[derive(ugli::Vertex, Debug, Clone, Copy)]
-struct Vertex {
-    a_pos: vec2<f32>,
-    a_uv: vec2<f32>,
-}
-
-#[derive(ugli::Vertex, Debug, Clone, Copy)]
-struct MaskedVertex {
-    a_pos: vec2<f32>,
-    a_uv: vec2<f32>,
-    a_mask_uv: vec2<f32>,
-}
-
-impl Vertex {
-    fn mask(self, a_mask_uv: vec2<f32>) -> MaskedVertex {
-        MaskedVertex {
-            a_pos: self.a_pos,
-            a_uv: self.a_uv,
-            a_mask_uv,
-        }
-    }
-}
-
 pub struct WorldRender {
     geng: Geng,
     assets: Rc<Assets>,
@@ -45,7 +22,14 @@ impl WorldRender {
     ) {
         // TODO: normals
         self.draw_background(world, framebuffer);
-        self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
+        self.draw_level(
+            &world.level,
+            &world.geometry.0,
+            &world.geometry.1,
+            draw_hitboxes,
+            &world.camera,
+            framebuffer,
+        );
         self.draw_player(&world.player, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
     }
@@ -158,12 +142,14 @@ impl WorldRender {
     pub fn draw_level(
         &self,
         level: &Level,
+        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
         self.draw_props(&level.props, camera, framebuffer);
-        self.draw_tiles(level, &level.tiles, camera, framebuffer);
+        self.draw_tiles(tiles_geometry, masked_geometry, camera, framebuffer);
         self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
         self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
 
@@ -191,11 +177,20 @@ impl WorldRender {
     pub fn draw_level_editor(
         &self,
         level: &Level,
+        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        self.draw_level(level, draw_hitboxes, camera, framebuffer);
+        self.draw_level(
+            level,
+            tiles_geometry,
+            masked_geometry,
+            draw_hitboxes,
+            camera,
+            framebuffer,
+        );
 
         // Spawnpoint
         self.geng.draw_2d(
@@ -225,82 +220,20 @@ impl WorldRender {
 
     pub fn draw_tiles(
         &self,
-        level: &Level,
-        tiles: &TileMap,
+        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
-        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
-        let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
-            let pos = index_to_pos(i, level.size.x);
-            let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
-            let pos = Aabb2::point(pos)
-                .extend_positive(level.grid.cell_size)
-                .map(Coord::as_f32);
-            let set = self.assets.sprites.tiles.get_tile_set(tile);
-            let geometry = set.get_tile_connected(connections);
-            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
-            let vertices = [0, 1, 2, 3].map(|i| Vertex {
-                a_pos: vec2(vertices[i].0, vertices[i].1),
-                a_uv: geometry[i],
-            });
-            let geometry = [
-                vertices[0],
-                vertices[1],
-                vertices[2],
-                vertices[0],
-                vertices[2],
-                vertices[3],
-            ];
-            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
-            geometry.map(|vertex| {
-                let pos = matrix * vertex.a_pos.extend(1.0);
-                Vertex {
-                    a_pos: pos.xy() / pos.z,
-                    ..vertex
-                }
-            })
-        };
-        for (i, tile) in tiles.tiles().iter().enumerate() {
-            if let Tile::Air = tile {
-                continue;
-            }
-
-            let connections = tiles.get_tile_connections(i);
-            let neighbours = tiles.get_tile_neighbours(i);
-            if neighbours.contains(&Some(Tile::Grass)) {
-                let geometry = calc_geometry(i, &Tile::Grass, connections);
-                let mask = self
-                    .assets
-                    .sprites
-                    .tiles
-                    .mask
-                    .get_tile_connected(connections);
-                let idx = [0, 1, 2, 0, 2, 3];
-                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
-                masked_geometry
-                    .entry(Tile::Grass)
-                    .or_default()
-                    .extend(geometry);
-            }
-
-            tiles_geometry
-                .entry(*tile)
-                .or_default()
-                .extend(calc_geometry(i, tile, connections));
-        }
-
         let mask = self.assets.sprites.tiles.mask.texture();
         for (tile, geometry) in masked_geometry {
-            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let set = self.assets.sprites.tiles.get_tile_set(tile);
             let texture = set.texture();
-            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
             ugli::draw(
                 framebuffer,
                 &self.assets.shaders.texture_mask,
                 ugli::DrawMode::Triangles,
-                &geometry,
+                geometry,
                 (
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),
@@ -316,14 +249,13 @@ impl WorldRender {
             );
         }
         for (tile, geometry) in tiles_geometry {
-            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let set = self.assets.sprites.tiles.get_tile_set(tile);
             let texture = set.texture();
-            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
             ugli::draw(
                 framebuffer,
                 &self.assets.shaders.texture,
                 ugli::DrawMode::Triangles,
-                &geometry,
+                geometry,
                 (
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),

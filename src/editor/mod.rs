@@ -22,6 +22,11 @@ pub struct Editor {
     framebuffer_size: vec2<usize>,
     level_name: String,
     level: Level,
+    geometry: (
+        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+    ),
+    light_geometry: Vec<StaticPolygon>,
     draw_grid: bool,
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
@@ -73,6 +78,8 @@ enum EditorMode {
 impl Editor {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, level_name: Option<String>) -> Self {
         let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
+        let level =
+            util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -93,9 +100,8 @@ impl Editor {
                 fov: 22.5,
             },
             framebuffer_size: vec2(1, 1),
-            level: util::report_err(Level::load(&level_name), "Failed to load level")
-                .unwrap_or_default(),
-            level_name,
+            geometry: level.calculate_geometry(geng, assets),
+            light_geometry: level.calculate_light_geometry(geng),
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -137,6 +143,8 @@ impl Editor {
             undo_actions: default(),
             redo_actions: default(),
             hovered: Vec::new(),
+            level,
+            level_name,
         }
     }
 
@@ -344,14 +352,19 @@ impl geng::State for Editor {
         // Render level
         self.render.world.draw_level_editor(
             &self.level,
+            &self.geometry.0,
+            &self.geometry.1,
             true,
             &self.camera,
             &mut world_framebuffer,
         );
 
-        self.render
-            .lights
-            .finish_render(&self.level, &self.camera, &mut pixel_framebuffer);
+        self.render.lights.finish_render(
+            &self.level,
+            &self.light_geometry,
+            &self.camera,
+            &mut pixel_framebuffer,
+        );
 
         // Render the texture onto the screen
         let reference_size = vec2(16.0, 9.0);

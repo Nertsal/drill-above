@@ -43,7 +43,7 @@ impl Game {
     ) -> Self {
         geng.window().set_cursor_type(geng::CursorType::None);
 
-        let mut world = World::new(assets, assets.rules.clone(), level);
+        let mut world = World::new(geng, assets, assets.rules.clone(), level);
         world.coins_collected = coins;
         let mut music = music.unwrap_or_else(|| assets.music.play());
         music.set_volume((world.volume - 0.3).max(0.0));
@@ -328,6 +328,7 @@ impl geng::State for Game {
             if level == self.level_name {
                 let coins = self.world.coins_collected;
                 self.world = World::new(
+                    &self.geng,
                     &self.assets,
                     self.assets.rules.clone(),
                     self.world.level.clone(),
