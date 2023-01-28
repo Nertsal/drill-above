@@ -29,11 +29,13 @@ pub struct Editor {
     active_tab: usize,
     undo_actions: Vec<Action>,
     redo_actions: Vec<Action>,
+    hovered: Vec<BlockId>,
 }
 
 #[derive(Debug, Clone)]
 struct EditorTab {
     pub name: String,
+    pub hoverable: Vec<BlockType>,
     pub mode: EditorMode,
 }
 
@@ -95,12 +97,14 @@ impl Editor {
                 ),
                 EditorTab {
                     name: "Lights".into(),
+                    hoverable: vec![BlockType::Spotlight(default())],
                     mode: EditorMode::Spotlight { config: default() },
                 },
             ],
             active_tab: 0,
             undo_actions: default(),
             redo_actions: default(),
+            hovered: Vec::new(),
         }
     }
 
@@ -147,6 +151,12 @@ impl Editor {
                 cursor_pos.map(|x| x as f32),
             )
             .map(Coord::new);
+
+        self.hovered = self.level.get_hovered(self.cursor_world_pos);
+        if let Some(tab) = &self.tabs.get(self.active_tab) {
+            self.hovered
+                .retain(|id| tab.hoverable.iter().any(|&ty| id.fits_type(ty)))
+        }
 
         if let Some(button) = self.dragging {
             match button {
@@ -206,6 +216,39 @@ impl geng::State for Editor {
         self.render
             .lights
             .finish_render(&self.level, &self.camera, framebuffer);
+
+        // Draw hovered
+        let mut colliders = Vec::new();
+        for &block in &self.hovered {
+            match block {
+                BlockId::Tile(_) => {}
+                BlockId::Hazard(id) => {
+                    let hazard = &self.level.hazards[id];
+                    colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
+                }
+                BlockId::Prop(id) => {
+                    let prop = &self.level.props[id];
+                    colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
+                }
+                BlockId::Coin(id) => {
+                    let coin = &self.level.coins[id];
+                    colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
+                }
+                BlockId::Spotlight(id) => {
+                    let light = &self.level.spotlights[id];
+                    let collider =
+                        Collider::new(Aabb2::point(light.position).extend_uniform(Coord::new(0.5)));
+                    let mut color = light.color;
+                    color.a = 0.5;
+                    colliders.push((collider, color));
+                }
+            }
+        }
+        for (collider, color) in colliders {
+            self.render
+                .util
+                .draw_collider(&collider, color, &self.camera, framebuffer);
+        }
 
         if self.draw_grid {
             self.render.util.draw_grid(
@@ -291,6 +334,7 @@ impl EditorTab {
     pub fn block(name: impl Into<String>, blocks: Vec<BlockType>) -> Self {
         Self {
             name: name.into(),
+            hoverable: blocks.clone(),
             mode: EditorMode::Block {
                 selected: 0,
                 blocks,

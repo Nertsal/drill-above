@@ -15,7 +15,7 @@ pub fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
 }
 
 pub struct UtilRender {
-    // geng: Geng,
+    geng: Geng,
     assets: Rc<Assets>,
     quad_geometry: ugli::VertexBuffer<draw_2d::Vertex>,
 }
@@ -23,7 +23,7 @@ pub struct UtilRender {
 impl UtilRender {
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
         Self {
-            // geng: geng.clone(),
+            geng: geng.clone(),
             assets: assets.clone(),
             quad_geometry: ugli::VertexBuffer::new_static(
                 geng.ugli(),
@@ -43,6 +43,20 @@ impl UtilRender {
                 ],
             ),
         }
+    }
+
+    pub fn draw_collider(
+        &self,
+        collider: &Collider,
+        color: Rgba<f32>,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        self.geng.draw_2d(
+            framebuffer,
+            camera,
+            &draw_2d::Quad::new(collider.raw().map(Coord::as_f32), color),
+        );
     }
 
     pub fn draw_grid(

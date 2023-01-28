@@ -59,11 +59,10 @@ impl Editor {
                     .map(Coord::new);
                 self.level.place_prop(grid_pos, size, prop);
             }
-            BlockType::Spotlight(light) => {
-                self.level
-                    .spotlights
-                    .push(SpotlightSource { position, ..light })
-            }
+            BlockType::Spotlight(light) => self
+                .level
+                .spotlights
+                .push(SpotlightSource { position, ..light }),
         }
         vec![]
     }
@@ -87,11 +86,14 @@ impl Editor {
         vec![]
     }
 
-    fn action_remove(&mut self, pos: vec2<Coord>) -> Vec<Action> {
-        self.level
-            .remove_all_at(pos)
+    fn action_remove(&mut self, _pos: vec2<Coord>) -> Vec<Action> {
+        let actions = self
+            .level
+            .remove_blocks(&self.hovered)
             .into_iter()
             .map(Action::Replace)
-            .collect()
+            .collect();
+        self.hovered.clear();
+        actions
     }
 }

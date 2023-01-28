@@ -32,6 +32,15 @@ pub enum BlockType {
     Coin,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum BlockId {
+    Tile(vec2<isize>),
+    Hazard(usize),
+    Prop(usize),
+    Coin(usize),
+    Spotlight(usize),
+}
+
 #[derive(Debug, Clone)]
 pub enum Block {
     Tile((Tile, vec2<isize>)),
@@ -177,49 +186,78 @@ impl Level {
         });
     }
 
-    pub fn remove_all_at(&mut self, pos: vec2<Coord>) -> Vec<Block> {
-        let mut removed = Vec::new();
+    pub fn get_hovered(&mut self, pos: vec2<Coord>) -> Vec<BlockId> {
+        let grid_pos = self.grid.world_to_grid(pos).0;
+        itertools::chain![
+            self.spotlights
+                .iter()
+                .enumerate()
+                .filter(|(_, spotlight)| (spotlight.position - pos).len() < Coord::new(0.5))
+                .map(|(i, _)| BlockId::Spotlight(i)),
+            self.props
+                .iter()
+                .enumerate()
+                .filter(|(_, prop)| prop.sprite.contains(pos))
+                .map(|(i, _)| BlockId::Prop(i)),
+            self.hazards
+                .iter()
+                .enumerate()
+                .filter(|(_, hazard)| hazard.collider.contains(pos))
+                .map(|(i, _)| BlockId::Hazard(i)),
+            self.coins
+                .iter()
+                .enumerate()
+                .filter(|(_, hazard)| hazard.collider.contains(pos))
+                .map(|(i, _)| BlockId::Coin(i)),
+            self.tiles
+                .get_tile_isize(grid_pos)
+                .map(|_| BlockId::Tile(grid_pos)),
+        ]
+        .collect()
+    }
 
-        // Try spotlights
-        if let Some(i) = self
-            .spotlights
-            .iter()
-            .position(|spotlight| (spotlight.position - pos).len() < Coord::new(0.5))
-        {
-            let spotlight = self.spotlights.swap_remove(i);
-            removed.push(Block::Spotlight(spotlight));
+    pub fn remove_blocks(&mut self, blocks: &[BlockId]) -> Vec<Block> {
+        let mut spotlights = Vec::new();
+        let mut props = Vec::new();
+        let mut hazards = Vec::new();
+        let mut coins = Vec::new();
+        let mut tiles = Vec::new();
+        for &block in blocks {
+            match block {
+                BlockId::Tile(pos) => tiles.push(pos),
+                BlockId::Hazard(id) => hazards.push(id),
+                BlockId::Prop(id) => props.push(id),
+                BlockId::Coin(id) => coins.push(id),
+                BlockId::Spotlight(id) => spotlights.push(id),
+            }
         }
 
-        // Try props
-        if let Some(i) = self.props.iter().position(|prop| prop.sprite.contains(pos)) {
-            let prop = self.props.swap_remove(i);
+        spotlights.sort_unstable();
+        props.sort_unstable();
+        hazards.sort_unstable();
+        coins.sort_unstable();
+
+        let mut removed = Vec::new();
+        for id in spotlights.into_iter().rev() {
+            let light = self.spotlights.swap_remove(id);
+            removed.push(Block::Spotlight(light));
+        }
+        for id in props.into_iter().rev() {
+            let prop = self.props.swap_remove(id);
             removed.push(Block::Prop(prop));
         }
-
-        // Try hazards first
-        if let Some(i) = self
-            .hazards
-            .iter()
-            .position(|hazard| hazard.collider.contains(pos))
-        {
-            let hazard = self.hazards.swap_remove(i);
+        for id in hazards.into_iter().rev() {
+            let hazard = self.hazards.swap_remove(id);
             removed.push(Block::Hazard(hazard));
         }
-
-        // Try coins
-        if let Some(i) = self
-            .coins
-            .iter()
-            .position(|hazard| hazard.collider.contains(pos))
-        {
-            let coin = self.coins.swap_remove(i);
+        for id in coins.into_iter().rev() {
+            let coin = self.coins.swap_remove(id);
             removed.push(Block::Coin(coin));
         }
-
-        // Try tiles
-        let pos = self.grid.world_to_grid(pos).0;
-        if let Some(tile) = self.tiles.get_tile_isize(pos) {
-            removed.push(Block::Tile((tile, pos)));
+        for pos in tiles {
+            if let Some(tile) = self.tiles.get_tile_isize(pos) {
+                removed.push(Block::Tile((tile, pos)));
+            }
             self.tiles.set_tile_isize(pos, Tile::Air);
         }
 
@@ -258,6 +296,19 @@ impl Level {
         {
             anyhow::bail!("unimplemented")
         }
+    }
+}
+
+impl BlockId {
+    pub fn fits_type(&self, ty: BlockType) -> bool {
+        matches!(
+            (self, ty),
+            (BlockId::Tile(_), BlockType::Tile(_))
+                | (BlockId::Hazard(_), BlockType::Hazard(_))
+                | (BlockId::Prop(_), BlockType::Prop(_))
+                | (BlockId::Coin(_), BlockType::Coin)
+                | (BlockId::Spotlight(_), BlockType::Spotlight(_))
+        )
     }
 }
 
