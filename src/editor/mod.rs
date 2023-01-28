@@ -60,6 +60,7 @@ struct EditorTab {
 
 #[derive(Debug, Clone)]
 enum EditorMode {
+    Level,
     Block {
         blocks: Vec<BlockType>,
         selected: usize,
@@ -101,6 +102,11 @@ impl Editor {
             dragging: None,
             selected_block: None,
             tabs: vec![
+                EditorTab {
+                    name: "Level".into(),
+                    hoverable: vec![],
+                    mode: EditorMode::Level,
+                },
                 EditorTab::block(
                     "Tiles",
                     Tile::all()
@@ -148,6 +154,7 @@ impl Editor {
         self.tabs
             .get(self.active_tab)
             .and_then(|tab| match &tab.mode {
+                EditorMode::Level => None,
                 EditorMode::Block { blocks, selected } => blocks.get(*selected).copied(),
                 EditorMode::Spotlight { config } => Some(BlockType::Spotlight(*config)),
             })
@@ -309,8 +316,11 @@ impl Editor {
         }
     }
 
-    fn save_level(&self) -> anyhow::Result<()> {
-        self.level.save(&self.level_name)
+    fn save_level(&self) {
+        if let Ok(()) = util::report_err(self.level.save(&self.level_name), "Failed to save level")
+        {
+            info!("Saved the level");
+        }
     }
 }
 
@@ -437,9 +447,7 @@ impl geng::State for Editor {
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::S if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
-                    if let Ok(()) = util::report_err(self.save_level(), "Failed to save level") {
-                        info!("Saved the level");
-                    }
+                    self.save_level();
                 }
                 geng::Key::Z if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
                     if self.geng.window().is_key_pressed(geng::Key::LShift) {

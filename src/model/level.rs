@@ -282,6 +282,26 @@ impl Level {
         self.size = size;
     }
 
+    pub fn translate(&mut self, delta: vec2<isize>) {
+        self.tiles.translate(delta);
+
+        let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
+        self.spawn_point += delta;
+        self.finish += delta;
+        for coin in &mut self.coins {
+            coin.translate(delta);
+        }
+        for hazard in &mut self.hazards {
+            hazard.translate(delta);
+        }
+        for prop in &mut self.props {
+            prop.translate(delta);
+        }
+        for light in &mut self.spotlights {
+            light.position += delta;
+        }
+    }
+
     pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
         let path = run_dir().join("assets").join("levels").join(path);
         #[cfg(not(target_arch = "wasm32"))]
@@ -329,17 +349,30 @@ impl Hazard {
         self.sprite.translate(pos - self.sprite.bottom_left());
         self.collider.teleport(pos);
     }
+
+    pub fn translate(&mut self, delta: vec2<Coord>) {
+        self.sprite.translate(delta);
+        self.collider.translate(delta);
+    }
 }
 
 impl Coin {
     pub fn teleport(&mut self, pos: vec2<Coord>) {
         self.collider.teleport(pos);
     }
+
+    pub fn translate(&mut self, delta: vec2<Coord>) {
+        self.collider.translate(delta);
+    }
 }
 
 impl Prop {
     pub fn teleport(&mut self, pos: vec2<Coord>) {
         self.sprite.translate(pos - self.sprite.center());
+    }
+
+    pub fn translate(&mut self, delta: vec2<Coord>) {
+        self.sprite.translate(delta);
     }
 }
 

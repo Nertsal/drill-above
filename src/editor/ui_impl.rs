@@ -6,16 +6,133 @@ impl Editor {
 
         let framebuffer_size = self.framebuffer_size.map(|x| x as f32);
 
-        let (cell_pos, cell_offset) = self.level.grid.world_to_grid(self.cursor_world_pos);
-        let cell_pos = Text::new(
-            format!(
-                "({}, {}) + ({:.1}, {:.1})",
-                cell_pos.x, cell_pos.y, cell_offset.x, cell_offset.y
+        // let (cell_pos, cell_offset) = self.level.grid.world_to_grid(self.cursor_world_pos);
+        // let cell_pos = Text::new(
+        //     format!(
+        //         "({}, {}) + ({:.1}, {:.1})",
+        //         cell_pos.x, cell_pos.y, cell_offset.x, cell_offset.y
+        //     ),
+        //     self.geng.default_font(),
+        //     framebuffer_size.y * 0.05,
+        //     Rgba::WHITE,
+        // );
+
+        let text_size = framebuffer_size.y * 0.05;
+        let mut level_info = geng::ui::column![
+            Text::new(
+                &self.level_name,
+                self.geng.default_font(),
+                text_size,
+                Rgba::WHITE
             ),
-            self.geng.default_font(),
-            framebuffer_size.y * 0.05,
-            Rgba::WHITE,
-        );
+            {
+                let button = Button::new(cx, "Save");
+                if button.was_clicked() {
+                    self.save_level();
+                }
+                button.padding_bottom(text_size.into())
+            },
+        ];
+
+        if let Some(tab) = self.tabs.get(self.active_tab) {
+            if let EditorMode::Level = tab.mode {
+                level_info.extend([
+                    Box::new(geng::ui::row![
+                        Text::new(
+                            format!("width: {}", self.level.size.x),
+                            self.geng.default_font(),
+                            text_size,
+                            Rgba::WHITE
+                        )
+                        .padding_right(text_size.into()),
+                        {
+                            let inc = Button::new(cx, "+");
+                            if inc.was_clicked() {
+                                self.level.change_size(self.level.size + vec2(1, 0));
+                            }
+                            inc.padding_right(text_size.into())
+                        },
+                        {
+                            let dec = Button::new(cx, "-");
+                            if dec.was_clicked() {
+                                self.level.change_size(self.level.size - vec2(1, 0));
+                            }
+                            dec.padding_right(text_size.into())
+                        },
+                    ]) as Box<dyn Widget>,
+                    Box::new(geng::ui::row![
+                        Text::new(
+                            format!("height: {}", self.level.size.y),
+                            self.geng.default_font(),
+                            text_size,
+                            Rgba::WHITE
+                        )
+                        .padding_right(text_size.into()),
+                        {
+                            let inc = Button::new(cx, "+");
+                            if inc.was_clicked() {
+                                self.level.change_size(self.level.size + vec2(0, 1));
+                            }
+                            inc.padding_right(text_size.into())
+                        },
+                        {
+                            let dec = Button::new(cx, "-");
+                            if dec.was_clicked() {
+                                self.level.change_size(self.level.size - vec2(0, 1));
+                            }
+                            dec.padding_right(text_size.into())
+                        },
+                    ]),
+                    Box::new(Text::new(
+                        "Translate",
+                        self.geng.default_font(),
+                        text_size,
+                        Rgba::WHITE,
+                    )),
+                    Box::new(geng::ui::row![
+                        Text::new(
+                            "Horizontal",
+                            self.geng.default_font(),
+                            text_size,
+                            Rgba::WHITE,
+                        )
+                        .padding_right(text_size.into()),
+                        {
+                            let left = Button::new(cx, "left");
+                            if left.was_clicked() {
+                                self.level.translate(vec2(-1, 0));
+                            }
+                            left.padding_right(text_size.into())
+                        },
+                        {
+                            let right = Button::new(cx, "right");
+                            if right.was_clicked() {
+                                self.level.translate(vec2(1, 0));
+                            }
+                            right.padding_right(text_size.into())
+                        },
+                    ]),
+                    Box::new(geng::ui::row![
+                        Text::new("Vertical", self.geng.default_font(), text_size, Rgba::WHITE,)
+                            .padding_right(text_size.into()),
+                        {
+                            let down = Button::new(cx, "down");
+                            if down.was_clicked() {
+                                self.level.translate(vec2(0, -1));
+                            }
+                            down.padding_right(text_size.into())
+                        },
+                        {
+                            let up = Button::new(cx, "up");
+                            if up.was_clicked() {
+                                self.level.translate(vec2(0, 1));
+                            }
+                            up.padding_right(text_size.into())
+                        },
+                    ]),
+                ]);
+            }
+        }
 
         let tabs = self
             .tabs
@@ -80,7 +197,7 @@ impl Editor {
             .map_or(Box::new(geng::ui::Void), |block| Box::new(block_ui(&block)));
 
         let mut stack = geng::ui::stack![
-            cell_pos.align(vec2(1.0, 1.0)),
+            level_info.align(vec2(1.0, 1.0)),
             geng::ui::row(tabs)
                 .align(vec2(0.0, 1.0))
                 .padding_left(framebuffer_size.x as f64 * 0.02),
