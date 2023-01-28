@@ -299,6 +299,25 @@ impl Level {
     }
 }
 
+impl Hazard {
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.sprite.translate(pos - self.sprite.bottom_left());
+        self.collider.teleport(pos);
+    }
+}
+
+impl Coin {
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.collider.teleport(pos);
+    }
+}
+
+impl Prop {
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.sprite.translate(pos - self.sprite.center());
+    }
+}
+
 impl BlockId {
     pub fn fits_type(&self, ty: BlockType) -> bool {
         matches!(
