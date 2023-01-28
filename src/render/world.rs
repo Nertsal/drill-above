@@ -23,61 +23,17 @@ impl Vertex {
     }
 }
 
-pub struct Render {
+pub struct WorldRender {
     geng: Geng,
     assets: Rc<Assets>,
-    quad_geometry: ugli::VertexBuffer<draw_2d::Vertex>,
 }
 
-impl Render {
+impl WorldRender {
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
-            quad_geometry: ugli::VertexBuffer::new_dynamic(
-                geng.ugli(),
-                vec![
-                    draw_2d::Vertex {
-                        a_pos: vec2(-1.0, -1.0),
-                    },
-                    draw_2d::Vertex {
-                        a_pos: vec2(1.0, -1.0),
-                    },
-                    draw_2d::Vertex {
-                        a_pos: vec2(1.0, 1.0),
-                    },
-                    draw_2d::Vertex {
-                        a_pos: vec2(-1.0, 1.0),
-                    },
-                ],
-            ),
         }
-    }
-
-    pub fn draw_grid(
-        &self,
-        grid: &Grid,
-        size: vec2<usize>,
-        camera: &impl geng::AbstractCamera2d,
-        framebuffer: &mut ugli::Framebuffer,
-    ) {
-        let matrix = grid.matrix().map(Coord::as_f32);
-        ugli::draw(
-            framebuffer,
-            &self.assets.shaders.grid,
-            ugli::DrawMode::TriangleFan,
-            &self.quad_geometry,
-            (
-                ugli::uniforms! {
-                    u_grid_matrix: matrix,
-                    u_grid_size: size,
-                    u_grid_color: Rgba::GRAY,
-                    u_grid_width: vec2(0.01, 0.01),
-                },
-                geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
-            ),
-            ugli::DrawParameters::default(),
-        )
     }
 
     pub fn draw_world(
@@ -85,7 +41,9 @@ impl Render {
         world: &World,
         draw_hitboxes: bool,
         framebuffer: &mut ugli::Framebuffer,
+        _normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
+        // TODO: normals
         self.draw_background(world, framebuffer);
         self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
         self.draw_player(&world.player, draw_hitboxes, &world.camera, framebuffer);
@@ -251,6 +209,18 @@ impl Render {
                 Rgba::new(0.0, 1.0, 0.0, 0.5),
             ),
         );
+
+        // Spotlights
+        for spotlight in &level.spotlights {
+            let pos = pixel_perfect_pos(spotlight.position);
+            let size = vec2(1.0, 1.0);
+            let aabb = Aabb2::point(pos).extend_symmetric(size / 2.0);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(aabb, &self.assets.sprites.spotlight),
+            );
+        }
     }
 
     pub fn draw_tiles(
@@ -556,79 +526,4 @@ impl Render {
             );
         }
     }
-
-    pub fn draw_ui(
-        &self,
-        show_time: Option<Time>,
-        world: &World,
-        framebuffer: &mut ugli::Framebuffer,
-    ) {
-        let framebuffer_size = framebuffer.size().map(|x| x as f32);
-
-        // Coins collected
-        let texture = &self.assets.sprites.coin;
-        let size = framebuffer_size.y * 0.07;
-        let size = texture
-            .size()
-            .map(|x| x as f32 / texture.size().x as f32 * size);
-        let pos = vec2(0.05, 0.95) * framebuffer_size;
-        self.geng.draw_2d(
-            framebuffer,
-            &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(
-                Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
-                texture,
-            ),
-        );
-        self.geng.draw_2d(
-            framebuffer,
-            &geng::PixelPerfectCamera,
-            &draw_2d::Text::unit(
-                &*self.assets.font,
-                format!("{}", world.coins_collected),
-                Rgba::try_from("#e3a912").unwrap(),
-            )
-            .scale_uniform(size.y * 0.3)
-            .align_bounding_box(vec2(0.0, 0.5))
-            .translate(pos + vec2(size.x * 1.5, -size.y / 2.0)),
-        );
-
-        if let Some(time) = show_time {
-            // Speedrun timer
-            let pos = framebuffer_size * vec2(0.77, 0.95);
-            let size = framebuffer_size.x * 0.01;
-            let (m, s, ms) = time_ms(time);
-            self.geng.draw_2d(
-                framebuffer,
-                &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
-                    &*self.assets.font,
-                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
-                    Rgba::WHITE,
-                )
-                .scale_uniform(size)
-                .align_bounding_box(vec2(0.0, 1.0))
-                .translate(pos),
-            );
-            let (m, s, ms) = time_ms(world.time);
-            self.geng.draw_2d(
-                framebuffer,
-                &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
-                    &*self.assets.font,
-                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
-                    Rgba::WHITE,
-                )
-                .scale_uniform(size * 0.7)
-                .align_bounding_box(vec2(0.0, 1.0))
-                .translate(pos - vec2(0.0, size * 2.5)),
-            );
-        }
-    }
-}
-
-fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
-    let pos = pos.map(Coord::as_f32);
-    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
-    pixel / PIXELS_PER_UNIT
 }

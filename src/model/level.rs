@@ -4,15 +4,22 @@ use super::*;
 #[asset(json)]
 pub struct Level {
     pub drill_allowed: bool,
+    #[serde(default)]
     pub grid: Grid,
     pub size: vec2<usize>,
     pub spawn_point: vec2<Coord>,
     pub finish: vec2<Coord>,
     pub tiles: TileMap,
+    #[serde(default)]
     pub hazards: Vec<Hazard>,
+    #[serde(default)]
     pub coins: Vec<Coin>,
     #[serde(default)]
     pub props: Vec<Prop>,
+    #[serde(default)]
+    pub global_light: GlobalLightSource,
+    #[serde(default)]
+    pub spotlights: Vec<SpotlightSource>,
     pub next_level: Option<String>,
 }
 
@@ -21,7 +28,17 @@ pub enum BlockType {
     Tile(Tile),
     Hazard(HazardType),
     Prop(PropType),
+    Spotlight(SpotlightSource),
     Coin,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BlockId {
+    Tile(vec2<isize>),
+    Hazard(usize),
+    Prop(usize),
+    Coin(usize),
+    Spotlight(usize),
 }
 
 #[derive(Debug, Clone)]
@@ -30,6 +47,7 @@ pub enum Block {
     Hazard(Hazard),
     Prop(Prop),
     Coin(Coin),
+    Spotlight(SpotlightSource),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +108,8 @@ impl Level {
             props: Vec::new(),
             next_level: None,
             drill_allowed: true,
+            global_light: default(),
+            spotlights: Vec::new(),
             grid,
             size,
         }
@@ -166,37 +186,91 @@ impl Level {
         });
     }
 
-    pub fn remove_all_at(&mut self, pos: vec2<Coord>) -> Vec<Block> {
-        let mut removed = Vec::new();
+    pub fn get_hovered(&mut self, pos: vec2<Coord>) -> Vec<BlockId> {
+        let grid_pos = self.grid.world_to_grid(pos).0;
+        itertools::chain![
+            self.spotlights
+                .iter()
+                .enumerate()
+                .filter(|(_, spotlight)| (spotlight.position - pos).len() < Coord::new(0.5))
+                .map(|(i, _)| BlockId::Spotlight(i)),
+            self.props
+                .iter()
+                .enumerate()
+                .filter(|(_, prop)| prop.sprite.contains(pos))
+                .map(|(i, _)| BlockId::Prop(i)),
+            self.hazards
+                .iter()
+                .enumerate()
+                .filter(|(_, hazard)| hazard.collider.contains(pos))
+                .map(|(i, _)| BlockId::Hazard(i)),
+            self.coins
+                .iter()
+                .enumerate()
+                .filter(|(_, hazard)| hazard.collider.contains(pos))
+                .map(|(i, _)| BlockId::Coin(i)),
+            self.tiles
+                .get_tile_isize(grid_pos)
+                .map(|_| BlockId::Tile(grid_pos)),
+        ]
+        .collect()
+    }
 
-        // Try hazards first
-        if let Some(i) = self.props.iter().position(|prop| prop.sprite.contains(pos)) {
-            let prop = self.props.swap_remove(i);
+    pub fn get_block(&self, id: BlockId) -> Option<Block> {
+        match id {
+            BlockId::Tile(pos) => self
+                .tiles
+                .get_tile_isize(pos)
+                .map(|tile| Block::Tile((tile, pos))),
+            BlockId::Hazard(id) => self.hazards.get(id).cloned().map(Block::Hazard),
+            BlockId::Prop(id) => self.props.get(id).cloned().map(Block::Prop),
+            BlockId::Coin(id) => self.coins.get(id).cloned().map(Block::Coin),
+            BlockId::Spotlight(id) => self.spotlights.get(id).cloned().map(Block::Spotlight),
+        }
+    }
+
+    pub fn remove_blocks(&mut self, blocks: &[BlockId]) -> Vec<Block> {
+        let mut spotlights = Vec::new();
+        let mut props = Vec::new();
+        let mut hazards = Vec::new();
+        let mut coins = Vec::new();
+        let mut tiles = Vec::new();
+        for &block in blocks {
+            match block {
+                BlockId::Tile(pos) => tiles.push(pos),
+                BlockId::Hazard(id) => hazards.push(id),
+                BlockId::Prop(id) => props.push(id),
+                BlockId::Coin(id) => coins.push(id),
+                BlockId::Spotlight(id) => spotlights.push(id),
+            }
+        }
+
+        spotlights.sort_unstable();
+        props.sort_unstable();
+        hazards.sort_unstable();
+        coins.sort_unstable();
+
+        let mut removed = Vec::new();
+        for id in spotlights.into_iter().rev() {
+            let light = self.spotlights.swap_remove(id);
+            removed.push(Block::Spotlight(light));
+        }
+        for id in props.into_iter().rev() {
+            let prop = self.props.swap_remove(id);
             removed.push(Block::Prop(prop));
         }
-        // Try hazards first
-        while let Some(i) = self
-            .hazards
-            .iter()
-            .position(|hazard| hazard.collider.contains(pos))
-        {
-            let hazard = self.hazards.swap_remove(i);
+        for id in hazards.into_iter().rev() {
+            let hazard = self.hazards.swap_remove(id);
             removed.push(Block::Hazard(hazard));
         }
-        // Try coins
-        while let Some(i) = self
-            .coins
-            .iter()
-            .position(|hazard| hazard.collider.contains(pos))
-        {
-            let coin = self.coins.swap_remove(i);
+        for id in coins.into_iter().rev() {
+            let coin = self.coins.swap_remove(id);
             removed.push(Block::Coin(coin));
         }
-
-        // Try tiles
-        let pos = self.grid.world_to_grid(pos).0;
-        if let Some(tile) = self.tiles.get_tile_isize(pos) {
-            removed.push(Block::Tile((tile, pos)));
+        for pos in tiles {
+            if let Some(tile) = self.tiles.get_tile_isize(pos) {
+                removed.push(Block::Tile((tile, pos)));
+            }
             self.tiles.set_tile_isize(pos, Tile::Air);
         }
 
@@ -235,6 +309,50 @@ impl Level {
         {
             anyhow::bail!("unimplemented")
         }
+    }
+}
+
+impl Block {
+    pub fn position(&self) -> vec2<Coord> {
+        match self {
+            Block::Tile(_) => unimplemented!(),
+            Block::Hazard(hazard) => hazard.collider.pos(),
+            Block::Prop(prop) => prop.sprite.center(),
+            Block::Coin(coin) => coin.collider.pos(),
+            Block::Spotlight(light) => light.position,
+        }
+    }
+}
+
+impl Hazard {
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.sprite.translate(pos - self.sprite.bottom_left());
+        self.collider.teleport(pos);
+    }
+}
+
+impl Coin {
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.collider.teleport(pos);
+    }
+}
+
+impl Prop {
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.sprite.translate(pos - self.sprite.center());
+    }
+}
+
+impl BlockId {
+    pub fn fits_type(&self, ty: BlockType) -> bool {
+        matches!(
+            (self, ty),
+            (BlockId::Tile(_), BlockType::Tile(_))
+                | (BlockId::Hazard(_), BlockType::Hazard(_))
+                | (BlockId::Prop(_), BlockType::Prop(_))
+                | (BlockId::Coin(_), BlockType::Coin)
+                | (BlockId::Spotlight(_), BlockType::Spotlight(_))
+        )
     }
 }
 

@@ -17,6 +17,11 @@ pub struct Shaders {
     pub texture: ugli::Program,
     pub texture_mask: ugli::Program,
     pub grid: ugli::Program,
+    pub global_light: ugli::Program,
+    pub spotlight: ugli::Program,
+    pub point_light_shadow_map: ugli::Program,
+    pub shadow_remove: ugli::Program,
+    pub normal_map: ugli::Program,
 }
 
 #[derive(geng::Assets)]
@@ -58,6 +63,8 @@ pub struct Sprites {
     pub drill_hover: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub cursor: ugli::Texture,
+    #[asset(postprocess = "pixel")]
+    pub spotlight: ugli::Texture,
 }
 
 #[derive(geng::Assets)]

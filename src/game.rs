@@ -3,7 +3,7 @@ use super::*;
 pub struct Game {
     geng: Geng,
     assets: Rc<Assets>,
-    render: Render,
+    render: GameRender,
     framebuffer_size: vec2<usize>,
     pixel_texture: ugli::Texture,
     level_name: String,
@@ -50,11 +50,11 @@ impl Game {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
-            render: Render::new(geng, assets),
+            render: GameRender::new(geng, assets),
             framebuffer_size: vec2(1, 1),
             pixel_texture: {
                 let mut texture =
-                    ugli::Texture::new_with(geng.ugli(), vec2(320, 180), |_| Rgba::BLACK);
+                    ugli::Texture::new_with(geng.ugli(), SCREEN_RESOLUTION, |_| Rgba::BLACK);
                 texture.set_filter(ugli::Filter::Nearest);
                 texture
             },
