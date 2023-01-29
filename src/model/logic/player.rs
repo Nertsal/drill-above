@@ -197,12 +197,29 @@ impl Logic<'_> {
             let dir = dir.normalize_or_zero();
             let vel_dir = self.world.player.velocity.normalize_or_zero();
             let rules = &self.world.rules;
-            let acceleration = rules.drill_dash_speed_inc;
-            let speed = self.world.player.velocity.len();
-            let angle = Coord::new(vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
-            let current = speed * angle.cos();
-            let speed = (current + acceleration).max(rules.drill_dash_speed_min);
-            self.world.player.velocity = dir * speed;
+            // let acceleration = rules.drill_dash_speed_inc;
+            // let speed = self.world.player.velocity.len();
+            // let angle = Coord::new(vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
+            // let current = speed * angle.cos();
+            // let speed = (current + acceleration).max(rules.drill_dash_speed_min);
+            let speed = rules.drill_dash_speed_min;
+            let mut target = dir * speed;
+
+            let real = self.world.player.velocity;
+            if target.x != Coord::ZERO
+                && target.x.signum() == real.x.signum()
+                && real.x.abs() > target.x.abs()
+            {
+                target.x = real.x;
+            }
+            if target.y != Coord::ZERO
+                && target.y.signum() == real.y.signum()
+                && real.y.abs() > target.y.abs()
+            {
+                target.y = real.y;
+            }
+
+            self.world.player.velocity = target;
             self.world.player.can_drill_dash = false;
             dash = Some(self.world.rules.drill_dash_time);
 
