@@ -4,7 +4,7 @@ uniform mat3 u_projection_matrix;
 
 varying vec2 v_quad_pos;
 
-float smoothstep(float min, float max, float value) {
+float smooth_step(float min, float max, float value) {
     float t = clamp((value - min) / (max - min), 0.0, 1.0);
     return 3.0 * t * t - 2.0 * t * t * t;
 }
@@ -51,7 +51,7 @@ void main() {
     float radial_falloff = (1.0 - distance_t) * (1.0 - distance_t);
 
     // Angular falloff
-    float angular_falloff = smoothstep(u_light_angle_range, 0.0, abs(angle));
+    float angular_falloff = smooth_step(u_light_angle_range, 0.0, abs(angle));
 
     // Normal falloff
     vec2 light_dir = -position / distance;
