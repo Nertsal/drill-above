@@ -7,7 +7,7 @@
   "drill_speed_inc": 0.0,
   "drill_dash_time": 0.1,
   "drill_dash_speed_min": 10.0,
-  "drill_dash_speed_inc": 2.0,
+  "drill_dash_speed_inc": 0.0,
   "drill_jump_speed_min": 20.0,
   "drill_jump_speed_inc": 5.0,
   "full_control_acc": 500.0,
