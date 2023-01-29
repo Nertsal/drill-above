@@ -953,5 +953,10 @@
   "hazards": [],
   "coins": [],
   "props": [],
+  "global_light": {
+    "color": "#ffffff",
+    "intensity": 1.0
+  },
+  "spotlights": [],
   "next_level": null
 }

@@ -70,9 +70,7 @@ enum EditorMode {
         blocks: Vec<BlockType>,
         selected: usize,
     },
-    Spotlight {
-        config: SpotlightSource,
-    },
+    Lights,
 }
 
 impl Editor {
@@ -136,7 +134,7 @@ impl Editor {
                 EditorTab {
                     name: "Lights".into(),
                     hoverable: vec![BlockType::Spotlight(default())],
-                    mode: EditorMode::Spotlight { config: default() },
+                    mode: EditorMode::Lights,
                 },
             ],
             active_tab: 0,
@@ -164,7 +162,7 @@ impl Editor {
             .and_then(|tab| match &tab.mode {
                 EditorMode::Level => None,
                 EditorMode::Block { blocks, selected } => blocks.get(*selected).copied(),
-                EditorMode::Spotlight { config } => Some(BlockType::Spotlight(*config)),
+                EditorMode::Lights => Some(BlockType::Spotlight(default())),
             })
     }
 
@@ -211,31 +209,15 @@ impl Editor {
 
     fn select_block(&mut self, id: BlockId) {
         self.selected_block = Some(id);
-        let Some(block) = self.level.get_block(id) else {
+        let Some(_block) = self.level.get_block(id) else {
             return;
         };
-        if let Block::Spotlight(light) = block {
-            if let Some(tab) = self.tabs.get_mut(self.active_tab) {
-                if let EditorMode::Spotlight { config } = &mut tab.mode {
-                    *config = light;
-                }
-            }
-        }
     }
 
     fn update_selected_block(&mut self) {
-        let Some(id) = self.selected_block else {
+        let Some(_id) = self.selected_block else {
             return;
         };
-        if let BlockId::Spotlight(id) = id {
-            if let Some(light) = self.level.spotlights.get_mut(id) {
-                if let Some(tab) = self.tabs.get(self.active_tab) {
-                    if let &EditorMode::Spotlight { config } = &tab.mode {
-                        *light = config;
-                    }
-                }
-            }
-        }
     }
 
     fn update_cursor(&mut self, cursor_pos: vec2<f64>) {

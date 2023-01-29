@@ -206,49 +206,71 @@ impl Editor {
                 .uniform_padding(framebuffer_size.y as f64 * 0.05),
         ];
 
+        let text_size = framebuffer_size.y * 0.03;
+        let font = &self.assets.font;
+        let slider = |name, range, value: &mut f32| {
+            let slider = ui::Slider::new(cx, (*value).into(), range);
+            if let Some(change) = slider.get_change() {
+                *value = change as f32;
+            }
+            geng::ui::row![
+                geng::ui::Text::new(name, font, text_size, Rgba::WHITE),
+                slider
+            ]
+        };
+
         if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
-            if let EditorMode::Spotlight { config } = &mut tab.mode {
-                let text_size = framebuffer_size.y * 0.03;
-                let font = &self.assets.font;
-
-                let slider = |name, range, value: &mut f32| {
-                    let slider = ui::Slider::new(cx, (*value).into(), range);
-                    if let Some(change) = slider.get_change() {
-                        *value = change as f32;
+            if let EditorMode::Lights = &mut tab.mode {
+                if let Some(config) = self.selected_block.and_then(|id| {
+                    if let BlockId::Spotlight(id) = id {
+                        self.level.spotlights.get_mut(id)
+                    } else {
+                        None
                     }
-                    geng::ui::row![
-                        geng::ui::Text::new(name, font, text_size, Rgba::WHITE),
+                }) {
+                    // Spotlight
+                    let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
+                    let angle_range = slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
+                    let color = geng::ui::Void; // TODO
+                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
+                    let max_distance = {
+                        let mut d = config.max_distance.as_f32();
+                        let slider = slider("Distance", 0.0..=50.0, &mut d);
+                        config.max_distance = Coord::new(d);
                         slider
+                    };
+                    let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
+
+                    let light = geng::ui::stack![
+                        geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
+                        geng::ui::column![
+                            angle,
+                            angle_range,
+                            color,
+                            intensity,
+                            max_distance,
+                            volume
+                        ]
                     ]
-                };
+                    .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.5))
+                    .align(vec2(1.0, 0.5))
+                    .uniform_padding(framebuffer_size.x as f64 * 0.05);
+                    stack.push(Box::new(light));
+                } else {
+                    // Global light
+                    let config = &mut self.level.global_light;
+                    let color = geng::ui::Void; // TODO
+                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
 
-                // pub position: vec2<Coord>,
-                // pub angle: f32,
-                // pub angle_range: f32,
-                // pub color: Rgba<f32>,
-                // pub intensity: f32,
-                // pub max_distance: Coord,
-                // pub volume: f32,
-                let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
-                let angle_range = slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
-                let color = geng::ui::Void; // TODO
-                let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
-                let max_distance = {
-                    let mut d = config.max_distance.as_f32();
-                    let slider = slider("Distance", 0.0..=50.0, &mut d);
-                    config.max_distance = Coord::new(d);
-                    slider
-                };
-                let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
-
-                let light = geng::ui::stack![
-                    geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
-                    geng::ui::column![angle, angle_range, color, intensity, max_distance, volume]
-                ]
-                .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.5))
-                .align(vec2(1.0, 0.5))
-                .uniform_padding(framebuffer_size.x as f64 * 0.05);
-                stack.push(Box::new(light));
+                    let light = geng::ui::stack![
+                        geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
+                        geng::ui::column![color, intensity],
+                    ]
+                    .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.5))
+                    .align(vec2(1.0, 0.5))
+                    .uniform_padding(framebuffer_size.x as f64 * 0.05);
+                    stack.push(Box::new(light));
+                }
             }
         }
 

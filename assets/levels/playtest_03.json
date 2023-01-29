@@ -2358,7 +2358,7 @@
   "props": [],
   "global_light": {
     "color": "#ffffff",
-    "intensity": 0.5
+    "intensity": 1.0
   },
   "spotlights": [],
   "next_level": "playtest_04.json"

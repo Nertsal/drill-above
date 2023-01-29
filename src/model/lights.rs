@@ -21,7 +21,7 @@ impl Default for GlobalLightSource {
     fn default() -> Self {
         Self {
             color: Rgba::WHITE,
-            intensity: 0.5,
+            intensity: 1.0,
         }
     }
 }
