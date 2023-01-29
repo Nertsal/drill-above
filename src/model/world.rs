@@ -34,6 +34,11 @@ pub struct World {
     pub rules: Rules,
     pub volume: f64,
     pub camera: Camera2d,
+    pub geometry: (
+        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+    ),
+    pub light_geometry: Vec<StaticPolygon>,
     pub level: Level,
     pub level_transition: Option<String>,
     pub player: Player,
@@ -45,7 +50,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
         Self {
             assets: assets.clone(),
             volume: 0.5,
@@ -54,6 +59,8 @@ impl World {
                 rotation: 0.0,
                 fov: 22.5,
             },
+            geometry: level.calculate_geometry(geng, assets),
+            light_geometry: level.calculate_light_geometry(geng),
             player: Player::new(level.spawn_point),
             particles: default(),
             level_transition: None,

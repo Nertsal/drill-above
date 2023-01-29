@@ -153,7 +153,7 @@ impl geng::LoadAsset for TileSet {
             let mut texture = ugli::Texture::load(&geng, &path).await?;
             texture.set_filter(ugli::Filter::Nearest);
             let name = path.file_stem().unwrap().to_str().unwrap();
-            let path = path.parent().unwrap().join(format!("{}_config.json", name));
+            let path = path.parent().unwrap().join(format!("{name}_config.json"));
             let config = TileSetConfig::load(&geng, &path).await?;
             Ok(Self::new(texture, config))
         }

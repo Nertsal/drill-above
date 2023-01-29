@@ -17,6 +17,7 @@ use render::*;
 const FPS: f64 = 60.0;
 
 const PIXELS_PER_UNIT: f32 = 8.0;
+const SCREEN_RESOLUTION: vec2<usize> = vec2(320, 180);
 
 #[derive(clap::Parser)]
 struct Opt {
@@ -80,7 +81,7 @@ fn main() {
                             //         .expect("Failed to load texture");
                             let path = run_dir().join(opt.tileset);
                             let image = image::open(&path)
-                                .unwrap_or_else(|_| panic!("Failed to load {:?}", path));
+                                .unwrap_or_else(|_| panic!("Failed to load {path:?}"));
                             let texture = match image {
                                 image::DynamicImage::ImageRgba8(image) => image,
                                 _ => image.to_rgba8(),

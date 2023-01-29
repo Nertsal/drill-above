@@ -104,13 +104,33 @@ impl TileMap {
         let mut tiles = vec![Tile::Air; size.x * size.y];
         for y in 0..size.y {
             for x in 0..size.x {
-                let i = x + y * size.x;
                 if x < self.size.x && y < self.size.y {
+                    let i = x + y * size.x;
                     tiles[i] = self.tiles[x + y * self.size.x];
                 }
             }
         }
         self.size = size;
+        self.tiles = tiles;
+    }
+
+    pub fn translate(&mut self, delta: vec2<isize>) {
+        let mut tiles = vec![Tile::Air; self.size.x * self.size.y];
+        for y in 0..self.size.y {
+            for x in 0..self.size.x {
+                let i = x + y * self.size.x;
+                let x = x as isize - delta.x;
+                let y = y as isize - delta.y;
+                if x < 0 || y < 0 {
+                    continue;
+                }
+                let x = x as usize;
+                let y = y as usize;
+                if x < self.size.x && y < self.size.y {
+                    tiles[i] = self.tiles[x + y * self.size.x];
+                }
+            }
+        }
         self.tiles = tiles;
     }
 }

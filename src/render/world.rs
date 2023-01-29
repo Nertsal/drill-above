@@ -1,83 +1,16 @@
 use super::*;
 
-#[derive(ugli::Vertex, Debug, Clone, Copy)]
-struct Vertex {
-    a_pos: vec2<f32>,
-    a_uv: vec2<f32>,
-}
-
-#[derive(ugli::Vertex, Debug, Clone, Copy)]
-struct MaskedVertex {
-    a_pos: vec2<f32>,
-    a_uv: vec2<f32>,
-    a_mask_uv: vec2<f32>,
-}
-
-impl Vertex {
-    fn mask(self, a_mask_uv: vec2<f32>) -> MaskedVertex {
-        MaskedVertex {
-            a_pos: self.a_pos,
-            a_uv: self.a_uv,
-            a_mask_uv,
-        }
-    }
-}
-
-pub struct Render {
+pub struct WorldRender {
     geng: Geng,
     assets: Rc<Assets>,
-    quad_geometry: ugli::VertexBuffer<draw_2d::Vertex>,
 }
 
-impl Render {
+impl WorldRender {
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
-            quad_geometry: ugli::VertexBuffer::new_dynamic(
-                geng.ugli(),
-                vec![
-                    draw_2d::Vertex {
-                        a_pos: vec2(-1.0, -1.0),
-                    },
-                    draw_2d::Vertex {
-                        a_pos: vec2(1.0, -1.0),
-                    },
-                    draw_2d::Vertex {
-                        a_pos: vec2(1.0, 1.0),
-                    },
-                    draw_2d::Vertex {
-                        a_pos: vec2(-1.0, 1.0),
-                    },
-                ],
-            ),
         }
-    }
-
-    pub fn draw_grid(
-        &self,
-        grid: &Grid,
-        size: vec2<usize>,
-        camera: &impl geng::AbstractCamera2d,
-        framebuffer: &mut ugli::Framebuffer,
-    ) {
-        let matrix = grid.matrix().map(Coord::as_f32);
-        ugli::draw(
-            framebuffer,
-            &self.assets.shaders.grid,
-            ugli::DrawMode::TriangleFan,
-            &self.quad_geometry,
-            (
-                ugli::uniforms! {
-                    u_grid_matrix: matrix,
-                    u_grid_size: size,
-                    u_grid_color: Rgba::GRAY,
-                    u_grid_width: vec2(0.01, 0.01),
-                },
-                geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
-            ),
-            ugli::DrawParameters::default(),
-        )
     }
 
     pub fn draw_world(
@@ -85,9 +18,18 @@ impl Render {
         world: &World,
         draw_hitboxes: bool,
         framebuffer: &mut ugli::Framebuffer,
+        _normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
+        // TODO: normals
         self.draw_background(world, framebuffer);
-        self.draw_level(&world.level, draw_hitboxes, &world.camera, framebuffer);
+        self.draw_level(
+            &world.level,
+            &world.geometry.0,
+            &world.geometry.1,
+            draw_hitboxes,
+            &world.camera,
+            framebuffer,
+        );
         self.draw_player(&world.player, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
     }
@@ -200,12 +142,14 @@ impl Render {
     pub fn draw_level(
         &self,
         level: &Level,
+        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
         self.draw_props(&level.props, camera, framebuffer);
-        self.draw_tiles(level, &level.tiles, camera, framebuffer);
+        self.draw_tiles(tiles_geometry, masked_geometry, camera, framebuffer);
         self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
         self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
 
@@ -233,11 +177,20 @@ impl Render {
     pub fn draw_level_editor(
         &self,
         level: &Level,
+        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        self.draw_level(level, draw_hitboxes, camera, framebuffer);
+        self.draw_level(
+            level,
+            tiles_geometry,
+            masked_geometry,
+            draw_hitboxes,
+            camera,
+            framebuffer,
+        );
 
         // Spawnpoint
         self.geng.draw_2d(
@@ -251,86 +204,36 @@ impl Render {
                 Rgba::new(0.0, 1.0, 0.0, 0.5),
             ),
         );
+
+        // Spotlights
+        for spotlight in &level.spotlights {
+            let pos = pixel_perfect_pos(spotlight.position);
+            let size = vec2(1.0, 1.0);
+            let aabb = Aabb2::point(pos).extend_symmetric(size / 2.0);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(aabb, &self.assets.sprites.spotlight),
+            );
+        }
     }
 
     pub fn draw_tiles(
         &self,
-        level: &Level,
-        tiles: &TileMap,
+        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
-        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
-        let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
-            let pos = index_to_pos(i, level.size.x);
-            let pos = level.grid.grid_to_world(pos.map(|x| x as isize));
-            let pos = Aabb2::point(pos)
-                .extend_positive(level.grid.cell_size)
-                .map(Coord::as_f32);
-            let set = self.assets.sprites.tiles.get_tile_set(tile);
-            let geometry = set.get_tile_connected(connections);
-            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
-            let vertices = [0, 1, 2, 3].map(|i| Vertex {
-                a_pos: vec2(vertices[i].0, vertices[i].1),
-                a_uv: geometry[i],
-            });
-            let geometry = [
-                vertices[0],
-                vertices[1],
-                vertices[2],
-                vertices[0],
-                vertices[2],
-                vertices[3],
-            ];
-            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
-            geometry.map(|vertex| {
-                let pos = matrix * vertex.a_pos.extend(1.0);
-                Vertex {
-                    a_pos: pos.xy() / pos.z,
-                    ..vertex
-                }
-            })
-        };
-        for (i, tile) in tiles.tiles().iter().enumerate() {
-            if let Tile::Air = tile {
-                continue;
-            }
-
-            let connections = tiles.get_tile_connections(i);
-            let neighbours = tiles.get_tile_neighbours(i);
-            if neighbours.contains(&Some(Tile::Grass)) {
-                let geometry = calc_geometry(i, &Tile::Grass, connections);
-                let mask = self
-                    .assets
-                    .sprites
-                    .tiles
-                    .mask
-                    .get_tile_connected(connections);
-                let idx = [0, 1, 2, 0, 2, 3];
-                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
-                masked_geometry
-                    .entry(Tile::Grass)
-                    .or_default()
-                    .extend(geometry);
-            }
-
-            tiles_geometry
-                .entry(*tile)
-                .or_default()
-                .extend(calc_geometry(i, tile, connections));
-        }
-
         let mask = self.assets.sprites.tiles.mask.texture();
         for (tile, geometry) in masked_geometry {
-            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let set = self.assets.sprites.tiles.get_tile_set(tile);
             let texture = set.texture();
-            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
             ugli::draw(
                 framebuffer,
                 &self.assets.shaders.texture_mask,
                 ugli::DrawMode::Triangles,
-                &geometry,
+                geometry,
                 (
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),
@@ -346,14 +249,13 @@ impl Render {
             );
         }
         for (tile, geometry) in tiles_geometry {
-            let set = self.assets.sprites.tiles.get_tile_set(&tile);
+            let set = self.assets.sprites.tiles.get_tile_set(tile);
             let texture = set.texture();
-            let geometry = ugli::VertexBuffer::new_dynamic(self.geng.ugli(), geometry);
             ugli::draw(
                 framebuffer,
                 &self.assets.shaders.texture,
                 ugli::DrawMode::Triangles,
-                &geometry,
+                geometry,
                 (
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),
@@ -556,79 +458,4 @@ impl Render {
             );
         }
     }
-
-    pub fn draw_ui(
-        &self,
-        show_time: Option<Time>,
-        world: &World,
-        framebuffer: &mut ugli::Framebuffer,
-    ) {
-        let framebuffer_size = framebuffer.size().map(|x| x as f32);
-
-        // Coins collected
-        let texture = &self.assets.sprites.coin;
-        let size = framebuffer_size.y * 0.07;
-        let size = texture
-            .size()
-            .map(|x| x as f32 / texture.size().x as f32 * size);
-        let pos = vec2(0.05, 0.95) * framebuffer_size;
-        self.geng.draw_2d(
-            framebuffer,
-            &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(
-                Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
-                texture,
-            ),
-        );
-        self.geng.draw_2d(
-            framebuffer,
-            &geng::PixelPerfectCamera,
-            &draw_2d::Text::unit(
-                &*self.assets.font,
-                format!("{}", world.coins_collected),
-                Rgba::try_from("#e3a912").unwrap(),
-            )
-            .scale_uniform(size.y * 0.3)
-            .align_bounding_box(vec2(0.0, 0.5))
-            .translate(pos + vec2(size.x * 1.5, -size.y / 2.0)),
-        );
-
-        if let Some(time) = show_time {
-            // Speedrun timer
-            let pos = framebuffer_size * vec2(0.77, 0.95);
-            let size = framebuffer_size.x * 0.01;
-            let (m, s, ms) = time_ms(time);
-            self.geng.draw_2d(
-                framebuffer,
-                &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
-                    &*self.assets.font,
-                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
-                    Rgba::WHITE,
-                )
-                .scale_uniform(size)
-                .align_bounding_box(vec2(0.0, 1.0))
-                .translate(pos),
-            );
-            let (m, s, ms) = time_ms(world.time);
-            self.geng.draw_2d(
-                framebuffer,
-                &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
-                    &*self.assets.font,
-                    format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
-                    Rgba::WHITE,
-                )
-                .scale_uniform(size * 0.7)
-                .align_bounding_box(vec2(0.0, 1.0))
-                .translate(pos - vec2(0.0, size * 2.5)),
-            );
-        }
-    }
-}
-
-fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
-    let pos = pos.map(Coord::as_f32);
-    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT).round());
-    pixel / PIXELS_PER_UNIT
 }

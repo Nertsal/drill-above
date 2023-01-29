@@ -15,11 +15,14 @@ impl Editor {
     }
 
     fn action_impl(&mut self, action: Action) -> Vec<Action> {
-        match action {
+        let actions = match action {
             Action::Place { block, pos } => self.action_place(block, pos),
+
             Action::Remove { pos } => self.action_remove(pos),
             Action::Replace(block) => self.action_replace(block),
-        }
+        };
+        self.geometry = self.level.calculate_geometry(&self.geng, &self.assets);
+        actions
     }
 
     pub fn undo(&mut self) {
@@ -36,17 +39,17 @@ impl Editor {
         }
     }
 
-    fn action_place(&mut self, block: BlockType, pos: vec2<Coord>) -> Vec<Action> {
-        let pos = self.level.grid.world_to_grid(pos).0;
+    fn action_place(&mut self, block: BlockType, position: vec2<Coord>) -> Vec<Action> {
+        let grid_pos = self.level.grid.world_to_grid(position).0;
         match block {
             BlockType::Tile(tile) => {
-                self.level.tiles.set_tile_isize(pos, tile);
+                self.level.tiles.set_tile_isize(grid_pos, tile);
             }
             BlockType::Hazard(hazard) => {
-                self.level.place_hazard(pos, hazard);
+                self.level.place_hazard(grid_pos, hazard);
             }
             BlockType::Coin => {
-                self.level.place_coin(pos);
+                self.level.place_coin(grid_pos);
             }
             BlockType::Prop(prop) => {
                 let size = self
@@ -57,8 +60,12 @@ impl Editor {
                     .size()
                     .map(|x| x as f32 / PIXELS_PER_UNIT)
                     .map(Coord::new);
-                self.level.place_prop(pos, size, prop);
+                self.level.place_prop(grid_pos, size, prop);
             }
+            BlockType::Spotlight(light) => self
+                .level
+                .spotlights
+                .push(SpotlightSource { position, ..light }),
         }
         vec![]
     }
@@ -77,15 +84,19 @@ impl Editor {
             Block::Prop(prop) => {
                 self.level.props.push(prop);
             }
+            Block::Spotlight(spotlight) => self.level.spotlights.push(spotlight),
         }
         vec![]
     }
 
-    fn action_remove(&mut self, pos: vec2<Coord>) -> Vec<Action> {
-        self.level
-            .remove_all_at(pos)
+    fn action_remove(&mut self, _pos: vec2<Coord>) -> Vec<Action> {
+        let actions = self
+            .level
+            .remove_blocks(&self.hovered)
             .into_iter()
             .map(Action::Replace)
-            .collect()
+            .collect();
+        self.hovered.clear();
+        actions
     }
 }
