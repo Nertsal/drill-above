@@ -50,6 +50,7 @@ pub enum Coyote {
     Ground,
     Wall { wall_normal: vec2<Coord> },
     DrillJump { direction: vec2<Coord> },
+    DrillDirection { initial: vec2<Coord> },
 }
 
 impl Player {

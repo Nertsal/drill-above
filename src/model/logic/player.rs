@@ -89,6 +89,17 @@ impl Logic<'_> {
             self.variable_jump();
             self.horizontal_control();
             self.jump();
+        } else if self.world.player.state.is_drilling()
+            && self.player_control.move_dir != vec2::ZERO
+        {
+            if let Some((Coyote::DrillDirection { initial }, _)) = self.world.player.coyote_time {
+                // Change drill direction
+                if vec2::dot(self.player_control.move_dir, initial) >= Coord::ZERO {
+                    self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
+                        * self.world.player.velocity.len();
+                    self.world.player.coyote_time = None;
+                }
+            }
         }
 
         self.world
@@ -192,7 +203,8 @@ impl Logic<'_> {
 
         let mut dash = None;
         let dir = self.player_control.move_dir;
-        if self.world.player.can_drill_dash && dir != vec2::ZERO {
+        if self.world.rules.can_drill_dash && self.world.player.can_drill_dash && dir != vec2::ZERO
+        {
             // Dash
             let dir = dir.normalize_or_zero();
             let vel_dir = self.world.player.velocity.normalize_or_zero();
@@ -232,6 +244,29 @@ impl Logic<'_> {
                 radius: Coord::new(0.2),
                 ..Default::default()
             });
+        } else if !matches!(self.world.player.state, PlayerState::Drilling)
+            && self.player_control.drill
+            && self.world.level.drill_allowed
+        {
+            let dirs = itertools::chain![
+                match self.world.player.state {
+                    PlayerState::Grounded(tile) if tile.is_drillable() =>
+                        Some(vec2(0.0, -1.0).map(Coord::new)),
+                    PlayerState::WallSliding { tile, wall_normal } if tile.is_drillable() =>
+                        Some(-wall_normal),
+                    _ => None,
+                },
+                self.world
+                    .player
+                    .touching_wall
+                    .and_then(|(tile, normal)| tile.is_drillable().then_some(-normal))
+            ];
+            for drill_dir in dirs {
+                if vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
+                    self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
+                        * self.world.rules.drill_speed_min;
+                }
+            }
         }
 
         // Turn into a drill
@@ -439,6 +474,7 @@ impl Logic<'_> {
                     ..Default::default()
                 });
             }
+            Coyote::DrillDirection { .. } => {}
         }
     }
 
@@ -579,6 +615,10 @@ impl Logic<'_> {
             let speed = self.world.player.velocity.len();
             let dir = self.world.player.velocity.normalize_or_zero();
 
+            self.world.player.coyote_time = Some((
+                Coyote::DrillDirection { initial: dir },
+                self.world.rules.coyote_time,
+            ));
             self.world.player.velocity = dir * speed.max(self.world.rules.drill_speed_min);
             self.world.player.state = PlayerState::Drilling;
 

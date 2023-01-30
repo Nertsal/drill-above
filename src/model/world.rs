@@ -18,6 +18,7 @@ pub struct Rules {
     pub low_jump_multiplier: Coord,
     pub free_fall_speed: Coord,
     pub wall_slide_speed: Coord,
+    pub can_drill_dash: bool,
     pub drill_release_time: Time,
     pub drill_speed_min: Coord,
     pub drill_mistimed_inc: Coord,
