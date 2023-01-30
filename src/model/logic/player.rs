@@ -428,7 +428,7 @@ impl Logic<'_> {
                 let jump_vel = rules.normal_jump_strength;
                 self.world.player.velocity.y = jump_vel;
                 self.world.player.state = PlayerState::Airborn;
-                self.play_sound(&self.world.assets.sounds.jump);
+                self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
                     position: self.world.player.collider.feet(),
@@ -445,7 +445,7 @@ impl Logic<'_> {
                 self.world.player.velocity = jump_vel;
                 self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
                 self.world.player.state = PlayerState::Airborn;
-                self.play_sound(&self.world.assets.sounds.jump);
+                self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
                     position: self.world.player.collider.feet()
@@ -463,7 +463,7 @@ impl Logic<'_> {
                 let current = vec2::dot(self.world.player.velocity, direction);
                 self.world.player.velocity =
                     direction * (current + acceleration).max(rules.drill_jump_speed_min);
-                self.play_sound(&self.world.assets.sounds.drill_jump);
+                self.world.play_sound(&self.world.assets.sounds.drill_jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
                     position: self.world.player.collider.pos(),
@@ -665,7 +665,7 @@ impl Logic<'_> {
             velocity: vec2(0.0, 1.5).map(Coord::new),
             particle_type: ParticleType::Heart8,
         });
-        self.play_sound(&self.world.assets.sounds.charm);
+        self.world.play_sound(&self.world.assets.sounds.charm);
 
         true
     }
@@ -682,7 +682,7 @@ impl Logic<'_> {
         }
         self.world.level.coins.retain(|coin| !coin.collected);
         if let Some(position) = collected {
-            self.play_sound(&self.world.assets.sounds.coin);
+            self.world.play_sound(&self.world.assets.sounds.coin);
             self.spawn_particles(ParticleSpawn {
                 lifetime: Time::ONE,
                 position,
@@ -703,7 +703,7 @@ impl Logic<'_> {
                     vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
                 })
             {
-                self.kill_player();
+                self.world.kill_player();
                 break;
             }
         }
@@ -740,7 +740,7 @@ impl Logic<'_> {
         // Bottom
         let player = &mut self.world.player;
         if player.collider.feet().y < level_bounds.min.y {
-            self.kill_player();
+            self.world.kill_player();
             return true;
         }
 

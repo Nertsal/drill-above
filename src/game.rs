@@ -26,6 +26,7 @@ struct Controls {
     up: Vec<geng::Key>,
     jump: Vec<geng::Key>,
     drill: Vec<geng::Key>,
+    retry: Vec<geng::Key>,
 }
 
 impl Game {
@@ -69,6 +70,7 @@ impl Game {
                 up: vec![geng::Key::Up],
                 jump: vec![geng::Key::Z],
                 drill: vec![geng::Key::C],
+                retry: vec![geng::Key::R],
             },
             accumulated_time: time,
             music: Some(music),
@@ -307,6 +309,9 @@ impl geng::State for Game {
             }
             if self.controls.drill.contains(&key) {
                 self.control.drill = true;
+            }
+            if self.controls.retry.contains(&key) {
+                self.world.kill_player();
             }
             match key {
                 geng::Key::F1 => {

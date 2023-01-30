@@ -74,6 +74,18 @@ impl World {
         }
     }
 
+    pub fn play_sound(&self, sound: &geng::Sound) {
+        let mut sound = sound.play();
+        sound.set_volume(self.volume);
+    }
+
+    pub fn kill_player(&mut self) {
+        self.player.velocity = vec2::ZERO;
+        self.player.state = PlayerState::Respawning { time: Time::ONE };
+        self.deaths += 1;
+        self.play_sound(&self.assets.sounds.death);
+    }
+
     pub fn camera_bounds(&self) -> Aabb2<Coord> {
         let mut level_bounds = self.level.bounds();
         level_bounds.min.y += self.level.grid.cell_size.y * Coord::new(0.5);
