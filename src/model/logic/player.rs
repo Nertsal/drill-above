@@ -519,7 +519,7 @@ impl Logic<'_> {
                                 Aabb2::point(self.world.level.grid.grid_to_world(pos))
                                     .extend_positive(self.world.level.grid.cell_size),
                             );
-                            player.collider.check(&collider).and_then(|collision| {
+                            player.collider.collide(&collider).and_then(|collision| {
                                 (vec2::dot(collision.normal, player.velocity) >= Coord::ZERO)
                                     .then_some((tile, collision))
                             })
@@ -649,12 +649,7 @@ impl Logic<'_> {
     fn check_finish(&mut self) -> bool {
         if self.world.player.state.is_drilling()
             || self.world.player.state.has_finished()
-            || self
-                .world
-                .player
-                .collider
-                .check(&self.world.level.finish())
-                .is_none()
+            || !self.world.player.collider.check(&self.world.level.finish())
         {
             return false;
         }
@@ -680,7 +675,7 @@ impl Logic<'_> {
         // Collect coins
         let mut collected = None;
         for coin in &mut self.world.level.coins {
-            if !coin.collected && self.world.player.collider.check(&coin.collider).is_some() {
+            if !coin.collected && self.world.player.collider.check(&coin.collider) {
                 self.world.coins_collected += 1;
                 coin.collected = true;
                 collected = Some(coin.collider.pos());
@@ -704,7 +699,7 @@ impl Logic<'_> {
     fn player_hazards(&mut self) {
         // Die from hazards
         for hazard in &self.world.level.hazards {
-            if self.world.player.collider.check(&hazard.collider).is_some()
+            if self.world.player.collider.check(&hazard.collider)
                 && hazard.direction.map_or(true, |dir| {
                     vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
                 })

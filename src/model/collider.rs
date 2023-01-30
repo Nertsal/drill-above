@@ -51,10 +51,17 @@ impl Collider {
     }
 
     pub fn contains(&self, pos: vec2<Coord>) -> bool {
-        self.check(&Collider::new(Aabb2::point(pos))).is_some()
+        self.0.contains(pos)
     }
 
-    pub fn check(&self, other: &Self) -> Option<Collision> {
+    pub fn check(&self, other: &Self) -> bool {
+        self.0.min.x < other.0.max.x
+            && other.0.min.x < self.0.max.x
+            && self.0.min.y < other.0.max.y
+            && other.0.min.y < self.0.max.y
+    }
+
+    pub fn collide(&self, other: &Self) -> Option<Collision> {
         let dx_right = self.0.max.x - other.0.min.x;
         let dx_left = other.0.max.x - self.0.min.x;
         let dy_up = self.0.max.y - other.0.min.y;
