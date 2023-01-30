@@ -81,6 +81,10 @@ impl PlayerState {
         matches!(self, Self::Grounded(..))
     }
 
+    pub fn is_wall_sliding(&self) -> bool {
+        matches!(self, Self::WallSliding { .. })
+    }
+
     pub fn is_drilling(&self) -> bool {
         matches!(self, Self::Drilling)
     }

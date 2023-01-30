@@ -441,10 +441,12 @@ impl Logic<'_> {
             }
             Coyote::Wall { wall_normal } => {
                 let angle = rules.wall_jump_angle * wall_normal.x.signum();
-                let jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
-                self.world.player.velocity = jump_vel;
-                self.world.player.control_timeout = Some(self.world.rules.wall_jump_timeout);
-                self.world.player.state = PlayerState::Airborn;
+                let mut jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
+                let player = &mut self.world.player;
+                jump_vel.y = jump_vel.y.max(player.velocity.y);
+                player.velocity = jump_vel;
+                player.control_timeout = Some(self.world.rules.wall_jump_timeout);
+                player.state = PlayerState::Airborn;
                 self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
@@ -481,6 +483,7 @@ impl Logic<'_> {
     fn player_tiles(&mut self) -> bool {
         let player = &mut self.world.player;
         let was_grounded = player.state.is_grounded();
+        let wall_sliding = player.state.is_wall_sliding();
         let has_finished = player.state.has_finished();
         let using_drill = player.state.using_drill();
         let update_state = !using_drill;
@@ -556,6 +559,9 @@ impl Logic<'_> {
                         let wall_normal = -collision.normal;
                         player.touching_wall = Some((tile, wall_normal));
                         if update_state {
+                            if !wall_sliding {
+                                player.velocity.y = player.velocity.y.max(Coord::ZERO);
+                            }
                             player.state = PlayerState::WallSliding { tile, wall_normal };
                             player.coyote_time =
                                 Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));

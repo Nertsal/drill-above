@@ -68,7 +68,7 @@ impl Game {
                 right: vec![geng::Key::Right],
                 down: vec![geng::Key::Down],
                 up: vec![geng::Key::Up],
-                jump: vec![geng::Key::Z],
+                jump: vec![geng::Key::Z, geng::Key::Space],
                 drill: vec![geng::Key::C],
                 retry: vec![geng::Key::R],
             },
