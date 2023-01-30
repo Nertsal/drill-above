@@ -914,11 +914,11 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
       "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -939,7 +939,6 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -956,8 +955,9 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
       "Stone",
       "Air",
       "Air",
@@ -996,9 +996,9 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
       "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1019,7 +1019,6 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1039,6 +1038,7 @@
       "Air",
       "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1059,7 +1059,6 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1079,6 +1078,7 @@
       "Air",
       "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1099,7 +1099,6 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1119,6 +1118,7 @@
       "Air",
       "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1143,7 +1143,6 @@
       "Stone",
       "Stone",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1159,6 +1158,7 @@
       "Air",
       "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1197,7 +1197,7 @@
       "Air",
       "Air",
       "Air",
-      "Air",
+      "Stone",
       "Stone",
       "Air",
       "Air",
@@ -1237,7 +1237,7 @@
       "Air",
       "Air",
       "Air",
-      "Air",
+      "Stone",
       "Stone",
       "Air",
       "Air",
@@ -1277,8 +1277,8 @@
       "Air",
       "Air",
       "Air",
-      "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1303,7 +1303,6 @@
       "Grass",
       "Grass",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1319,6 +1318,7 @@
       "Air",
       "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1343,7 +1343,6 @@
       "Grass",
       "Grass",
       "Stone",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1359,6 +1358,7 @@
       "Air",
       "Air",
       "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1397,7 +1397,7 @@
       "Air",
       "Air",
       "Air",
-      "Air",
+      "Stone",
       "Stone",
       "Air",
       "Air",
@@ -1437,7 +1437,7 @@
       "Air",
       "Air",
       "Air",
-      "Air",
+      "Stone",
       "Stone",
       "Air",
       "Air",
@@ -1463,8 +1463,6 @@
       "Grass",
       "Grass",
       "Stone",
-      "Air",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1495,6 +1493,8 @@
       "Stone",
       "Stone",
       "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1503,9 +1503,6 @@
       "Grass",
       "Grass",
       "Stone",
-      "Air",
-      "Air",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1518,14 +1515,17 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1543,16 +1543,6 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1564,8 +1554,18 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1583,11 +1583,6 @@
       "Air",
       "Air",
       "Stone",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
       "Air",
       "Air",
       "Air",
@@ -1597,15 +1592,20 @@
       "Air",
       "Air",
       "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1634,17 +1634,17 @@
       "Stone",
       "Stone",
       "Stone",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -1678,12 +1678,12 @@
       "Stone",
       "Stone",
       "Stone",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
-      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
       "Air",
       "Air",
       "Air",
@@ -2952,39 +2952,12 @@
     {
       "sprite": {
         "min": [
-          -3.0,
-          25.5
-        ],
-        "max": [
-          -2.0,
-          26.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          -2.9,
-          25.5
-        ],
-        "max": [
-          -2.1,
-          25.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
           -4.0,
-          25.5
+          3.5
         ],
         "max": [
           -3.0,
-          26.5
+          4.5
         ]
       },
       "direction": [
@@ -2994,11 +2967,11 @@
       "collider": {
         "min": [
           -3.9,
-          25.5
+          3.5
         ],
         "max": [
           -3.1,
-          25.9
+          3.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3006,12 +2979,12 @@
     {
       "sprite": {
         "min": [
-          -5.0,
-          25.5
+          8.0,
+          3.5
         ],
         "max": [
-          -4.0,
-          26.5
+          9.0,
+          4.5
         ]
       },
       "direction": [
@@ -3020,12 +2993,12 @@
       ],
       "collider": {
         "min": [
-          -4.9,
-          25.5
+          8.1,
+          3.5
         ],
         "max": [
-          -4.1,
-          25.9
+          8.9,
+          3.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3033,12 +3006,12 @@
     {
       "sprite": {
         "min": [
-          -6.0,
-          25.5
+          7.0,
+          3.5
         ],
         "max": [
-          -5.0,
-          26.5
+          8.0,
+          4.5
         ]
       },
       "direction": [
@@ -3047,12 +3020,12 @@
       ],
       "collider": {
         "min": [
-          -5.9,
-          25.5
+          7.1,
+          3.5
         ],
         "max": [
-          -5.1,
-          25.9
+          7.9,
+          3.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3060,12 +3033,12 @@
     {
       "sprite": {
         "min": [
-          -7.0,
-          25.5
+          5.0,
+          16.5
         ],
         "max": [
-          -6.0,
-          26.5
+          6.0,
+          17.5
         ]
       },
       "direction": [
@@ -3074,12 +3047,12 @@
       ],
       "collider": {
         "min": [
-          -6.9,
-          25.5
+          5.1,
+          16.5
         ],
         "max": [
-          -6.1,
-          25.9
+          5.9,
+          16.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3087,12 +3060,12 @@
     {
       "sprite": {
         "min": [
-          -8.0,
-          25.5
+          -3.0,
+          3.5
         ],
         "max": [
-          -7.0,
-          26.5
+          -2.0,
+          4.5
         ]
       },
       "direction": [
@@ -3101,12 +3074,12 @@
       ],
       "collider": {
         "min": [
-          -7.9,
-          25.5
+          -2.9,
+          3.5
         ],
         "max": [
-          -7.1,
-          25.9
+          -2.1,
+          3.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3114,12 +3087,12 @@
     {
       "sprite": {
         "min": [
-          -9.0,
-          25.5
+          6.0,
+          3.5
         ],
         "max": [
-          -8.0,
-          26.5
+          7.0,
+          4.5
         ]
       },
       "direction": [
@@ -3128,12 +3101,12 @@
       ],
       "collider": {
         "min": [
-          -8.9,
-          25.5
+          6.1,
+          3.5
         ],
         "max": [
-          -8.1,
-          25.9
+          6.9,
+          3.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3141,12 +3114,12 @@
     {
       "sprite": {
         "min": [
-          -10.0,
-          25.5
+          4.0,
+          16.5
         ],
         "max": [
-          -9.0,
-          26.5
+          5.0,
+          17.5
         ]
       },
       "direction": [
@@ -3155,12 +3128,39 @@
       ],
       "collider": {
         "min": [
-          -9.9,
-          25.5
+          4.1,
+          16.5
         ],
         "max": [
-          -9.1,
-          25.9
+          4.9,
+          16.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          3.0,
+          16.5
+        ],
+        "max": [
+          4.0,
+          17.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          3.1,
+          16.5
+        ],
+        "max": [
+          3.9,
+          16.9
         ]
       },
       "hazard_type": "Spikes"
@@ -3215,222 +3215,6 @@
         "max": [
           -1.1,
           16.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          3.0,
-          16.5
-        ],
-        "max": [
-          4.0,
-          17.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          3.1,
-          16.5
-        ],
-        "max": [
-          3.9,
-          16.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          4.0,
-          16.5
-        ],
-        "max": [
-          5.0,
-          17.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          4.1,
-          16.5
-        ],
-        "max": [
-          4.9,
-          16.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          5.0,
-          16.5
-        ],
-        "max": [
-          6.0,
-          17.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          5.1,
-          16.5
-        ],
-        "max": [
-          5.9,
-          16.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          6.0,
-          3.5
-        ],
-        "max": [
-          7.0,
-          4.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          6.1,
-          3.5
-        ],
-        "max": [
-          6.9,
-          3.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          -3.0,
-          3.5
-        ],
-        "max": [
-          -2.0,
-          4.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          -2.9,
-          3.5
-        ],
-        "max": [
-          -2.1,
-          3.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          7.0,
-          3.5
-        ],
-        "max": [
-          8.0,
-          4.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          7.1,
-          3.5
-        ],
-        "max": [
-          7.9,
-          3.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          8.0,
-          3.5
-        ],
-        "max": [
-          9.0,
-          4.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          8.1,
-          3.5
-        ],
-        "max": [
-          8.9,
-          3.9
-        ]
-      },
-      "hazard_type": "Spikes"
-    },
-    {
-      "sprite": {
-        "min": [
-          -4.0,
-          3.5
-        ],
-        "max": [
-          -3.0,
-          4.5
-        ]
-      },
-      "direction": [
-        -0.0,
-        1.0
-      ],
-      "collider": {
-        "min": [
-          -3.9,
-          3.5
-        ],
-        "max": [
-          -3.1,
-          3.9
         ]
       },
       "hazard_type": "Spikes"
