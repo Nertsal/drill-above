@@ -11,7 +11,7 @@ pub struct PlayerControl {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
-    pub collider: Collider,
+    pub id: Id,
     pub velocity: vec2<Coord>,
     pub state: PlayerState,
     pub touching_wall: Option<(Tile, vec2<Coord>)>,
@@ -54,14 +54,9 @@ pub enum Coyote {
 }
 
 impl Player {
-    pub fn new(feet_pos: vec2<Coord>) -> Self {
-        let height = Coord::new(0.9);
-        let half_width = Coord::new(0.9 / 2.0);
+    pub fn new(id: Id) -> Self {
         Self {
-            collider: Collider::new(Aabb2::from_corners(
-                feet_pos - vec2(half_width, Coord::ZERO),
-                feet_pos + vec2(half_width, height),
-            )),
+            id,
             velocity: vec2::ZERO,
             state: PlayerState::Airborn,
             touching_wall: None,

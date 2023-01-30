@@ -24,7 +24,7 @@ pub struct Level {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum BlockType {
+pub enum PlaceableType {
     Tile(Tile),
     Hazard(HazardType),
     Prop(PropType),
@@ -33,7 +33,7 @@ pub enum BlockType {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum BlockId {
+pub enum PlaceableId {
     Tile(vec2<isize>),
     Hazard(usize),
     Prop(usize),
@@ -42,7 +42,7 @@ pub enum BlockId {
 }
 
 #[derive(Debug, Clone)]
-pub enum Block {
+pub enum Placeable {
     Tile((Tile, vec2<isize>)),
     Hazard(Hazard),
     Prop(Prop),
@@ -186,50 +186,52 @@ impl Level {
         });
     }
 
-    pub fn get_hovered(&mut self, pos: vec2<Coord>) -> Vec<BlockId> {
+    pub fn get_hovered(&mut self, pos: vec2<Coord>) -> Vec<PlaceableId> {
         let grid_pos = self.grid.world_to_grid(pos).0;
         itertools::chain![
             self.spotlights
                 .iter()
                 .enumerate()
                 .filter(|(_, spotlight)| (spotlight.position - pos).len() < Coord::new(0.5))
-                .map(|(i, _)| BlockId::Spotlight(i)),
+                .map(|(i, _)| PlaceableId::Spotlight(i)),
             self.props
                 .iter()
                 .enumerate()
                 .filter(|(_, prop)| prop.sprite.contains(pos))
-                .map(|(i, _)| BlockId::Prop(i)),
+                .map(|(i, _)| PlaceableId::Prop(i)),
             self.hazards
                 .iter()
                 .enumerate()
                 .filter(|(_, hazard)| hazard.collider.contains(pos))
-                .map(|(i, _)| BlockId::Hazard(i)),
+                .map(|(i, _)| PlaceableId::Hazard(i)),
             self.coins
                 .iter()
                 .enumerate()
                 .filter(|(_, hazard)| hazard.collider.contains(pos))
-                .map(|(i, _)| BlockId::Coin(i)),
+                .map(|(i, _)| PlaceableId::Coin(i)),
             self.tiles
                 .get_tile_isize(grid_pos)
-                .map(|_| BlockId::Tile(grid_pos)),
+                .map(|_| PlaceableId::Tile(grid_pos)),
         ]
         .collect()
     }
 
-    pub fn get_block(&self, id: BlockId) -> Option<Block> {
+    pub fn get_block(&self, id: PlaceableId) -> Option<Placeable> {
         match id {
-            BlockId::Tile(pos) => self
+            PlaceableId::Tile(pos) => self
                 .tiles
                 .get_tile_isize(pos)
-                .map(|tile| Block::Tile((tile, pos))),
-            BlockId::Hazard(id) => self.hazards.get(id).cloned().map(Block::Hazard),
-            BlockId::Prop(id) => self.props.get(id).cloned().map(Block::Prop),
-            BlockId::Coin(id) => self.coins.get(id).cloned().map(Block::Coin),
-            BlockId::Spotlight(id) => self.spotlights.get(id).cloned().map(Block::Spotlight),
+                .map(|tile| Placeable::Tile((tile, pos))),
+            PlaceableId::Hazard(id) => self.hazards.get(id).cloned().map(Placeable::Hazard),
+            PlaceableId::Prop(id) => self.props.get(id).cloned().map(Placeable::Prop),
+            PlaceableId::Coin(id) => self.coins.get(id).cloned().map(Placeable::Coin),
+            PlaceableId::Spotlight(id) => {
+                self.spotlights.get(id).cloned().map(Placeable::Spotlight)
+            }
         }
     }
 
-    pub fn remove_blocks(&mut self, blocks: &[BlockId]) -> Vec<Block> {
+    pub fn remove_blocks(&mut self, blocks: &[PlaceableId]) -> Vec<Placeable> {
         let mut spotlights = Vec::new();
         let mut props = Vec::new();
         let mut hazards = Vec::new();
@@ -237,11 +239,11 @@ impl Level {
         let mut tiles = Vec::new();
         for &block in blocks {
             match block {
-                BlockId::Tile(pos) => tiles.push(pos),
-                BlockId::Hazard(id) => hazards.push(id),
-                BlockId::Prop(id) => props.push(id),
-                BlockId::Coin(id) => coins.push(id),
-                BlockId::Spotlight(id) => spotlights.push(id),
+                PlaceableId::Tile(pos) => tiles.push(pos),
+                PlaceableId::Hazard(id) => hazards.push(id),
+                PlaceableId::Prop(id) => props.push(id),
+                PlaceableId::Coin(id) => coins.push(id),
+                PlaceableId::Spotlight(id) => spotlights.push(id),
             }
         }
 
@@ -253,23 +255,23 @@ impl Level {
         let mut removed = Vec::new();
         for id in spotlights.into_iter().rev() {
             let light = self.spotlights.swap_remove(id);
-            removed.push(Block::Spotlight(light));
+            removed.push(Placeable::Spotlight(light));
         }
         for id in props.into_iter().rev() {
             let prop = self.props.swap_remove(id);
-            removed.push(Block::Prop(prop));
+            removed.push(Placeable::Prop(prop));
         }
         for id in hazards.into_iter().rev() {
             let hazard = self.hazards.swap_remove(id);
-            removed.push(Block::Hazard(hazard));
+            removed.push(Placeable::Hazard(hazard));
         }
         for id in coins.into_iter().rev() {
             let coin = self.coins.swap_remove(id);
-            removed.push(Block::Coin(coin));
+            removed.push(Placeable::Coin(coin));
         }
         for pos in tiles {
             if let Some(tile) = self.tiles.get_tile_isize(pos) {
-                removed.push(Block::Tile((tile, pos)));
+                removed.push(Placeable::Tile((tile, pos)));
             }
             self.tiles.set_tile_isize(pos, Tile::Air);
         }
@@ -430,14 +432,14 @@ impl Level {
     }
 }
 
-impl Block {
+impl Placeable {
     pub fn position(&self) -> vec2<Coord> {
         match self {
-            Block::Tile(_) => unimplemented!(),
-            Block::Hazard(hazard) => hazard.collider.pos(),
-            Block::Prop(prop) => prop.sprite.center(),
-            Block::Coin(coin) => coin.collider.pos(),
-            Block::Spotlight(light) => light.position,
+            Placeable::Tile(_) => unimplemented!(),
+            Placeable::Hazard(hazard) => hazard.collider.pos(),
+            Placeable::Prop(prop) => prop.sprite.center(),
+            Placeable::Coin(coin) => coin.collider.pos(),
+            Placeable::Spotlight(light) => light.position,
         }
     }
 }
@@ -474,15 +476,15 @@ impl Prop {
     }
 }
 
-impl BlockId {
-    pub fn fits_type(&self, ty: BlockType) -> bool {
+impl PlaceableId {
+    pub fn fits_type(&self, ty: PlaceableType) -> bool {
         matches!(
             (self, ty),
-            (BlockId::Tile(_), BlockType::Tile(_))
-                | (BlockId::Hazard(_), BlockType::Hazard(_))
-                | (BlockId::Prop(_), BlockType::Prop(_))
-                | (BlockId::Coin(_), BlockType::Coin)
-                | (BlockId::Spotlight(_), BlockType::Spotlight(_))
+            (PlaceableId::Tile(_), PlaceableType::Tile(_))
+                | (PlaceableId::Hazard(_), PlaceableType::Hazard(_))
+                | (PlaceableId::Prop(_), PlaceableType::Prop(_))
+                | (PlaceableId::Coin(_), PlaceableType::Coin)
+                | (PlaceableId::Spotlight(_), PlaceableType::Spotlight(_))
         )
     }
 }

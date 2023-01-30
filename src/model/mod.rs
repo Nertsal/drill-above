@@ -2,6 +2,7 @@ use super::*;
 
 mod collider;
 mod grid;
+mod id;
 mod level;
 mod lights;
 mod logic;
@@ -14,8 +15,10 @@ mod world;
 
 pub use collider::*;
 pub use grid::*;
+pub use id::*;
 pub use level::*;
 pub use lights::*;
+pub use logic::*;
 pub use particle::*;
 pub use player::*;
 pub use static_polygon::*;

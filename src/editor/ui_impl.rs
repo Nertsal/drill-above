@@ -164,19 +164,19 @@ impl Editor {
             })
             .collect();
 
-        let block_ui = |block: &BlockType| {
+        let block_ui = |block: &PlaceableType| {
             let unit = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
             let (texture, uv) = match block {
-                BlockType::Tile(tile) => {
+                PlaceableType::Tile(tile) => {
                     let set = self.assets.sprites.tiles.get_tile_set(tile);
                     (set.texture(), set.get_tile_connected([Connection::None; 8]))
                 }
-                BlockType::Hazard(hazard) => {
+                PlaceableType::Hazard(hazard) => {
                     (self.assets.sprites.hazards.get_texture(hazard), unit)
                 }
-                BlockType::Coin => (&self.assets.sprites.coin, unit),
-                BlockType::Prop(prop) => (self.assets.sprites.props.get_texture(prop), unit),
-                BlockType::Spotlight(..) => (&self.assets.sprites.spotlight, unit),
+                PlaceableType::Coin => (&self.assets.sprites.coin, unit),
+                PlaceableType::Prop(prop) => (self.assets.sprites.props.get_texture(prop), unit),
+                PlaceableType::Spotlight(..) => (&self.assets.sprites.spotlight, unit),
             };
             let texture_size = (uv[2] - uv[0]) * texture.size().map(|x| x as f32);
             let scale = framebuffer_size.y / 90.0;
@@ -222,7 +222,7 @@ impl Editor {
         if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
             if let EditorMode::Lights = &mut tab.mode {
                 if let Some(config) = self.selected_block.and_then(|id| {
-                    if let BlockId::Spotlight(id) = id {
+                    if let PlaceableId::Spotlight(id) = id {
                         self.level.spotlights.get_mut(id)
                     } else {
                         None

@@ -30,7 +30,7 @@ impl WorldRender {
             &world.camera,
             framebuffer,
         );
-        self.draw_player(&world.player, draw_hitboxes, &world.camera, framebuffer);
+        self.draw_player(world, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
     }
 
@@ -197,10 +197,9 @@ impl WorldRender {
             framebuffer,
             camera,
             &draw_2d::Quad::new(
-                Player::new(level.spawn_point)
-                    .collider
-                    .raw()
-                    .map(Coord::as_f32),
+                Aabb2::point(level.spawn_point.map(Coord::as_f32))
+                    .extend_symmetric(vec2(0.5, 0.0))
+                    .extend_up(1.0),
                 Rgba::new(0.0, 1.0, 0.0, 0.5),
             ),
         );
@@ -354,11 +353,12 @@ impl WorldRender {
 
     pub fn draw_player(
         &self,
-        player: &Player,
+        world: &World,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
+        let player = &world.player;
         if let PlayerState::Respawning { .. } = player.state {
         } else {
             let sprites = &self.assets.sprites.player;
@@ -394,7 +394,8 @@ impl WorldRender {
                 _ => (&sprites.idle0, mat3::identity()),
             };
 
-            let pos = player.collider.feet();
+            let actor = world.actors.get(&player.id).unwrap();
+            let pos = actor.collider.feet();
             let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
             let pos = pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
             let transform = mat3::translate(pos) * transform;
@@ -413,7 +414,7 @@ impl WorldRender {
                     framebuffer,
                     camera,
                     &draw_2d::Quad::new(
-                        player.collider.raw().map(Coord::as_f32),
+                        actor.collider.raw().map(Coord::as_f32),
                         Rgba::new(0.0, 1.0, 0.0, 0.7),
                     ),
                 );

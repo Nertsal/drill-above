@@ -2,9 +2,14 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub enum Action {
-    Place { block: BlockType, pos: vec2<Coord> },
-    Remove { pos: vec2<Coord> },
-    Replace(Block),
+    Place {
+        block: PlaceableType,
+        pos: vec2<Coord>,
+    },
+    Remove {
+        pos: vec2<Coord>,
+    },
+    Replace(Placeable),
 }
 
 impl Editor {
@@ -39,19 +44,19 @@ impl Editor {
         }
     }
 
-    fn action_place(&mut self, block: BlockType, position: vec2<Coord>) -> Vec<Action> {
+    fn action_place(&mut self, block: PlaceableType, position: vec2<Coord>) -> Vec<Action> {
         let grid_pos = self.level.grid.world_to_grid(position).0;
         match block {
-            BlockType::Tile(tile) => {
+            PlaceableType::Tile(tile) => {
                 self.level.tiles.set_tile_isize(grid_pos, tile);
             }
-            BlockType::Hazard(hazard) => {
+            PlaceableType::Hazard(hazard) => {
                 self.level.place_hazard(grid_pos, hazard);
             }
-            BlockType::Coin => {
+            PlaceableType::Coin => {
                 self.level.place_coin(grid_pos);
             }
-            BlockType::Prop(prop) => {
+            PlaceableType::Prop(prop) => {
                 let size = self
                     .assets
                     .sprites
@@ -62,7 +67,7 @@ impl Editor {
                     .map(Coord::new);
                 self.level.place_prop(grid_pos, size, prop);
             }
-            BlockType::Spotlight(light) => self
+            PlaceableType::Spotlight(light) => self
                 .level
                 .spotlights
                 .push(SpotlightSource { position, ..light }),
@@ -70,21 +75,21 @@ impl Editor {
         vec![]
     }
 
-    fn action_replace(&mut self, block: Block) -> Vec<Action> {
+    fn action_replace(&mut self, block: Placeable) -> Vec<Action> {
         match block {
-            Block::Tile((tile, pos)) => {
+            Placeable::Tile((tile, pos)) => {
                 self.level.tiles.set_tile_isize(pos, tile);
             }
-            Block::Hazard(hazard) => {
+            Placeable::Hazard(hazard) => {
                 self.level.hazards.push(hazard);
             }
-            Block::Coin(coin) => {
+            Placeable::Coin(coin) => {
                 self.level.coins.push(coin);
             }
-            Block::Prop(prop) => {
+            Placeable::Prop(prop) => {
                 self.level.props.push(prop);
             }
-            Block::Spotlight(spotlight) => self.level.spotlights.push(spotlight),
+            Placeable::Spotlight(spotlight) => self.level.spotlights.push(spotlight),
         }
         vec![]
     }

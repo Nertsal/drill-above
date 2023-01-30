@@ -101,20 +101,57 @@ impl Logic<'_> {
                 }
             }
         }
-
-        self.world
-            .player
-            .collider
-            .translate(self.world.player.velocity * self.delta_time);
     }
 
-    pub fn player_collisions(&mut self) {
+    pub fn player_movement(&mut self) {
+        let delta = self.world.player.velocity * self.delta_time;
+        if self.world.player.state.is_grounded() || self.world.player.state.is_wall_sliding() {
+            self.world.player.state = PlayerState::Airborn;
+        }
+        let callback: CollisionCallback = Rc::new(|logic, _id, col| {
+            let player = &mut logic.world.player;
+            let bounciness = Coord::new(if player.state.using_drill() { 1.0 } else { 0.0 } + 1.0);
+            if let Some((id, col)) = col.y {
+                player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
+                if col.normal.y > Coord::ZERO {
+                    if let PlayerState::Airborn = player.state {
+                        let tile = match id {
+                            ColliderId::Tile(pos) => {
+                                logic.world.level.tiles.get_tile_isize(pos).unwrap()
+                            }
+                            ColliderId::Entity(id) => logic.world.blocks.get(&id).unwrap().tile,
+                        };
+                        player.state = PlayerState::Grounded(tile);
+                        player.coyote_time = Some((Coyote::Ground, logic.world.rules.coyote_time))
+                    }
+                }
+            }
+            if let Some((id, col)) = col.x {
+                player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
+                let tile = match id {
+                    ColliderId::Tile(pos) => logic.world.level.tiles.get_tile_isize(pos).unwrap(),
+                    ColliderId::Entity(id) => logic.world.blocks.get(&id).unwrap().tile,
+                };
+                player.touching_wall = Some((tile, col.normal));
+                if let PlayerState::Airborn = player.state {
+                    player.state = PlayerState::WallSliding {
+                        tile,
+                        wall_normal: col.normal,
+                    };
+                    player.coyote_time = Some((
+                        Coyote::Wall {
+                            wall_normal: col.normal,
+                        },
+                        logic.world.rules.coyote_time,
+                    ))
+                }
+            }
+        });
+        self.move_actor(self.world.player.id, delta, Some(callback));
+
         if let PlayerState::Respawning { .. } = self.world.player.state {
             return;
         }
-
-        let finished = self.world.player.state.finished_state();
-        let can_drill = self.player_tiles();
 
         // Level bounds
         if self.level_bounds() {
@@ -122,12 +159,12 @@ impl Logic<'_> {
         }
 
         // Stay in finish state
-        if let Some(state) = finished {
+        if let Some(state) = self.world.player.state.finished_state() {
             self.world.player.state = state;
             return;
         }
 
-        self.update_drill_state(can_drill);
+        self.update_state();
 
         self.player_coins();
 
@@ -140,6 +177,7 @@ impl Logic<'_> {
     }
 
     fn pause_state(&mut self) -> bool {
+        let actor = self.world.actors.get_mut(&self.world.player.id).unwrap();
         match &mut self.world.player.state {
             PlayerState::Respawning { time } => {
                 *time -= self.delta_time;
@@ -147,10 +185,7 @@ impl Logic<'_> {
                     // Respawn
                     self.world.player.state = PlayerState::Airborn;
                     self.world.player.velocity = vec2::ZERO;
-                    self.world
-                        .player
-                        .collider
-                        .teleport(self.world.level.spawn_point);
+                    actor.collider.teleport(self.world.level.spawn_point);
                 }
                 true
             }
@@ -168,7 +203,7 @@ impl Logic<'_> {
                         initial_lifetime: Time::new(2.0),
                         lifetime: Time::new(2.0),
                         position: self.world.level.finish
-                            + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
+                            + vec2(Coord::ZERO, actor.collider.raw().height()),
                         velocity: vec2(0.0, 1.5)
                             .rotate(thread_rng().gen_range(-0.5..=0.5))
                             .map(Coord::new),
@@ -177,10 +212,6 @@ impl Logic<'_> {
                 }
                 self.world.player.velocity += self.world.rules.gravity * self.delta_time;
                 self.world.player.velocity.x = Coord::ZERO;
-                self.world
-                    .player
-                    .collider
-                    .translate(self.world.player.velocity * self.delta_time);
                 true
             }
             _ => false,
@@ -235,9 +266,10 @@ impl Logic<'_> {
             self.world.player.can_drill_dash = false;
             dash = Some(self.world.rules.drill_dash_time);
 
+            let actor = self.world.actors.get(&self.world.player.id).unwrap();
             self.spawn_particles(ParticleSpawn {
                 lifetime: Time::ONE,
-                position: self.world.player.collider.pos(),
+                position: actor.collider.pos(),
                 velocity: -vel_dir * Coord::new(0.5),
                 amount: 5,
                 color: Rgba::opaque(0.8, 0.25, 0.2),
@@ -294,9 +326,11 @@ impl Logic<'_> {
         }
 
         // Slow-down punishment
+        player.velocity.x = player.velocity.x.clamp_abs(self.world.rules.move_speed);
+        let actor = self.world.actors.get(&player.id).unwrap();
         let spawn = ParticleSpawn {
             lifetime: Time::new(0.3),
-            position: player.collider.pos(),
+            position: actor.collider.pos(),
             velocity: player.velocity,
             amount: 5,
             color: Rgba::opaque(0.6, 0.6, 0.6),
@@ -304,13 +338,13 @@ impl Logic<'_> {
             angle_range: Coord::new(-0.1)..=Coord::new(0.1),
             ..Default::default()
         };
-        player.velocity.x = player.velocity.x.clamp_abs(self.world.rules.move_speed);
         self.spawn_particles(spawn);
     }
 
     fn restore_drill_dash(&mut self) {
         // Restore Drill Dash
         // Spawn particles on walk/wallslide
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
         match self.world.player.state {
             PlayerState::Grounded(..) => {
                 self.world.player.can_drill_dash = true;
@@ -319,7 +353,7 @@ impl Logic<'_> {
                 {
                     self.spawn_particles(ParticleSpawn {
                         lifetime: Time::ONE,
-                        position: self.world.player.collider.feet(),
+                        position: actor.collider.feet(),
                         velocity: vec2(self.world.player.velocity.x.signum(), Coord::ONE)
                             * Coord::new(0.5),
                         amount: 2,
@@ -334,10 +368,8 @@ impl Logic<'_> {
                 if self.world.player.velocity.y < Coord::new(-0.1) && thread_rng().gen_bool(0.1) {
                     self.spawn_particles(ParticleSpawn {
                         lifetime: Time::ONE,
-                        position: self.world.player.collider.pos()
-                            - wall_normal
-                                * self.world.player.collider.raw().width()
-                                * Coord::new(0.5),
+                        position: actor.collider.pos()
+                            - wall_normal * actor.collider.raw().width() * Coord::new(0.5),
                         velocity: vec2(wall_normal.x * Coord::new(0.2), Coord::ONE)
                             * Coord::new(0.5),
                         amount: 2,
@@ -423,6 +455,7 @@ impl Logic<'_> {
         self.world.player.coyote_time = None;
         self.world.player.jump_buffer = None;
         self.world.player.can_hold_jump = true;
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
         match jump {
             Coyote::Ground => {
                 let jump_vel = rules.normal_jump_strength;
@@ -431,7 +464,7 @@ impl Logic<'_> {
                 self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
-                    position: self.world.player.collider.feet(),
+                    position: actor.collider.feet(),
                     velocity: vec2(Coord::ZERO, Coord::ONE),
                     amount: 3,
                     color: Rgba::WHITE,
@@ -450,8 +483,8 @@ impl Logic<'_> {
                 self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
-                    position: self.world.player.collider.feet()
-                        - wall_normal * self.world.player.collider.raw().width() * Coord::new(0.5),
+                    position: actor.collider.feet()
+                        - wall_normal * actor.collider.raw().width() * Coord::new(0.5),
                     velocity: jump_vel.normalize_or_zero(),
                     amount: 3,
                     color: Rgba::WHITE,
@@ -468,7 +501,7 @@ impl Logic<'_> {
                 self.world.play_sound(&self.world.assets.sounds.drill_jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
-                    position: self.world.player.collider.pos(),
+                    position: actor.collider.pos(),
                     velocity: direction,
                     amount: 5,
                     color: Rgba::opaque(0.8, 0.25, 0.2),
@@ -480,105 +513,35 @@ impl Logic<'_> {
         }
     }
 
-    fn player_tiles(&mut self) -> bool {
-        let player = &mut self.world.player;
-        let was_grounded = player.state.is_grounded();
-        let wall_sliding = player.state.is_wall_sliding();
-        let has_finished = player.state.has_finished();
-        let using_drill = player.state.using_drill();
-        let update_state = !using_drill;
-
-        if update_state {
-            player.state = PlayerState::Airborn;
-        }
-
-        let mut particles = Vec::new();
-        let mut can_drill = false;
-        player.touching_wall = None;
-
-        for _ in 0..2 {
-            // Player-tiles
-            let player_aabb = player.collider.grid_aabb(&self.world.level.grid);
-            let collisions = (player_aabb.min.x..=player_aabb.max.x)
-                .flat_map(move |x| (player_aabb.min.y..=player_aabb.max.y).map(move |y| vec2(x, y)))
-                .filter_map(|pos| {
-                    self.world
-                        .level
-                        .tiles
-                        .get_tile_isize(pos)
-                        .filter(|tile| {
-                            let air = matches!(tile, Tile::Air);
-                            let drill = using_drill && tile.is_drillable();
-                            if !air && drill {
-                                can_drill = true;
-                            }
-                            !air && !drill
-                        })
-                        .and_then(|tile| {
-                            let collider = Collider::new(
-                                Aabb2::point(self.world.level.grid.grid_to_world(pos))
-                                    .extend_positive(self.world.level.grid.cell_size),
-                            );
-                            player.collider.collide(&collider).and_then(|collision| {
-                                (vec2::dot(collision.normal, player.velocity) >= Coord::ZERO)
-                                    .then_some((tile, collision))
-                            })
-                        })
-                });
-            if let Some((tile, collision)) =
-                collisions.max_by_key(|(_, collision)| collision.penetration)
-            {
-                player
-                    .collider
-                    .translate(-collision.normal * collision.penetration);
-                let bounciness = Coord::new(if using_drill { 1.0 } else { 0.0 });
-                player.velocity -= collision.normal
-                    * vec2::dot(player.velocity, collision.normal)
-                    * (Coord::ONE + bounciness);
-                if !using_drill {
-                    if collision.normal.x.approx_eq(&Coord::ZERO)
-                        && collision.normal.y < Coord::ZERO
-                    {
-                        if !was_grounded && !has_finished {
-                            particles.push(ParticleSpawn {
-                                lifetime: Time::ONE,
-                                position: player.collider.feet(),
-                                velocity: vec2(Coord::ZERO, Coord::ONE) * Coord::new(0.5),
-                                amount: 3,
-                                color: Rgba::WHITE,
-                                radius: Coord::new(0.1),
-                                ..Default::default()
-                            });
-                        }
-                        if update_state {
-                            player.state = PlayerState::Grounded(tile);
-                            player.coyote_time =
-                                Some((Coyote::Ground, self.world.rules.coyote_time));
-                        }
-                    } else if collision.normal.y.approx_eq(&Coord::ZERO) {
-                        let wall_normal = -collision.normal;
-                        player.touching_wall = Some((tile, wall_normal));
-                        if update_state {
-                            if !wall_sliding {
-                                player.velocity.y = player.velocity.y.max(Coord::ZERO);
-                            }
-                            player.state = PlayerState::WallSliding { tile, wall_normal };
-                            player.coyote_time =
-                                Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
-                        }
-                    }
-                }
-            }
-        }
-
-        for spawn in particles {
-            self.spawn_particles(spawn);
-        }
-
-        can_drill
+    fn check_tiles(&self) -> bool {
+        let player = self.world.actors.get(&self.world.player.id).unwrap();
+        let player_aabb = player.collider.grid_aabb(&self.world.level.grid);
+        (player_aabb.min.x..=player_aabb.max.x)
+            .flat_map(move |x| (player_aabb.min.y..=player_aabb.max.y).map(move |y| vec2(x, y)))
+            .any(|pos| {
+                self.world
+                    .level
+                    .tiles
+                    .get_tile_isize(pos)
+                    .filter(|tile| {
+                        let air = matches!(tile, Tile::Air);
+                        let drill = tile.is_drillable();
+                        !air && drill
+                    })
+                    .filter(|_| {
+                        let collider = Collider::new(
+                            Aabb2::point(self.world.level.grid.grid_to_world(pos))
+                                .extend_positive(self.world.level.grid.cell_size),
+                        );
+                        player.collider.check(&collider)
+                    })
+                    .is_some()
+            })
     }
 
-    fn update_drill_state(&mut self, can_drill: bool) {
+    fn update_state(&mut self) {
+        let can_drill = self.check_tiles();
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
         if self.world.player.state.is_drilling() {
             if !can_drill {
                 // Exited the ground in drill mode
@@ -597,7 +560,7 @@ impl Logic<'_> {
                 ));
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
-                    position: self.world.player.collider.pos(),
+                    position: actor.collider.pos(),
                     velocity: direction * Coord::new(0.3),
                     amount: 8,
                     color: Rgba::opaque(0.7, 0.7, 0.7),
@@ -608,7 +571,7 @@ impl Logic<'_> {
                 // Drilling through the ground
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
-                    position: self.world.player.collider.pos(),
+                    position: actor.collider.pos(),
                     velocity: -self.world.player.velocity.normalize_or_zero() * Coord::new(0.5),
                     amount: 2,
                     color: Rgba::opaque(0.8, 0.8, 0.8),
@@ -630,7 +593,7 @@ impl Logic<'_> {
 
             self.spawn_particles(ParticleSpawn {
                 lifetime: Time::ONE,
-                position: self.world.player.collider.pos(),
+                position: actor.collider.pos(),
                 velocity: -dir * Coord::new(0.3),
                 amount: 5,
                 color: Rgba::opaque(0.7, 0.7, 0.7),
@@ -647,9 +610,10 @@ impl Logic<'_> {
     }
 
     fn check_finish(&mut self) -> bool {
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
         if self.world.player.state.is_drilling()
             || self.world.player.state.has_finished()
-            || !self.world.player.collider.check(&self.world.level.finish())
+            || !actor.collider.check(&self.world.level.finish())
         {
             return false;
         }
@@ -661,8 +625,7 @@ impl Logic<'_> {
         self.world.particles.push(Particle {
             initial_lifetime: Time::new(2.0),
             lifetime: Time::new(2.0),
-            position: self.world.player.collider.head()
-                + vec2(Coord::ZERO, self.world.player.collider.raw().height()),
+            position: actor.collider.head() + vec2(Coord::ZERO, actor.collider.raw().height()),
             velocity: vec2(0.0, 1.5).map(Coord::new),
             particle_type: ParticleType::Heart8,
         });
@@ -674,8 +637,9 @@ impl Logic<'_> {
     fn player_coins(&mut self) {
         // Collect coins
         let mut collected = None;
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
         for coin in &mut self.world.level.coins {
-            if !coin.collected && self.world.player.collider.check(&coin.collider) {
+            if !coin.collected && actor.collider.check(&coin.collider) {
                 self.world.coins_collected += 1;
                 coin.collected = true;
                 collected = Some(coin.collider.pos());
@@ -698,8 +662,9 @@ impl Logic<'_> {
 
     fn player_hazards(&mut self) {
         // Die from hazards
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
         for hazard in &self.world.level.hazards {
-            if self.world.player.collider.check(&hazard.collider)
+            if actor.collider.check(&hazard.collider)
                 && hazard.direction.map_or(true, |dir| {
                     vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
                 })
@@ -714,12 +679,13 @@ impl Logic<'_> {
         let level = &self.world.level;
         let level_bounds = level.bounds();
         let player = &mut self.world.player;
+        let actor = self.world.actors.get_mut(&player.id).unwrap();
 
         // Top
-        if player.collider.head().y > level_bounds.max.y {
-            player.collider.translate(vec2(
+        if actor.collider.head().y > level_bounds.max.y {
+            actor.collider.translate(vec2(
                 Coord::ZERO,
-                level_bounds.max.y - player.collider.head().y,
+                level_bounds.max.y - actor.collider.head().y,
             ));
             player.velocity.y = if player.state.is_drilling() {
                 -player.velocity.y
@@ -729,9 +695,9 @@ impl Logic<'_> {
         }
 
         // Horizontal
-        let offset = player.collider.feet().x - level_bounds.center().x;
+        let offset = actor.collider.feet().x - level_bounds.center().x;
         if offset.abs() > level_bounds.width() / Coord::new(2.0) {
-            player.collider.translate(vec2(
+            actor.collider.translate(vec2(
                 offset.signum() * (level_bounds.width() / Coord::new(2.0) - offset.abs()),
                 Coord::ZERO,
             ));
@@ -739,8 +705,7 @@ impl Logic<'_> {
         }
 
         // Bottom
-        let player = &mut self.world.player;
-        if player.collider.feet().y < level_bounds.min.y {
+        if actor.collider.feet().y < level_bounds.min.y {
             self.world.kill_player();
             return true;
         }

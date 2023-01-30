@@ -31,6 +31,7 @@ pub struct Rules {
 }
 
 pub struct World {
+    pub id_gen: IdGen,
     pub assets: Rc<Assets>,
     pub rules: Rules,
     pub volume: f64,
@@ -42,16 +43,54 @@ pub struct World {
     pub light_geometry: Vec<StaticPolygon>,
     pub level: Level,
     pub level_transition: Option<String>,
-    pub player: Player,
-    pub particles: Vec<Particle>,
     pub coins_collected: usize,
     pub drill_sound: Option<geng::SoundEffect>,
     pub time: Time,
     pub deaths: usize,
+
+    pub player: Player,
+    pub actors: Collection<Actor>,
+    pub blocks: Collection<Block>,
+    pub particles: Vec<Particle>,
+}
+
+pub type CollisionCallback = Rc<dyn Fn(&mut Logic<'_>, Id, MoveCollision)>;
+
+#[derive(HasId)]
+pub struct Actor {
+    pub id: Id,
+    pub collider: Collider,
+    pub riding: Option<Id>,
+    pub move_remainder: vec2<Coord>,
+    pub on_squish: CollisionCallback,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, HasId)]
+pub struct Block {
+    pub id: Id,
+    pub tile: Tile,
+    pub move_remainder: vec2<Coord>,
+    pub collider: Collider,
 }
 
 impl World {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
+        let mut id_gen = IdGen::new();
+        let mut actors = Collection::new();
+
+        let player_id = id_gen.gen();
+        let height = Coord::new(0.9);
+        let half_width = Coord::new(0.9 / 2.0);
+        let player_actor = Actor::new(
+            player_id,
+            Collider::new(Aabb2::from_corners(
+                level.spawn_point - vec2(half_width, Coord::ZERO),
+                level.spawn_point + vec2(half_width, height),
+            )),
+        );
+
+        actors.insert(player_actor);
+
         Self {
             assets: assets.clone(),
             volume: 0.5,
@@ -62,13 +101,16 @@ impl World {
             },
             geometry: level.calculate_geometry(geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
-            player: Player::new(level.spawn_point),
-            particles: default(),
             level_transition: None,
             coins_collected: 0,
             time: Time::ZERO,
             drill_sound: None,
             deaths: 0,
+            player: Player::new(player_id),
+            blocks: default(),
+            particles: default(),
+            id_gen,
+            actors,
             rules,
             level,
         }
@@ -96,4 +138,27 @@ impl World {
             level_bounds.top_right() - camera_view,
         )
     }
+}
+
+impl Actor {
+    pub fn new(id: Id, collider: Collider) -> Self {
+        Self {
+            id,
+            collider,
+            riding: None,
+            move_remainder: vec2::ZERO,
+            on_squish: Rc::new(|_, _, _| {}),
+        }
+    }
+}
+
+impl Block {
+    // pub fn new(id: Id, tile: Tile, collider: Collider) -> Self {
+    //     Self {
+    //         id,
+    //         tile,
+    //         move_remainder: vec2::ZERO,
+    //         collider,
+    //     }
+    // }
 }

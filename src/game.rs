@@ -237,12 +237,13 @@ impl geng::State for Game {
 
         if self.show_debug {
             let size = framebuffer_size.y * 0.02;
+            let player = &self.world.player;
             self.geng.draw_2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("Speed: {:.2}", self.world.player.velocity.len()),
+                    format!("Speed: {:.2}", player.velocity.len()),
                     Rgba::BLACK,
                 )
                 .scale_uniform(size)
@@ -254,7 +255,7 @@ impl geng::State for Game {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("x: {:6.2}", self.world.player.velocity.x),
+                    format!("x: {:6.2}", player.velocity.x),
                     Rgba::BLACK,
                 )
                 .scale_uniform(size * 0.8)
@@ -266,7 +267,7 @@ impl geng::State for Game {
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
                     &*self.assets.font,
-                    format!("y: {:6.2}", self.world.player.velocity.y),
+                    format!("y: {:6.2}", player.velocity.y),
                     Rgba::BLACK,
                 )
                 .scale_uniform(size)

@@ -62,20 +62,24 @@ impl Collider {
     }
 
     pub fn collide(&self, other: &Self) -> Option<Collision> {
+        if !self.check(other) {
+            return None;
+        }
+
         let dx_right = self.0.max.x - other.0.min.x;
         let dx_left = other.0.max.x - self.0.min.x;
         let dy_up = self.0.max.y - other.0.min.y;
         let dy_down = other.0.max.y - self.0.min.y;
 
         let (nx, px) = if dx_right < dx_left {
-            (Coord::ONE, dx_right)
+            (-Coord::ONE, dx_right)
         } else {
-            (-Coord::ONE, dx_left)
+            (Coord::ONE, dx_left)
         };
         let (ny, py) = if dy_up < dy_down {
-            (Coord::ONE, dy_up)
+            (-Coord::ONE, dy_up)
         } else {
-            (-Coord::ONE, dy_down)
+            (Coord::ONE, dy_down)
         };
 
         if px <= Coord::ZERO || py <= Coord::ZERO {

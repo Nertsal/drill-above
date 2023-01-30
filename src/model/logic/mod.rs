@@ -1,11 +1,13 @@
 use super::*;
 
+mod movement;
 mod particles;
 mod player;
 
+pub use movement::*;
 use particles::*;
 
-struct Logic<'a> {
+pub struct Logic<'a> {
     world: &'a mut World,
     player_control: PlayerControl,
     delta_time: Time,
@@ -29,7 +31,7 @@ impl Logic<'_> {
         }
 
         self.process_player();
-        self.process_collisions();
+        self.movement();
         self.process_particles();
         self.process_camera();
     }
@@ -42,13 +44,14 @@ impl Logic<'_> {
         }
     }
 
-    fn process_collisions(&mut self) {
-        self.player_collisions();
+    fn movement(&mut self) {
+        self.player_movement();
     }
 
     fn process_camera(&mut self) {
         let camera_bounds = self.world.camera_bounds();
-        let target = self.world.player.collider.pos();
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
+        let target = actor.collider.pos();
         let target = target.clamp_aabb(camera_bounds);
         let pos = target.map(Coord::as_f32);
         let pixel = (pos.map(|x| (x * PIXELS_PER_UNIT).round())) / PIXELS_PER_UNIT;

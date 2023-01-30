@@ -31,12 +31,12 @@ pub struct Editor {
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
     dragging: Option<Dragging>,
-    selected_block: Option<BlockId>,
+    selected_block: Option<PlaceableId>,
     tabs: Vec<EditorTab>,
     active_tab: usize,
     undo_actions: Vec<Action>,
     redo_actions: Vec<Action>,
-    hovered: Vec<BlockId>,
+    hovered: Vec<PlaceableId>,
 }
 
 #[derive(Debug)]
@@ -51,7 +51,7 @@ enum DragAction {
     PlaceTile,
     RemoveTile,
     MoveBlock {
-        id: BlockId,
+        id: PlaceableId,
         initial_pos: vec2<Coord>,
     },
 }
@@ -59,7 +59,7 @@ enum DragAction {
 #[derive(Debug, Clone)]
 struct EditorTab {
     pub name: String,
-    pub hoverable: Vec<BlockType>,
+    pub hoverable: Vec<PlaceableType>,
     pub mode: EditorMode,
 }
 
@@ -67,7 +67,7 @@ struct EditorTab {
 enum EditorMode {
     Level,
     Block {
-        blocks: Vec<BlockType>,
+        blocks: Vec<PlaceableType>,
         selected: usize,
     },
     Lights,
@@ -116,24 +116,27 @@ impl Editor {
                     Tile::all()
                         .into_iter()
                         .filter(|tile| !matches!(tile, Tile::Air))
-                        .map(BlockType::Tile)
+                        .map(PlaceableType::Tile)
                         .collect(),
                 ),
-                EditorTab::block("Collectables", vec![BlockType::Coin]),
+                EditorTab::block("Collectables", vec![PlaceableType::Coin]),
                 EditorTab::block(
                     "Hazards",
                     HazardType::all()
                         .into_iter()
-                        .map(BlockType::Hazard)
+                        .map(PlaceableType::Hazard)
                         .collect(),
                 ),
                 EditorTab::block(
                     "Props",
-                    PropType::all().into_iter().map(BlockType::Prop).collect(),
+                    PropType::all()
+                        .into_iter()
+                        .map(PlaceableType::Prop)
+                        .collect(),
                 ),
                 EditorTab {
                     name: "Lights".into(),
-                    hoverable: vec![BlockType::Spotlight(default())],
+                    hoverable: vec![PlaceableType::Spotlight(default())],
                     mode: EditorMode::Lights,
                 },
             ],
@@ -156,13 +159,13 @@ impl Editor {
         }
     }
 
-    fn selected_block(&self) -> Option<BlockType> {
+    fn selected_block(&self) -> Option<PlaceableType> {
         self.tabs
             .get(self.active_tab)
             .and_then(|tab| match &tab.mode {
                 EditorMode::Level => None,
                 EditorMode::Block { blocks, selected } => blocks.get(*selected).copied(),
-                EditorMode::Lights => Some(BlockType::Spotlight(default())),
+                EditorMode::Lights => Some(PlaceableType::Spotlight(default())),
             })
     }
 
@@ -181,25 +184,25 @@ impl Editor {
         });
     }
 
-    fn move_block(&mut self, id: BlockId, pos: vec2<Coord>) {
+    fn move_block(&mut self, id: PlaceableId, pos: vec2<Coord>) {
         match id {
-            BlockId::Tile(_) => unimplemented!(),
-            BlockId::Hazard(id) => {
+            PlaceableId::Tile(_) => unimplemented!(),
+            PlaceableId::Hazard(id) => {
                 if let Some(hazard) = self.level.hazards.get_mut(id) {
                     hazard.teleport(pos);
                 }
             }
-            BlockId::Prop(id) => {
+            PlaceableId::Prop(id) => {
                 if let Some(prop) = self.level.props.get_mut(id) {
                     prop.teleport(pos);
                 }
             }
-            BlockId::Coin(id) => {
+            PlaceableId::Coin(id) => {
                 if let Some(coin) = self.level.coins.get_mut(id) {
                     coin.teleport(pos);
                 }
             }
-            BlockId::Spotlight(id) => {
+            PlaceableId::Spotlight(id) => {
                 if let Some(light) = self.level.spotlights.get_mut(id) {
                     light.position = pos;
                 }
@@ -207,7 +210,7 @@ impl Editor {
         }
     }
 
-    fn select_block(&mut self, id: BlockId) {
+    fn select_block(&mut self, id: PlaceableId) {
         self.selected_block = Some(id);
         let Some(_block) = self.level.get_block(id) else {
             return;
@@ -256,7 +259,7 @@ impl Editor {
 
         let action = match button {
             geng::MouseButton::Left => {
-                if let Some(BlockType::Tile(_)) = self.selected_block() {
+                if let Some(PlaceableType::Tile(_)) = self.selected_block() {
                     Some(DragAction::PlaceTile)
                 } else if let Some(&id) = self.hovered.first() {
                     self.level.get_block(id).map(|block| DragAction::MoveBlock {
@@ -268,7 +271,7 @@ impl Editor {
                 }
             }
             geng::MouseButton::Right => {
-                if let Some(BlockType::Tile(_)) = self.selected_block() {
+                if let Some(PlaceableType::Tile(_)) = self.selected_block() {
                     Some(DragAction::RemoveTile)
                 } else {
                     None
@@ -365,20 +368,20 @@ impl geng::State for Editor {
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selected_block] {
             match block {
-                BlockId::Tile(_) => {}
-                BlockId::Hazard(id) => {
+                PlaceableId::Tile(_) => {}
+                PlaceableId::Hazard(id) => {
                     let hazard = &self.level.hazards[id];
                     colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
                 }
-                BlockId::Prop(id) => {
+                PlaceableId::Prop(id) => {
                     let prop = &self.level.props[id];
                     colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
                 }
-                BlockId::Coin(id) => {
+                PlaceableId::Coin(id) => {
                     let coin = &self.level.coins[id];
                     colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
                 }
-                BlockId::Spotlight(id) => {
+                PlaceableId::Spotlight(id) => {
                     let light = &self.level.spotlights[id];
                     let collider =
                         Collider::new(Aabb2::point(light.position).extend_uniform(Coord::new(0.5)));
@@ -475,7 +478,7 @@ impl geng::State for Editor {
 }
 
 impl EditorTab {
-    pub fn block(name: impl Into<String>, blocks: Vec<BlockType>) -> Self {
+    pub fn block(name: impl Into<String>, blocks: Vec<PlaceableType>) -> Self {
         Self {
             name: name.into(),
             hoverable: blocks.clone(),
