@@ -117,25 +117,8 @@ impl Logic<'_> {
             }
 
             let player = &mut logic.world.player;
-            if let Some((id, col)) = col.x {
+            if let Some((_, col)) = col.x {
                 player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
-                let tile = match id {
-                    ColliderId::Tile(pos) => logic.world.level.tiles.get_tile_isize(pos).unwrap(),
-                    ColliderId::Entity(id) => logic.world.blocks.get(&id).unwrap().tile,
-                };
-                player.touching_wall = Some((tile, col.normal));
-                if let PlayerState::Airborn = player.state {
-                    player.state = PlayerState::WallSliding {
-                        tile,
-                        wall_normal: col.normal,
-                    };
-                    player.coyote_time = Some((
-                        Coyote::Wall {
-                            wall_normal: col.normal,
-                        },
-                        logic.world.rules.coyote_time,
-                    ));
-                }
             }
         });
         self.move_actor(self.world.player.id, delta, Some(callback));
@@ -504,7 +487,33 @@ impl Logic<'_> {
         }
     }
 
-    fn check_wall(&mut self) {}
+    fn check_wall(&mut self) {
+        let player = &mut self.world.player;
+        let update_state = player.state.is_airborn() || player.state.is_wall_sliding();
+        if update_state {
+            player.state = PlayerState::Airborn;
+        }
+
+        if update_state {
+            let actor = self.world.actors.get(&self.world.player.id).unwrap();
+            let collider = actor.wall_collider();
+
+            if let Some((id, col)) = self.check_collision(&collider) {
+                let player = &mut self.world.player;
+                let tile = match id {
+                    ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
+                    ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
+                };
+                let wall_normal = col.normal;
+                player.touching_wall = Some((tile, wall_normal));
+                if let PlayerState::Airborn = player.state {
+                    player.state = PlayerState::WallSliding { tile, wall_normal };
+                    player.coyote_time =
+                        Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
+                }
+            }
+        }
+    }
 
     fn check_ground(&mut self) {
         let player = &mut self.world.player;

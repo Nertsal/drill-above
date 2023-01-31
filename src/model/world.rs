@@ -151,6 +151,15 @@ impl Actor {
         }
     }
 
+    pub fn wall_collider(&self) -> Collider {
+        let mut collider = Collider::new(
+            Aabb2::ZERO
+                .extend_symmetric(self.collider.raw().size() * vec2(0.55, 0.45).map(Coord::new)),
+        );
+        collider.teleport(self.collider.pos());
+        collider
+    }
+
     pub fn feet_collider(&self) -> Collider {
         let mut collider = Collider::new(
             Aabb2::ZERO
