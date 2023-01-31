@@ -1,0 +1,3231 @@
+{
+  "drill_allowed": true,
+  "grid": {
+    "cell_size": [
+      1.0,
+      1.0
+    ],
+    "offset": [
+      20.0,
+      11.5
+    ]
+  },
+  "size": [
+    40,
+    50
+  ],
+  "spawn_point": [
+    -5.005099,
+    -7.3899064
+  ],
+  "finish": [
+    -16.93118,
+    32.509315
+  ],
+  "tiles": {
+    "size": [
+      40,
+      50
+    ],
+    "tiles": [
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Grass",
+      "Grass",
+      "Grass",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Stone",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air",
+      "Air"
+    ]
+  },
+  "hazards": [
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          3.5
+        ],
+        "max": [
+          -1.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -1.9,
+          3.5
+        ],
+        "max": [
+          -1.1,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -1.0,
+          3.5
+        ],
+        "max": [
+          0.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -0.9,
+          3.5
+        ],
+        "max": [
+          -0.100000024,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          0.0,
+          3.5
+        ],
+        "max": [
+          1.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          0.099999994,
+          3.5
+        ],
+        "max": [
+          0.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          1.0,
+          3.5
+        ],
+        "max": [
+          2.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          1.1,
+          3.5
+        ],
+        "max": [
+          1.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          2.0,
+          3.5
+        ],
+        "max": [
+          3.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          2.1,
+          3.5
+        ],
+        "max": [
+          2.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          3.0,
+          3.5
+        ],
+        "max": [
+          4.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          3.1,
+          3.5
+        ],
+        "max": [
+          3.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          4.0,
+          3.5
+        ],
+        "max": [
+          5.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          4.1,
+          3.5
+        ],
+        "max": [
+          4.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          5.0,
+          3.5
+        ],
+        "max": [
+          6.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          5.1,
+          3.5
+        ],
+        "max": [
+          5.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          9.0,
+          3.5
+        ],
+        "max": [
+          10.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          9.1,
+          3.5
+        ],
+        "max": [
+          9.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          8.5
+        ],
+        "max": [
+          -3.0,
+          9.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -4.0,
+          8.6
+        ],
+        "max": [
+          -3.6,
+          9.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          7.5
+        ],
+        "max": [
+          -3.0,
+          8.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -4.0,
+          7.6
+        ],
+        "max": [
+          -3.6,
+          8.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          6.5
+        ],
+        "max": [
+          -3.0,
+          7.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -4.0,
+          6.6
+        ],
+        "max": [
+          -3.6,
+          7.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          5.5
+        ],
+        "max": [
+          -3.0,
+          6.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -4.0,
+          5.6
+        ],
+        "max": [
+          -3.6,
+          6.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          4.5
+        ],
+        "max": [
+          -3.0,
+          5.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -4.0,
+          4.6
+        ],
+        "max": [
+          -3.6,
+          5.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          10.5
+        ],
+        "max": [
+          -3.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -3.9,
+          10.5
+        ],
+        "max": [
+          -3.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -9.0,
+          10.5
+        ],
+        "max": [
+          -8.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -8.9,
+          10.5
+        ],
+        "max": [
+          -8.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -5.0,
+          10.5
+        ],
+        "max": [
+          -4.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -4.9,
+          10.5
+        ],
+        "max": [
+          -4.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -6.0,
+          10.5
+        ],
+        "max": [
+          -5.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -5.9,
+          10.5
+        ],
+        "max": [
+          -5.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -7.0,
+          10.5
+        ],
+        "max": [
+          -6.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -6.9,
+          10.5
+        ],
+        "max": [
+          -6.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -8.0,
+          10.5
+        ],
+        "max": [
+          -7.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -7.9,
+          10.5
+        ],
+        "max": [
+          -7.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -3.0,
+          10.5
+        ],
+        "max": [
+          -2.0,
+          11.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -2.9,
+          10.5
+        ],
+        "max": [
+          -2.1,
+          10.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          22.5
+        ],
+        "max": [
+          -1.0,
+          23.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -2.0,
+          22.6
+        ],
+        "max": [
+          -1.6,
+          23.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          21.5
+        ],
+        "max": [
+          -1.0,
+          22.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -2.0,
+          21.6
+        ],
+        "max": [
+          -1.6,
+          22.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          20.5
+        ],
+        "max": [
+          -1.0,
+          21.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -2.0,
+          20.6
+        ],
+        "max": [
+          -1.6,
+          21.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          19.5
+        ],
+        "max": [
+          -1.0,
+          20.5
+        ]
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          -2.0,
+          19.6
+        ],
+        "max": [
+          -1.6,
+          20.4
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          6.0,
+          25.5
+        ],
+        "max": [
+          7.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          6.1,
+          25.5
+        ],
+        "max": [
+          6.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          5.0,
+          25.5
+        ],
+        "max": [
+          6.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          5.1,
+          25.5
+        ],
+        "max": [
+          5.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          4.0,
+          25.5
+        ],
+        "max": [
+          5.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          4.1,
+          25.5
+        ],
+        "max": [
+          4.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          3.0,
+          25.5
+        ],
+        "max": [
+          4.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          3.1,
+          25.5
+        ],
+        "max": [
+          3.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          2.0,
+          25.5
+        ],
+        "max": [
+          3.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          2.1,
+          25.5
+        ],
+        "max": [
+          2.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          1.0,
+          25.5
+        ],
+        "max": [
+          2.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          1.1,
+          25.5
+        ],
+        "max": [
+          1.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          0.0,
+          25.5
+        ],
+        "max": [
+          1.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          0.099999994,
+          25.5
+        ],
+        "max": [
+          0.9,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -1.0,
+          25.5
+        ],
+        "max": [
+          0.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -0.9,
+          25.5
+        ],
+        "max": [
+          -0.100000024,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          25.5
+        ],
+        "max": [
+          -1.0,
+          26.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -1.9,
+          25.5
+        ],
+        "max": [
+          -1.1,
+          25.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -4.0,
+          3.5
+        ],
+        "max": [
+          -3.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -3.9,
+          3.5
+        ],
+        "max": [
+          -3.1,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          8.0,
+          3.5
+        ],
+        "max": [
+          9.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          8.1,
+          3.5
+        ],
+        "max": [
+          8.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          7.0,
+          3.5
+        ],
+        "max": [
+          8.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          7.1,
+          3.5
+        ],
+        "max": [
+          7.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          5.0,
+          16.5
+        ],
+        "max": [
+          6.0,
+          17.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          5.1,
+          16.5
+        ],
+        "max": [
+          5.9,
+          16.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -3.0,
+          3.5
+        ],
+        "max": [
+          -2.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -2.9,
+          3.5
+        ],
+        "max": [
+          -2.1,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          6.0,
+          3.5
+        ],
+        "max": [
+          7.0,
+          4.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          6.1,
+          3.5
+        ],
+        "max": [
+          6.9,
+          3.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          4.0,
+          16.5
+        ],
+        "max": [
+          5.0,
+          17.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          4.1,
+          16.5
+        ],
+        "max": [
+          4.9,
+          16.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          3.0,
+          16.5
+        ],
+        "max": [
+          4.0,
+          17.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          3.1,
+          16.5
+        ],
+        "max": [
+          3.9,
+          16.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          2.0,
+          16.5
+        ],
+        "max": [
+          3.0,
+          17.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          2.1,
+          16.5
+        ],
+        "max": [
+          2.9,
+          16.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    },
+    {
+      "sprite": {
+        "min": [
+          -2.0,
+          16.5
+        ],
+        "max": [
+          -1.0,
+          17.5
+        ]
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          -1.9,
+          16.5
+        ],
+        "max": [
+          -1.1,
+          16.9
+        ]
+      },
+      "hazard_type": "Spikes"
+    }
+  ],
+  "coins": [],
+  "props": [],
+  "global_light": {
+    "color": "#ffffff",
+    "intensity": 1.0
+  },
+  "spotlights": [],
+  "next_level": "playtest_05.json"
+}
