@@ -6,6 +6,8 @@ pub struct Game {
     render: GameRender,
     framebuffer_size: vec2<usize>,
     pixel_texture: ugli::Texture,
+    is_paused: bool,
+    pause_menu: menu::PauseMenu,
     level_name: String,
     world: World,
     draw_hitboxes: bool,
@@ -59,6 +61,8 @@ impl Game {
                 texture.set_filter(ugli::Filter::Nearest);
                 texture
             },
+            pause_menu: menu::PauseMenu::new(geng, assets),
+            is_paused: false,
             draw_hitboxes: false,
             show_debug: false,
             fade: Time::ONE,
@@ -111,6 +115,13 @@ impl Game {
             dir.y += Coord::ONE;
         }
         self.control.move_dir = dir;
+    }
+
+    fn toggle_pause(&mut self) {
+        self.is_paused = !self.is_paused;
+        if self.is_paused {
+            self.pause_menu.pause();
+        }
     }
 }
 
@@ -290,42 +301,71 @@ impl geng::State for Game {
     }
 
     fn update(&mut self, delta_time: f64) {
+        if self.is_paused {
+            self.geng
+                .window()
+                .set_cursor_type(geng::CursorType::Default);
+        } else {
+            self.geng.window().set_cursor_type(geng::CursorType::None);
+        }
+
+        if self.pause_menu.resume() {
+            self.is_paused = false;
+        }
+
         let delta_time = Time::new(delta_time as f32);
-        if self.fade > Time::ZERO {
-            self.fade -= delta_time;
+
+        if !self.is_paused {
+            #[allow(clippy::collapsible_if)]
+            if self.fade > Time::ZERO {
+                self.fade -= delta_time;
+            }
         }
     }
 
     fn fixed_update(&mut self, delta_time: f64) {
         let delta_time = Time::new(delta_time as f32);
-        self.update_control();
-        let control = self.control.take();
-        self.world.update(control, delta_time);
+
+        if !self.is_paused {
+            self.update_control();
+            let control = self.control.take();
+            self.world.update(control, delta_time);
+        }
     }
 
     fn handle_event(&mut self, event: geng::Event) {
-        if let geng::Event::KeyDown { key } = event {
-            if self.controls.jump.contains(&key) {
-                self.control.jump = true;
-            }
-            if self.controls.drill.contains(&key) {
-                self.control.drill = true;
-            }
-            if self.controls.retry.contains(&key) {
-                self.world.kill_player();
-            }
-            match key {
-                geng::Key::F1 => {
-                    self.draw_hitboxes = !self.draw_hitboxes;
+        if !self.is_paused {
+            if let geng::Event::KeyDown { key } = event {
+                if self.controls.jump.contains(&key) {
+                    self.control.jump = true;
                 }
-                geng::Key::F2 => {
-                    self.show_time = !self.show_time;
+                if self.controls.drill.contains(&key) {
+                    self.control.drill = true;
                 }
-                geng::Key::F4 => {
-                    self.show_debug = !self.show_debug;
+                if self.controls.retry.contains(&key) {
+                    self.world.kill_player();
                 }
-                _ => (),
+                match key {
+                    geng::Key::Escape => {
+                        self.toggle_pause();
+                    }
+                    geng::Key::F1 => {
+                        self.draw_hitboxes = !self.draw_hitboxes;
+                    }
+                    geng::Key::F2 => {
+                        self.show_time = !self.show_time;
+                    }
+                    geng::Key::F4 => {
+                        self.show_debug = !self.show_debug;
+                    }
+                    _ => (),
+                }
             }
+        } else if let geng::Event::KeyDown {
+            key: geng::Key::Escape,
+        } = event
+        {
+            self.toggle_pause();
         }
     }
 
@@ -355,6 +395,19 @@ impl geng::State for Game {
             ))));
         }
         None
+    }
+
+    fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
+        let mut ui = geng::ui::stack![geng::ui::Void];
+
+        if self.is_paused {
+            ui.push(Box::new(geng::ui::ColorBox::new(Rgba::new(
+                0.0, 0.0, 0.0, 0.5,
+            ))));
+            ui.push(self.pause_menu.ui(&mut self.world, cx));
+        }
+
+        Box::new(ui)
     }
 }
 

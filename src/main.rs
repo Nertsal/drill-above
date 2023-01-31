@@ -5,6 +5,7 @@ mod assets;
 mod editor;
 mod game;
 mod intro;
+mod menu;
 mod model;
 mod render;
 mod ui;
