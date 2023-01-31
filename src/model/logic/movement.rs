@@ -15,6 +15,17 @@ pub struct MoveCollision {
 }
 
 impl Logic<'_> {
+    pub fn check_collision(&self, collider: &Collider) -> Option<(ColliderId, Collision)> {
+        actor_collides(
+            collider,
+            vec2::ZERO,
+            &self.world.level.grid,
+            &self.world.level.tiles,
+            &self.world.blocks,
+            false,
+        )
+    }
+
     pub fn move_actor(
         &mut self,
         actor_id: Id,
@@ -46,7 +57,7 @@ impl Logic<'_> {
                 steps.x -= Coord::ONE;
                 actor.collider.translate(step_x);
                 if let Some((block, col)) = actor_collides(
-                    actor,
+                    &actor.collider,
                     velocity,
                     &self.world.level.grid,
                     &self.world.level.tiles,
@@ -66,7 +77,7 @@ impl Logic<'_> {
                 steps.y -= Coord::ONE;
                 actor.collider.translate(step_y);
                 if let Some((block, col)) = actor_collides(
-                    actor,
+                    &actor.collider,
                     velocity,
                     &self.world.level.grid,
                     &self.world.level.tiles,
@@ -165,19 +176,18 @@ impl Logic<'_> {
 // }
 
 fn actor_collides(
-    actor: &Actor,
+    collider: &Collider,
     velocity: vec2<Coord>,
     grid: &Grid,
     tiles: &TileMap,
     blocks: &Collection<Block>,
     drill: bool,
 ) -> Option<(ColliderId, Collision)> {
-    collide_tiles(actor, velocity, grid, tiles, drill)
+    collide_tiles(collider, velocity, grid, tiles, drill)
         .map(|(pos, col)| (ColliderId::Tile(pos), col))
         .or_else(|| {
             blocks.iter().find_map(|block| {
-                actor
-                    .collider
+                collider
                     .collide(&block.collider)
                     .map(|collision| (ColliderId::Entity(block.id), collision))
             })
@@ -195,13 +205,13 @@ fn calc_move(remainder: &mut vec2<Coord>, delta: vec2<Coord>) -> (vec2<Coord>, v
 }
 
 fn collide_tiles(
-    actor: &Actor,
+    collider: &Collider,
     velocity: vec2<Coord>,
     grid: &Grid,
     tiles: &TileMap,
     drill: bool,
 ) -> Option<(vec2<isize>, Collision)> {
-    let aabb = actor.collider.grid_aabb(grid);
+    let aabb = collider.grid_aabb(grid);
     (aabb.min.x..=aabb.max.x)
         .flat_map(move |x| (aabb.min.y..=aabb.max.y).map(move |y| vec2(x, y)))
         .filter_map(|pos| {
@@ -216,7 +226,7 @@ fn collide_tiles(
                     let tile = Collider::new(
                         Aabb2::point(grid.grid_to_world(pos)).extend_positive(grid.cell_size),
                     );
-                    actor.collider.collide(&tile).and_then(|collision| {
+                    collider.collide(&tile).and_then(|collision| {
                         (vec2::dot(collision.normal, velocity) <= Coord::ZERO)
                             .then_some((pos, collision))
                     })

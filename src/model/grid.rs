@@ -41,6 +41,12 @@ impl Grid {
         }
         (cell_pos, offset)
     }
+
+    pub fn tile_collisions(&self, collider: &Collider) -> impl Iterator<Item = vec2<isize>> {
+        let aabb = collider.grid_aabb(self);
+        (aabb.min.x..=aabb.max.x)
+            .flat_map(move |x| (aabb.min.y..=aabb.max.y).map(move |y| vec2(x, y)))
+    }
 }
 
 impl Default for Grid {

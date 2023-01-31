@@ -150,6 +150,16 @@ impl Actor {
             on_squish: Rc::new(|_, _, _| {}),
         }
     }
+
+    pub fn feet_collider(&self) -> Collider {
+        let mut collider = Collider::new(
+            Aabb2::ZERO
+                .extend_symmetric(vec2::UNIT_X * self.collider.raw().width() * Coord::new(0.45))
+                .extend_down(Coord::new(0.1)),
+        );
+        collider.teleport(self.collider.feet() - vec2::UNIT_Y * collider.raw().height());
+        collider
+    }
 }
 
 impl Block {

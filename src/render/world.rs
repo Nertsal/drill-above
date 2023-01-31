@@ -418,6 +418,14 @@ impl WorldRender {
                         Rgba::new(0.0, 1.0, 0.0, 0.7),
                     ),
                 );
+                self.geng.draw_2d(
+                    framebuffer,
+                    camera,
+                    &draw_2d::Quad::new(
+                        actor.feet_collider().raw().map(Coord::as_f32),
+                        Rgba::new(1.0, 0.0, 0.0, 0.7),
+                    ),
+                );
             }
         }
     }

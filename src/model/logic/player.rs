@@ -105,27 +105,15 @@ impl Logic<'_> {
 
     pub fn player_movement(&mut self) {
         let delta = self.world.player.velocity * self.delta_time;
-        if self.world.player.state.is_grounded() || self.world.player.state.is_wall_sliding() {
-            self.world.player.state = PlayerState::Airborn;
-        }
         let callback: CollisionCallback = Rc::new(|logic, _id, col| {
             let player = &mut logic.world.player;
+
             let bounciness = Coord::new(if player.state.using_drill() { 1.0 } else { 0.0 } + 1.0);
-            if let Some((id, col)) = col.y {
+            if let Some((_, col)) = col.y {
                 player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
-                if col.normal.y > Coord::ZERO {
-                    if let PlayerState::Airborn = player.state {
-                        let tile = match id {
-                            ColliderId::Tile(pos) => {
-                                logic.world.level.tiles.get_tile_isize(pos).unwrap()
-                            }
-                            ColliderId::Entity(id) => logic.world.blocks.get(&id).unwrap().tile,
-                        };
-                        player.state = PlayerState::Grounded(tile);
-                        player.coyote_time = Some((Coyote::Ground, logic.world.rules.coyote_time))
-                    }
-                }
             }
+
+            let player = &mut logic.world.player;
             if let Some((id, col)) = col.x {
                 player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
                 let tile = match id {
@@ -133,7 +121,7 @@ impl Logic<'_> {
                     ColliderId::Entity(id) => logic.world.blocks.get(&id).unwrap().tile,
                 };
                 player.touching_wall = Some((tile, col.normal));
-                if let PlayerState::Airborn = player.state {
+                if let PlayerState::Airborn | PlayerState::WallSliding { .. } = player.state {
                     player.state = PlayerState::WallSliding {
                         tile,
                         wall_normal: col.normal,
@@ -143,7 +131,7 @@ impl Logic<'_> {
                             wall_normal: col.normal,
                         },
                         logic.world.rules.coyote_time,
-                    ))
+                    ));
                 }
             }
         });
@@ -513,11 +501,49 @@ impl Logic<'_> {
         }
     }
 
+    fn check_wall(&mut self) {}
+
+    fn check_ground(&mut self) {
+        let player = &mut self.world.player;
+        let was_grounded = player.state.is_grounded();
+        if was_grounded || player.state.is_wall_sliding() {
+            player.state = PlayerState::Airborn;
+        }
+
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
+        let collider = actor.feet_collider();
+        if let Some((id, _)) = self.check_collision(&collider) {
+            let player = &mut self.world.player;
+            if let PlayerState::Airborn = player.state {
+                let tile = match id {
+                    ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
+                    ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
+                };
+                player.state = PlayerState::Grounded(tile);
+                player.coyote_time = Some((Coyote::Ground, self.world.rules.coyote_time));
+                if !was_grounded {
+                    // Just landed
+                    let spawn = ParticleSpawn {
+                        lifetime: Time::ONE,
+                        position: actor.collider.feet(),
+                        velocity: vec2(Coord::ZERO, Coord::ONE) * Coord::new(0.5),
+                        amount: 3,
+                        color: Rgba::WHITE,
+                        radius: Coord::new(0.1),
+                        ..Default::default()
+                    };
+                    self.spawn_particles(spawn);
+                }
+            }
+        }
+    }
+
     fn check_tiles(&self) -> bool {
         let player = self.world.actors.get(&self.world.player.id).unwrap();
-        let player_aabb = player.collider.grid_aabb(&self.world.level.grid);
-        (player_aabb.min.x..=player_aabb.max.x)
-            .flat_map(move |x| (player_aabb.min.y..=player_aabb.max.y).map(move |y| vec2(x, y)))
+        self.world
+            .level
+            .grid
+            .tile_collisions(&player.collider)
             .any(|pos| {
                 self.world
                     .level
@@ -540,8 +566,12 @@ impl Logic<'_> {
     }
 
     fn update_state(&mut self) {
+        self.check_wall();
+        self.check_ground();
         let can_drill = self.check_tiles();
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
+
+        // Update drill state
         if self.world.player.state.is_drilling() {
             if !can_drill {
                 // Exited the ground in drill mode
