@@ -107,6 +107,9 @@ impl Logic<'_> {
         let delta = self.world.player.velocity * self.delta_time;
         let callback: CollisionCallback = Rc::new(|logic, _id, col| {
             let player = &mut logic.world.player;
+            if player.state.is_wall_sliding() {
+                player.state = PlayerState::Airborn;
+            }
 
             let bounciness = Coord::new(if player.state.using_drill() { 1.0 } else { 0.0 } + 1.0);
             if let Some((_, col)) = col.y {
@@ -121,7 +124,7 @@ impl Logic<'_> {
                     ColliderId::Entity(id) => logic.world.blocks.get(&id).unwrap().tile,
                 };
                 player.touching_wall = Some((tile, col.normal));
-                if let PlayerState::Airborn | PlayerState::WallSliding { .. } = player.state {
+                if let PlayerState::Airborn = player.state {
                     player.state = PlayerState::WallSliding {
                         tile,
                         wall_normal: col.normal,
@@ -506,21 +509,25 @@ impl Logic<'_> {
     fn check_ground(&mut self) {
         let player = &mut self.world.player;
         let was_grounded = player.state.is_grounded();
-        if was_grounded || player.state.is_wall_sliding() {
+        if was_grounded {
             player.state = PlayerState::Airborn;
         }
+        let update_state =
+            player.state.is_airborn() || was_grounded || player.state.is_wall_sliding();
 
-        let actor = self.world.actors.get(&self.world.player.id).unwrap();
-        let collider = actor.feet_collider();
-        if let Some((id, _)) = self.check_collision(&collider) {
-            let player = &mut self.world.player;
-            if let PlayerState::Airborn = player.state {
+        if update_state {
+            let actor = self.world.actors.get(&self.world.player.id).unwrap();
+            let collider = actor.feet_collider();
+
+            if let Some((id, _)) = self.check_collision(&collider) {
+                let player = &mut self.world.player;
                 let tile = match id {
                     ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
                     ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
                 };
                 player.state = PlayerState::Grounded(tile);
                 player.coyote_time = Some((Coyote::Ground, self.world.rules.coyote_time));
+
                 if !was_grounded {
                     // Just landed
                     let spawn = ParticleSpawn {

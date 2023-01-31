@@ -72,6 +72,10 @@ impl Player {
 }
 
 impl PlayerState {
+    pub fn is_airborn(&self) -> bool {
+        matches!(self, Self::Airborn)
+    }
+
     pub fn is_grounded(&self) -> bool {
         matches!(self, Self::Grounded(..))
     }
