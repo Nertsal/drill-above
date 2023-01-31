@@ -9,7 +9,6 @@ pub struct Rules {
     pub low_control_acc: Coord,
     pub jump_buffer_time: Time,
     pub coyote_time: Time,
-    pub predrill_time: Time,
     pub normal_jump_strength: Coord,
     pub wall_jump_strength: Coord,
     pub wall_jump_angle: R32,

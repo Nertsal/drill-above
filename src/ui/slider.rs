@@ -2,6 +2,28 @@ use super::*;
 
 use geng::ui::*;
 
+pub fn slider<'a, T: Float + 'a>(
+    cx: &'a Controller,
+    name: impl AsRef<str> + 'a,
+    value: &mut T,
+    range: RangeInclusive<f64>,
+    font: &'a Rc<geng::Font>,
+    text_size: f32,
+) -> impl geng::ui::Widget + 'a {
+    let slider = ui::Slider::new(cx, value.as_f32().into(), range);
+    if let Some(change) = slider.get_change() {
+        *value = T::from_f32(change as f32);
+    }
+
+    let text = geng::ui::Text::new(value.to_string(), font, text_size, Rgba::WHITE);
+
+    geng::ui::row![
+        geng::ui::Text::new(name, font, text_size, Rgba::WHITE),
+        slider,
+        text,
+    ]
+}
+
 pub struct Slider<'a> {
     cx: &'a Controller,
     sense: &'a mut Sense,

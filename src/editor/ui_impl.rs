@@ -208,16 +208,8 @@ impl Editor {
 
         let text_size = framebuffer_size.y * 0.03;
         let font = &self.assets.font;
-        let slider = |name, range, value: &mut f32| {
-            let slider = ui::Slider::new(cx, (*value).into(), range);
-            if let Some(change) = slider.get_change() {
-                *value = change as f32;
-            }
-            geng::ui::row![
-                geng::ui::Text::new(name, font, text_size, Rgba::WHITE),
-                slider
-            ]
-        };
+        let slider =
+            |name, range, value: &mut f32| ui::slider(cx, name, value, range, font, text_size);
 
         if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
             if let EditorMode::Lights = &mut tab.mode {
