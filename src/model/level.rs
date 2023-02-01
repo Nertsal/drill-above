@@ -378,9 +378,59 @@ impl Level {
         (tiles, masked)
     }
 
-    pub fn calculate_light_geometry(&self, geng: &Geng) -> Vec<StaticPolygon> {
-        itertools::chain![self
+    pub fn calculate_light_geometry(&self, geng: &Geng) -> ugli::VertexBuffer<NormalVertex> {
+        let vertices = self
             .tiles
+            .tiles()
+            .iter()
+            .enumerate()
+            .filter_map(|(i, tile)| {
+                (!matches!(tile, Tile::Air)).then(|| {
+                    let grid_pos = index_to_pos(i, self.size.x).map(|x| x as isize);
+                    let pos = self.grid.grid_to_world(grid_pos);
+                    let aabb = Aabb2::point(pos)
+                        .extend_positive(self.grid.cell_size)
+                        .map(Coord::as_f32);
+                    let matrix = mat3::translate(aabb.bottom_left()) * mat3::scale(aabb.size());
+
+                    let vs =
+                        [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
+                    let sides = [
+                        (vs[0], vs[1], vec2(0, -1)),
+                        (vs[1], vs[2], vec2(1, 0)),
+                        (vs[2], vs[3], vec2(0, 1)),
+                        (vs[3], vs[0], vec2(-1, 0)),
+                    ];
+                    sides
+                        .into_iter()
+                        .filter_map(move |(a, b, n)| {
+                            let pos = grid_pos + n;
+                            self.tiles
+                                .get_tile_isize(pos)
+                                .filter(|&neighbour| neighbour == Tile::Air)
+                                .map(|_| {
+                                    let a_normal = n.map(|x| x as f32);
+                                    let [a, b] = [a, b].map(|v| NormalVertex {
+                                        a_pos: (matrix * v.extend(1.0)).into_2d(),
+                                        a_normal,
+                                    });
+                                    let [a1, b1] = [a, b].map(|mut v| {
+                                        v.a_normal = vec2::ZERO;
+                                        v
+                                    });
+                                    [b1, a1, a, b1, a, b]
+                                })
+                        })
+                        .flatten()
+                })
+            })
+            .flatten()
+            .collect();
+        ugli::VertexBuffer::new_dynamic(geng.ugli(), vertices)
+    }
+
+    pub fn calculate_normal_geometry(&self, geng: &Geng) -> Vec<StaticPolygon> {
+        self.tiles
             .tiles()
             .iter()
             .enumerate()
@@ -398,8 +448,8 @@ impl Level {
                             .map(|(x, y)| (matrix * vec2(x, y).extend(1.0)).into_2d()),
                     )
                 })
-            })]
-        .collect()
+            })
+            .collect()
     }
 
     pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
@@ -493,6 +543,12 @@ impl Default for Level {
     fn default() -> Self {
         Self::new(vec2(40, 23))
     }
+}
+
+#[derive(ugli::Vertex, Debug, Clone, Copy)]
+pub struct NormalVertex {
+    pub a_pos: vec2<f32>,
+    pub a_normal: vec2<f32>,
 }
 
 #[derive(ugli::Vertex, Debug, Clone, Copy)]

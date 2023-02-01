@@ -26,7 +26,8 @@ pub struct Editor {
         HashMap<Tile, ugli::VertexBuffer<Vertex>>,
         HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
     ),
-    light_geometry: Vec<StaticPolygon>,
+    light_geometry: ugli::VertexBuffer<NormalVertex>,
+    normal_geometry: Vec<StaticPolygon>,
     draw_grid: bool,
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
@@ -100,6 +101,7 @@ impl Editor {
             framebuffer_size: vec2(1, 1),
             geometry: level.calculate_geometry(geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
+            normal_geometry: level.calculate_normal_geometry(geng),
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -347,6 +349,7 @@ impl geng::State for Editor {
         self.render.lights.finish_render(
             &self.level,
             &self.light_geometry,
+            &self.normal_geometry,
             &self.camera,
             &mut pixel_framebuffer,
         );

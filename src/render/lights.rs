@@ -53,15 +53,16 @@ impl LightsRender {
     pub fn finish_render(
         &mut self,
         level: &Level,
-        geometry: &[StaticPolygon],
+        light_geometry: &ugli::VertexBuffer<NormalVertex>,
+        normal_geometry: &[StaticPolygon],
         camera: &Camera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
         // Render normal map
-        self.render_normal_map(camera, geometry);
+        self.render_normal_map(camera, normal_geometry);
 
         // Render lights
-        self.render_lights(level, camera, geometry);
+        self.render_lights(level, camera, light_geometry);
 
         // Draw the texture to the screen
         self.geng.draw_2d(
@@ -75,7 +76,12 @@ impl LightsRender {
     }
 
     /// Renders the world for each light separately onto the postprocessing texture.
-    pub fn render_lights(&mut self, level: &Level, camera: &Camera2d, geometry: &[StaticPolygon]) {
+    pub fn render_lights(
+        &mut self,
+        level: &Level,
+        camera: &Camera2d,
+        geometry: &ugli::VertexBuffer<NormalVertex>,
+    ) {
         self.render_global_light(level);
         self.render_spotlights(level, camera, geometry);
     }
@@ -114,7 +120,7 @@ impl LightsRender {
         &mut self,
         level: &Level,
         camera: &Camera2d,
-        geometry: &[StaticPolygon],
+        geometry: &ugli::VertexBuffer<NormalVertex>,
     ) {
         for spotlight in &level.spotlights {
             // Using `world_texture` here but it is not actually used by the shader
@@ -126,67 +132,38 @@ impl LightsRender {
             let framebuffer_size = light_framebuffer.size().map(|x| x as f32);
             ugli::clear(&mut light_framebuffer, None, None, Some(0));
 
-            // Shadow map
-            for polygon in geometry {
-                // Cast shadow
-                ugli::draw(
-                    &mut light_framebuffer,
-                    &self.assets.shaders.point_light_shadow_map,
-                    ugli::DrawMode::TriangleFan,
-                    &polygon.doubled,
-                    (
-                        ugli::uniforms! {
-                            u_model_matrix: mat3::identity(),
-                            u_light_pos: spotlight.position.map(Coord::as_f32),
-                        },
-                        geng::camera2d_uniforms(camera, framebuffer_size),
-                    ),
-                    ugli::DrawParameters {
-                        // Just in case the shader writes something in the texture,
-                        // discard it during blending.
-                        blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
-                            src_factor: ugli::BlendFactor::Zero,
-                            dst_factor: ugli::BlendFactor::One,
-                        })),
-                        // Increment the shadow casters count
-                        stencil_mode: Some(ugli::StencilMode::always(ugli::FaceStencilMode {
-                            test: ugli::StencilTest {
-                                condition: ugli::Condition::Always,
-                                reference: 0,
-                                mask: 0xFF,
-                            },
-                            op: ugli::StencilOp::always(ugli::StencilOpFunc::Increment),
-                        })),
-                        ..Default::default()
+            // Cast shadow
+            ugli::draw(
+                &mut light_framebuffer,
+                &self.assets.shaders.point_light_shadow_map,
+                ugli::DrawMode::Triangles,
+                geometry,
+                (
+                    ugli::uniforms! {
+                        u_model_matrix: mat3::identity(),
+                        u_light_pos: spotlight.position.map(Coord::as_f32),
                     },
-                );
-                // Remove self-shadow
-                ugli::draw(
-                    &mut light_framebuffer,
-                    &self.assets.shaders.shadow_remove,
-                    ugli::DrawMode::TriangleFan,
-                    &polygon.vertices,
-                    (
-                        ugli::uniforms! {
-                            u_model_matrix: mat3::identity(),
-                            u_color: Rgba::TRANSPARENT_BLACK,
+                    geng::camera2d_uniforms(camera, framebuffer_size),
+                ),
+                ugli::DrawParameters {
+                    // Just in case the shader writes something in the texture,
+                    // discard it during blending.
+                    blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
+                        src_factor: ugli::BlendFactor::Zero,
+                        dst_factor: ugli::BlendFactor::One,
+                    })),
+                    // Increment the shadow casters count
+                    stencil_mode: Some(ugli::StencilMode::always(ugli::FaceStencilMode {
+                        test: ugli::StencilTest {
+                            condition: ugli::Condition::Always,
+                            reference: 0,
+                            mask: 0xFF,
                         },
-                        geng::camera2d_uniforms(camera, framebuffer_size),
-                    ),
-                    ugli::DrawParameters {
-                        // Decrement the shadow casters count
-                        stencil_mode: Some(ugli::StencilMode::always(ugli::FaceStencilMode {
-                            test: ugli::StencilTest {
-                                condition: ugli::Condition::Always,
-                                reference: 0,
-                                mask: 0xFF,
-                            },
-                            op: ugli::StencilOp::always(ugli::StencilOpFunc::Decrement),
-                        })),
-                        ..Default::default()
-                    },
-                );
-            }
+                        op: ugli::StencilOp::always(ugli::StencilOpFunc::Increment),
+                    })),
+                    ..Default::default()
+                },
+            );
 
             // Render the world for that light
             let mut world_framebuffer = ugli::Framebuffer::new(

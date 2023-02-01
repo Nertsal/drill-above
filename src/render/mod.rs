@@ -46,6 +46,7 @@ impl GameRender {
         self.lights.finish_render(
             &world.level,
             &world.light_geometry,
+            &world.normal_geometry,
             &world.camera,
             framebuffer,
         );
