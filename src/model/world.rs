@@ -155,7 +155,7 @@ impl Actor {
             Aabb2::ZERO
                 .extend_symmetric(self.collider.raw().size() * vec2(0.55, 0.45).map(Coord::new)),
         );
-        collider.teleport(self.collider.pos());
+        collider.translate(self.collider.pos());
         collider
     }
 
@@ -165,7 +165,7 @@ impl Actor {
                 .extend_symmetric(vec2::UNIT_X * self.collider.raw().width() * Coord::new(0.45))
                 .extend_down(Coord::new(0.1)),
         );
-        collider.teleport(self.collider.feet() - vec2::UNIT_Y * collider.raw().height());
+        collider.translate(self.collider.feet());
         collider
     }
 }
