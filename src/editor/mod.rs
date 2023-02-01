@@ -27,7 +27,7 @@ pub struct Editor {
         HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
     ),
     light_geometry: ugli::VertexBuffer<NormalVertex>,
-    normal_geometry: Vec<StaticPolygon>,
+    normal_geometry: Vec<ugli::VertexBuffer<NormalVertex>>,
     draw_grid: bool,
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,

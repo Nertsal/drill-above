@@ -54,7 +54,7 @@ impl LightsRender {
         &mut self,
         level: &Level,
         light_geometry: &ugli::VertexBuffer<NormalVertex>,
-        normal_geometry: &[StaticPolygon],
+        normal_geometry: &[ugli::VertexBuffer<NormalVertex>],
         camera: &Camera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -213,17 +213,21 @@ impl LightsRender {
         }
     }
 
-    pub fn render_normal_map(&mut self, camera: &Camera2d, geometry: &[StaticPolygon]) {
+    pub fn render_normal_map(
+        &mut self,
+        camera: &Camera2d,
+        geometry: &[ugli::VertexBuffer<NormalVertex>],
+    ) {
         let mut normal_framebuffer = attach_texture(&mut self.buffers.normal_texture, &self.geng);
         let framebuffer_size = normal_framebuffer.size().map(|x| x as f32);
 
-        for polygon in geometry {
+        for vertices in geometry {
             // Render the polygon's normal map
             ugli::draw(
                 &mut normal_framebuffer,
                 &self.assets.shaders.normal_map,
                 ugli::DrawMode::TriangleFan,
-                &polygon.vertices,
+                vertices,
                 (
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),

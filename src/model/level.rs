@@ -429,7 +429,7 @@ impl Level {
         ugli::VertexBuffer::new_dynamic(geng.ugli(), vertices)
     }
 
-    pub fn calculate_normal_geometry(&self, geng: &Geng) -> Vec<StaticPolygon> {
+    pub fn calculate_normal_geometry(&self, geng: &Geng) -> Vec<ugli::VertexBuffer<NormalVertex>> {
         self.tiles
             .tiles()
             .iter()
@@ -442,11 +442,15 @@ impl Level {
                         .extend_positive(self.grid.cell_size)
                         .map(Coord::as_f32);
                     let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
-                    StaticPolygon::new(
-                        geng,
-                        &[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
-                            .map(|(x, y)| (matrix * vec2(x, y).extend(1.0)).into_2d()),
-                    )
+                    let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+                    let normals = self.tiles.get_tile_normals(i);
+                    let vertices = std::iter::zip(vertices, normals)
+                        .map(|((x, y), n)| NormalVertex {
+                            a_pos: (matrix * vec2(x, y).extend(1.0)).into_2d(),
+                            a_normal: n,
+                        })
+                        .collect();
+                    ugli::VertexBuffer::new_dynamic(geng.ugli(), vertices)
                 })
             })
             .collect()

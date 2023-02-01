@@ -100,6 +100,24 @@ impl TileMap {
         })
     }
 
+    pub fn get_tile_normals(&self, tile: usize) -> [vec2<f32>; 4] {
+        let connections = self.get_tile_connections(tile);
+
+        [
+            (vec2(-1, -1), (7, 1)),
+            (vec2(1, -1), (3, 1)),
+            (vec2(1, 1), (3, 5)),
+            (vec2(-1, 1), (7, 5)),
+        ]
+        .map(|(n, (x, y))| {
+            let n = n.map(|x| x as f32);
+            let [x, y] = [x, y]
+                .map(|con| matches!(connections[con], Connection::None))
+                .map(|x| if x { 1.0 } else { 0.0 });
+            vec2(x, y).normalize_or_zero() * n
+        })
+    }
+
     pub fn change_size(&mut self, size: vec2<usize>) {
         let mut tiles = vec![Tile::Air; size.x * size.y];
         for y in 0..size.y {

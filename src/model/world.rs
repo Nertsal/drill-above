@@ -40,7 +40,7 @@ pub struct World {
         HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
     ),
     pub light_geometry: ugli::VertexBuffer<NormalVertex>,
-    pub normal_geometry: Vec<StaticPolygon>,
+    pub normal_geometry: Vec<ugli::VertexBuffer<NormalVertex>>,
     pub level: Level,
     pub level_transition: Option<String>,
     pub coins_collected: usize,
