@@ -92,6 +92,14 @@ impl PauseMenu {
             button
         };
 
+        let restore = {
+            let button = geng::ui::Button::new(cx, "Restore default");
+            if button.was_clicked() {
+                world.rules = self.assets.rules.clone();
+            }
+            button
+        };
+
         let slider =
             |name, range, value: &mut R32| ui::slider(cx, name, value, range, font, text_size);
 
@@ -121,6 +129,7 @@ impl PauseMenu {
             slider("drill_dash_speed_inc", 0.0..=10.0, &mut world.rules.drill_dash_speed_inc),
             slider("drill_jump_speed_min", 5.0..=30.0, &mut world.rules.drill_jump_speed_min),
             slider("drill_jump_speed_inc", 0.0..=10.0, &mut world.rules.drill_jump_speed_inc),
+            restore,
         ];
 
         geng::ui::column![back, rules,].align(vec2(0.5, 0.5))
