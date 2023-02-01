@@ -104,17 +104,23 @@ impl TileMap {
         let connections = self.get_tile_connections(tile);
 
         [
-            (vec2(-1, -1), (7, 1)),
-            (vec2(1, -1), (3, 1)),
-            (vec2(1, 1), (3, 5)),
-            (vec2(-1, 1), (7, 5)),
+            (vec2(-1, -1), (7, 0, 1)),
+            (vec2(1, -1), (3, 2, 1)),
+            (vec2(1, 1), (3, 4, 5)),
+            (vec2(-1, 1), (7, 6, 5)),
         ]
-        .map(|(n, (x, y))| {
+        .map(|(n, (x, d, y))| {
             let n = n.map(|x| x as f32);
-            let [x, y] = [x, y]
-                .map(|con| matches!(connections[con], Connection::None))
-                .map(|x| if x { 1.0 } else { 0.0 });
-            vec2(x, y).normalize_or_zero() * n
+            let [x, d, y] = [x, d, y].map(|con| matches!(connections[con], Connection::None));
+            let [x, y] = [x, y].map(|x| if x { 1.0 } else { 0.0 });
+            let offset = if !d && x != y {
+                -vec2(y, x)
+            } else if d && x == y && x == 0.0 {
+                vec2(1.0, 1.0)
+            } else {
+                vec2::ZERO
+            };
+            ((vec2(x, y) + offset) * n).normalize_or_zero()
         })
     }
 
