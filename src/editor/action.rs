@@ -65,7 +65,7 @@ impl Editor {
                     .props
                     .get_texture(&prop)
                     .size()
-                    .map(|x| x as f32 / PIXELS_PER_UNIT)
+                    .map(|x| x as f32 / PIXELS_PER_UNIT as f32)
                     .map(Coord::new);
                 self.level.place_prop(grid_pos, size, prop);
             }

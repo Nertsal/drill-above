@@ -36,7 +36,7 @@ impl WorldRender {
 
     pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
         let texture = &self.assets.sprites.background;
-        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT) / vec2(1.0, 4.0);
+        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32) / vec2(1.0, 4.0);
         let bounds = world.level.bounds().map(Coord::as_f32);
         let texture_bounds = bounds.extend_positive(vec2(0.5, 0.0) - size);
         let camera_bounds = world.camera_bounds().map(Coord::as_f32);
@@ -109,7 +109,7 @@ impl WorldRender {
         }
 
         let texture = &self.assets.sprites.sun;
-        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT);
+        let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32);
         let move_speed = 0.9;
         let mut pos = bounds.bottom_left();
         pos += (world.camera.center - camera_bounds.bottom_left()) * move_speed;
@@ -391,12 +391,12 @@ impl WorldRender {
                     flip = wall_normal.x < Coord::ZERO;
                     (&sprites.slide0, mat3::identity())
                 }
-                _ => (&sprites.idle0, mat3::identity()),
+                _ => (&sprites.player, mat3::identity()),
             };
 
             let actor = world.actors.get(&player.id).unwrap();
             let pos = actor.collider.feet();
-            let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT;
+            let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT as f32;
             let pos = pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
             let transform = mat3::translate(pos) * transform;
             self.geng.draw_2d_transformed(
@@ -456,7 +456,7 @@ impl WorldRender {
                     continue;
                 }
             };
-            let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT);
+            let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32);
             self.geng.draw_2d(
                 framebuffer,
                 camera,

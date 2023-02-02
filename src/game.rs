@@ -55,12 +55,7 @@ impl Game {
             assets: assets.clone(),
             render: GameRender::new(geng, assets),
             framebuffer_size: vec2(1, 1),
-            pixel_texture: {
-                let mut texture =
-                    ugli::Texture::new_with(geng.ugli(), SCREEN_RESOLUTION, |_| Rgba::BLACK);
-                texture.set_filter(ugli::Filter::Nearest);
-                texture
-            },
+            pixel_texture: ugli::Texture::new_with(geng.ugli(), vec2(1, 1), |_| Rgba::BLACK),
             pause_menu: menu::PauseMenu::new(geng, assets),
             is_paused: false,
             draw_hitboxes: false,
@@ -301,6 +296,12 @@ impl geng::State for Game {
     }
 
     fn update(&mut self, delta_time: f64) {
+        render::update_texture_size(
+            &mut self.pixel_texture,
+            self.world.screen_resolution,
+            &self.geng,
+        );
+
         if self.is_paused {
             self.geng
                 .window()

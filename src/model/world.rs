@@ -34,6 +34,7 @@ pub struct World {
     pub assets: Rc<Assets>,
     pub rules: Rules,
     pub volume: f64,
+    pub screen_resolution: vec2<usize>,
     pub camera: Camera2d,
     pub geometry: (
         HashMap<Tile, ugli::VertexBuffer<Vertex>>,
@@ -94,10 +95,17 @@ impl World {
         Self {
             assets: assets.clone(),
             volume: 0.5,
-            camera: Camera2d {
-                center: vec2(0.0, 0.25),
-                rotation: 0.0,
-                fov: 22.5,
+            screen_resolution: SCREEN_RESOLUTION,
+            camera: {
+                let fov = (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0;
+                Camera2d {
+                    center: vec2(
+                        0.0,
+                        ((SCREEN_RESOLUTION.y / PIXELS_PER_UNIT) as f32 - fov) / 2.0,
+                    ),
+                    rotation: 0.0,
+                    fov,
+                }
             },
             geometry: level.calculate_geometry(geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
@@ -115,6 +123,12 @@ impl World {
             rules,
             level,
         }
+    }
+
+    pub fn update_screen_size(&mut self, target_width: usize) {
+        let ratio = self.screen_resolution.y as f32 / self.screen_resolution.x as f32;
+        self.screen_resolution = vec2(target_width, (target_width as f32 * ratio).round() as usize);
+        self.camera.fov = (self.screen_resolution.x / PIXELS_PER_UNIT) as f32 * ratio;
     }
 
     pub fn play_sound(&self, sound: &geng::Sound) {

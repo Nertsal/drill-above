@@ -54,7 +54,7 @@ impl Logic<'_> {
         let target = actor.collider.pos();
         let target = target.clamp_aabb(camera_bounds);
         let pos = target.map(Coord::as_f32);
-        let pixel = (pos.map(|x| (x * PIXELS_PER_UNIT).round())) / PIXELS_PER_UNIT;
+        let pixel = (pos.map(|x| (x * PIXELS_PER_UNIT as f32).round())) / PIXELS_PER_UNIT as f32;
         self.world.camera.center = pixel;
     }
 }

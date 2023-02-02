@@ -1,6 +1,6 @@
 use super::*;
 
-const MOVE_STEP: f32 = 1.0 / PIXELS_PER_UNIT;
+const MOVE_STEP: f32 = 1.0 / PIXELS_PER_UNIT as f32;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ColliderId {

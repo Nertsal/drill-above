@@ -11,6 +11,7 @@ pub struct PauseMenu {
 
 enum MenuState {
     Paused,
+    Settings,
     Rules,
 }
 
@@ -39,6 +40,7 @@ impl PauseMenu {
     ) -> Box<dyn geng::ui::Widget + 'a> {
         match self.state {
             MenuState::Paused => Box::new(self.paused_ui(world, cx)),
+            MenuState::Settings => Box::new(self.settings_ui(world, cx)),
             MenuState::Rules => Box::new(self.rules_ui(world, cx)),
         }
     }
@@ -65,6 +67,14 @@ impl PauseMenu {
             button
         };
 
+        let settings = {
+            let button = geng::ui::Button::new(cx, "Settings");
+            if button.was_clicked() {
+                self.state = MenuState::Settings;
+            }
+            button
+        };
+
         let rules = {
             let button = geng::ui::Button::new(cx, "Rules");
             if button.was_clicked() {
@@ -73,7 +83,7 @@ impl PauseMenu {
             button
         };
 
-        geng::ui::column![resume, retry, rules,].align(vec2(0.5, 0.5))
+        geng::ui::column![resume, retry, settings, rules,].align(vec2(0.5, 0.5))
     }
 
     fn rules_ui<'a>(
@@ -133,5 +143,54 @@ impl PauseMenu {
         ];
 
         geng::ui::column![back, rules,].align(vec2(0.5, 0.5))
+    }
+
+    fn settings_ui<'a>(
+        &'a mut self,
+        world: &'a mut World,
+        cx: &'a geng::ui::Controller,
+    ) -> impl geng::ui::Widget + 'a {
+        let font = self.geng.default_font();
+        let text_size = cx.theme().text_size;
+
+        let back = {
+            let button = geng::ui::Button::new(cx, "Back");
+            if button.was_clicked() {
+                self.state = MenuState::Paused;
+            }
+            button
+        };
+
+        let screen_size = {
+            let text = geng::ui::Text::new(
+                format!("Screen size: {}", world.screen_resolution),
+                font,
+                text_size,
+                Rgba::WHITE,
+            );
+
+            let mut current = world.screen_resolution.x / PIXELS_PER_UNIT;
+
+            let inc = Button::new(cx, "+");
+            if inc.was_clicked() {
+                current += 1;
+            }
+            let dec = Button::new(cx, "-");
+            if dec.was_clicked() {
+                current -= 1;
+            }
+
+            current = current.clamp(10, 50);
+            let target = current * PIXELS_PER_UNIT;
+            world.update_screen_size(target);
+
+            geng::ui::row![
+                text.padding_right(text_size.into()),
+                inc.padding_right(text_size.into()),
+                dec.padding_right(text_size.into()),
+            ]
+        };
+
+        geng::ui::column![back, screen_size,].align(vec2(0.5, 0.5))
     }
 }

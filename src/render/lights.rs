@@ -39,7 +39,8 @@ impl LightsRender {
 
         let mut world_framebuffer = attach_texture(&mut self.buffers.world_texture, &self.geng);
         let mut normal_framebuffer = attach_texture(&mut self.buffers.normal_texture, &self.geng);
-        ugli::clear(&mut world_framebuffer, Some(Rgba::BLACK), None, None);
+        let color = Rgba::try_from("#341a22").unwrap();
+        ugli::clear(&mut world_framebuffer, Some(color), None, None);
         ugli::clear(
             &mut normal_framebuffer,
             Some(Rgba::TRANSPARENT_BLACK),
@@ -280,10 +281,7 @@ impl Buffers {
                 &mut self.normal_texture,
                 &mut self.postprocess_texture,
             ] {
-                if texture.size() != framebuffer_size {
-                    *texture =
-                        ugli::Texture::new_with(geng.ugli(), framebuffer_size, |_| Rgba::BLACK);
-                }
+                update_texture_size(texture, framebuffer_size, geng);
             }
             self.shadow_stencil = ugli::Renderbuffer::new(geng.ugli(), framebuffer_size);
 

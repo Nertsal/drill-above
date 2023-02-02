@@ -92,6 +92,8 @@ pub struct PropSprites {
 #[derive(geng::Assets)]
 pub struct PlayerSprites {
     #[asset(postprocess = "pixel")]
+    pub player: ugli::Texture,
+    #[asset(postprocess = "pixel")]
     pub idle0: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub slide0: ugli::Texture,

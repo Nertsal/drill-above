@@ -322,8 +322,7 @@ impl Editor {
 impl geng::State for Editor {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.framebuffer_size = framebuffer.size();
-        let color = Rgba::try_from("#341a22").unwrap();
-        ugli::clear(framebuffer, Some(color), None, None);
+        ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
         // Render the game onto the texture
         let mut pixel_framebuffer = ugli::Framebuffer::new_color(
