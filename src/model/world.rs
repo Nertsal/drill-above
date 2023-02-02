@@ -80,15 +80,9 @@ impl World {
         let mut actors = Collection::new();
 
         let player_id = id_gen.gen();
-        let height = Coord::new(0.9);
-        let half_width = Coord::new(0.9 / 2.0);
-        let player_actor = Actor::new(
-            player_id,
-            Collider::new(Aabb2::from_corners(
-                level.spawn_point - vec2(half_width, Coord::ZERO),
-                level.spawn_point + vec2(half_width, height),
-            )),
-        );
+        let mut collider = Player::collider();
+        collider.teleport(level.spawn_point);
+        let player_actor = Actor::new(player_id, collider);
 
         actors.insert(player_actor);
 
