@@ -19,7 +19,7 @@ pub fn slider<'a, T: Float + 'a>(
 
     geng::ui::row![
         geng::ui::Text::new(name, font, text_size, Rgba::WHITE),
-        slider,
+        slider.fixed_size(vec2(text_size * 5.0, text_size).map(|x| x as f64)),
         text,
     ]
 }
