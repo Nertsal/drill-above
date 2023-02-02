@@ -489,6 +489,9 @@ impl Logic<'_> {
 
     fn check_wall(&mut self) {
         let player = &mut self.world.player;
+
+        player.touching_wall = None;
+
         let update_state = player.state.is_airborn() || player.state.is_wall_sliding();
         if update_state {
             player.state = PlayerState::Airborn;
