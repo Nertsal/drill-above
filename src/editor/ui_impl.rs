@@ -232,16 +232,25 @@ impl Editor {
                         slider
                     };
                     let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
+                    let angle_gradient =
+                        slider("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
+                    let distance_gradient = slider(
+                        "Distance Gradient",
+                        0.5..=5.0,
+                        &mut config.distance_gradient,
+                    );
 
                     let light = geng::ui::stack![
                         geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
                         geng::ui::column![
                             angle,
                             angle_range,
+                            angle_gradient,
                             color,
                             intensity,
                             max_distance,
-                            volume
+                            distance_gradient,
+                            volume,
                         ]
                     ]
                     .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.5))
