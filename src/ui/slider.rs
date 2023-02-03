@@ -15,12 +15,16 @@ pub fn slider<'a, T: Float + 'a>(
         *value = T::from_f32(change as f32);
     }
 
-    let text = geng::ui::Text::new(value.to_string(), font, text_size, Rgba::WHITE);
+    let text = geng::ui::Text::new(format!("{value:.2}"), font, text_size, Rgba::WHITE);
 
-    geng::ui::row![
+    geng::ui::column![
         geng::ui::Text::new(name, font, text_size, Rgba::WHITE),
-        slider.fixed_size(vec2(text_size * 5.0, text_size).map(|x| x as f64)),
-        text,
+        geng::ui::row![
+            slider
+                .fixed_size(vec2(text_size * 5.0, text_size).map(|x| x as f64))
+                .padding_right(f64::from(text_size) * 0.5),
+            text,
+        ]
     ]
 }
 

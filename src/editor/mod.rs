@@ -26,6 +26,7 @@ pub struct Editor {
 
     level_name: String,
     level: Level,
+
     geometry: (
         HashMap<Tile, ugli::VertexBuffer<Vertex>>,
         HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
@@ -33,6 +34,7 @@ pub struct Editor {
     light_geometry: ugli::VertexBuffer<NormalVertex>,
     normal_geometry: ugli::VertexBuffer<NormalVertex>,
     normal_uv: HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+
     draw_grid: bool,
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
@@ -43,6 +45,8 @@ pub struct Editor {
     undo_actions: Vec<Action>,
     redo_actions: Vec<Action>,
     hovered: Vec<PlaceableId>,
+    light_float_scale: bool,
+    light_hsv: Option<Hsva<f32>>,
 }
 
 #[derive(Debug)]
@@ -157,6 +161,8 @@ impl Editor {
             undo_actions: default(),
             redo_actions: default(),
             hovered: Vec::new(),
+            light_float_scale: true,
+            light_hsv: None,
             level,
             level_name,
         }
@@ -224,6 +230,10 @@ impl Editor {
     }
 
     fn select_block(&mut self, id: PlaceableId) {
+        if self.selected_block != Some(id) {
+            // Selected a different block
+            self.light_hsv = None;
+        }
         self.selected_block = Some(id);
         let Some(_block) = self.level.get_block(id) else {
             return;

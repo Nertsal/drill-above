@@ -32,7 +32,7 @@ pub enum PlaceableType {
     Coin,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlaceableId {
     Tile(vec2<isize>),
     Hazard(usize),

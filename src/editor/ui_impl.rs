@@ -221,7 +221,8 @@ impl Editor {
         ];
 
         let text_size = framebuffer_size.y * 0.03;
-        let font = &self.assets.font;
+        // let font = &self.assets.font;
+        let font = self.geng.default_font();
         let slider =
             |name, range, value: &mut f32| ui::slider(cx, name, value, range, font, text_size);
 
@@ -237,7 +238,14 @@ impl Editor {
                     // Spotlight
                     let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
                     let angle_range = slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
-                    let color = geng::ui::Void; // TODO
+                    let color = ui::color_selector(
+                        cx,
+                        &mut config.color,
+                        &mut self.light_float_scale,
+                        &mut self.light_hsv,
+                        font,
+                        text_size,
+                    );
                     let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
                     let max_distance = {
                         let mut d = config.max_distance.as_f32();
@@ -267,14 +275,21 @@ impl Editor {
                             volume,
                         ]
                     ]
-                    .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.5))
+                    .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.7))
                     .align(vec2(1.0, 0.5))
                     .uniform_padding(framebuffer_size.x as f64 * 0.05);
                     stack.push(Box::new(light));
                 } else {
                     // Global light
                     let config = &mut self.level.global_light;
-                    let color = geng::ui::Void; // TODO
+                    let color = ui::color_selector(
+                        cx,
+                        &mut config.color,
+                        &mut self.light_float_scale,
+                        &mut self.light_hsv,
+                        font,
+                        text_size,
+                    );
                     let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
 
                     let light = geng::ui::stack![
