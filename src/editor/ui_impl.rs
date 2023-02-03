@@ -48,14 +48,16 @@ impl Editor {
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
-                                self.level.change_size(self.level.size + vec2(1, 0));
+                                self.level
+                                    .change_size(self.level.size + vec2(1, 0), &self.assets);
                             }
                             inc.padding_right(text_size.into())
                         },
                         {
                             let dec = Button::new(cx, "-");
                             if dec.was_clicked() {
-                                self.level.change_size(self.level.size - vec2(1, 0));
+                                self.level
+                                    .change_size(self.level.size - vec2(1, 0), &self.assets);
                             }
                             dec.padding_right(text_size.into())
                         },
@@ -71,14 +73,16 @@ impl Editor {
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
-                                self.level.change_size(self.level.size + vec2(0, 1));
+                                self.level
+                                    .change_size(self.level.size + vec2(0, 1), &self.assets);
                             }
                             inc.padding_right(text_size.into())
                         },
                         {
                             let dec = Button::new(cx, "-");
                             if dec.was_clicked() {
-                                self.level.change_size(self.level.size - vec2(0, 1));
+                                self.level
+                                    .change_size(self.level.size - vec2(0, 1), &self.assets);
                             }
                             dec.padding_right(text_size.into())
                         },
@@ -100,14 +104,14 @@ impl Editor {
                         {
                             let left = Button::new(cx, "left");
                             if left.was_clicked() {
-                                self.level.translate(vec2(-1, 0));
+                                self.level.translate(vec2(-1, 0), &self.assets);
                             }
                             left.padding_right(text_size.into())
                         },
                         {
                             let right = Button::new(cx, "right");
                             if right.was_clicked() {
-                                self.level.translate(vec2(1, 0));
+                                self.level.translate(vec2(1, 0), &self.assets);
                             }
                             right.padding_right(text_size.into())
                         },
@@ -118,14 +122,14 @@ impl Editor {
                         {
                             let down = Button::new(cx, "down");
                             if down.was_clicked() {
-                                self.level.translate(vec2(0, -1));
+                                self.level.translate(vec2(0, -1), &self.assets);
                             }
                             down.padding_right(text_size.into())
                         },
                         {
                             let up = Button::new(cx, "up");
                             if up.was_clicked() {
-                                self.level.translate(vec2(0, 1));
+                                self.level.translate(vec2(0, 1), &self.assets);
                             }
                             up.padding_right(text_size.into())
                         },
@@ -171,7 +175,12 @@ impl Editor {
                     let set = self.assets.sprites.tiles.get_tile_set(tile);
                     (
                         set.texture.texture(),
-                        set.get_tile_connected([Connection::None; 8]),
+                        set.get_tile_geometry(
+                            set.get_tile_connected([Connection::None; 8])
+                                .first()
+                                .copied()
+                                .unwrap_or(0),
+                        ),
                     )
                 }
                 PlaceableType::Hazard(hazard) => {

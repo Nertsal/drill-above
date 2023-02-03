@@ -76,7 +76,9 @@ pub struct Block {
 }
 
 impl World {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, mut level: Level) -> Self {
+        level.tiles.update_geometry(assets);
+
         let mut id_gen = IdGen::new();
         let mut actors = Collection::new();
 
@@ -104,7 +106,7 @@ impl World {
                     fov,
                 }
             },
-            geometry: level.calculate_geometry(geng, assets),
+            geometry: level.tiles.calculate_geometry(&level.grid, geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
             normal_geometry,
             normal_uv,

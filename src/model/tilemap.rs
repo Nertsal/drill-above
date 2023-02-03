@@ -4,6 +4,7 @@ use super::*;
 pub struct TileMap {
     pub size: vec2<usize>,
     pub tiles: Vec<Tile>,
+    geometry: Option<Vec<usize>>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -32,6 +33,7 @@ impl TileMap {
     pub fn new(size: vec2<usize>) -> Self {
         Self {
             tiles: (0..size.y * size.x).map(|_| Tile::Air).collect(),
+            geometry: None,
             size,
         }
     }
@@ -40,18 +42,28 @@ impl TileMap {
         &self.tiles
     }
 
-    pub fn set_tile(&mut self, pos: vec2<usize>, tile: Tile) {
+    pub fn get_tile_index(&self, tile: usize) -> usize {
+        *self
+            .geometry
+            .as_ref()
+            .unwrap()
+            .get(tile)
+            .expect("Failed to find tile geometry")
+    }
+
+    pub fn set_tile(&mut self, pos: vec2<usize>, tile: Tile, assets: &Assets) {
         if let Some(t) = pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get_mut(index))
         {
             *t = tile;
+            self.update_geometry(assets);
         }
     }
 
-    pub fn set_tile_isize(&mut self, pos: vec2<isize>, tile: Tile) {
+    pub fn set_tile_isize(&mut self, pos: vec2<isize>, tile: Tile, assets: &Assets) {
         if pos.x < 0 || pos.y < 0 {
             return;
         }
-        self.set_tile(pos.map(|x| x as usize), tile);
+        self.set_tile(pos.map(|x| x as usize), tile, assets);
     }
 
     pub fn get_tile_isize(&self, pos: vec2<isize>) -> Option<Tile> {
@@ -124,7 +136,7 @@ impl TileMap {
         })
     }
 
-    pub fn change_size(&mut self, size: vec2<usize>) {
+    pub fn change_size(&mut self, size: vec2<usize>, assets: &Assets) {
         let mut tiles = vec![Tile::Air; size.x * size.y];
         for y in 0..size.y {
             for x in 0..size.x {
@@ -136,9 +148,10 @@ impl TileMap {
         }
         self.size = size;
         self.tiles = tiles;
+        self.update_geometry(assets);
     }
 
-    pub fn translate(&mut self, delta: vec2<isize>) {
+    pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
         let mut tiles = vec![Tile::Air; self.size.x * self.size.y];
         for y in 0..self.size.y {
             for x in 0..self.size.x {
@@ -156,6 +169,108 @@ impl TileMap {
             }
         }
         self.tiles = tiles;
+        self.update_geometry(assets);
+    }
+
+    pub fn update_geometry(&mut self, assets: &Assets) {
+        let mut geometry = vec![0; self.tiles.len()];
+        let mut rng = thread_rng();
+        for (i, tile) in self.tiles.iter().enumerate() {
+            let connections = self.get_tile_connections(i);
+            let set = assets.sprites.tiles.get_tile_set(tile);
+            let options = set.get_tile_connected(connections);
+            geometry[i] = *options
+                .choose(&mut rng)
+                .expect("Failed to find a suitable tile geometry");
+        }
+        self.geometry = Some(geometry);
+    }
+
+    pub fn calculate_geometry(
+        &self,
+        grid: &Grid,
+        geng: &Geng,
+        assets: &Assets,
+    ) -> (
+        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+    ) {
+        let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
+        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
+
+        let calc_geometry = |i: usize, tile: &Tile, connections: Option<[Connection; 8]>| {
+            let pos = index_to_pos(i, self.size.x);
+            let pos = grid.grid_to_world(pos.map(|x| x as isize));
+            let pos = Aabb2::point(pos)
+                .extend_positive(grid.cell_size)
+                .map(Coord::as_f32);
+            let set = assets.sprites.tiles.get_tile_set(tile);
+            let index = if let Some(connections) = connections {
+                *set.get_tile_connected(connections).first().unwrap()
+            } else {
+                self.get_tile_index(i)
+            };
+            let geometry = set.get_tile_geometry(index);
+            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+            let vertices = [0, 1, 2, 3].map(|i| Vertex {
+                a_pos: vec2(vertices[i].0, vertices[i].1),
+                a_uv: geometry[i],
+            });
+            let geometry = [
+                vertices[0],
+                vertices[1],
+                vertices[2],
+                vertices[0],
+                vertices[2],
+                vertices[3],
+            ];
+            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
+            geometry.map(|vertex| {
+                let pos = matrix * vertex.a_pos.extend(1.0);
+                Vertex {
+                    a_pos: pos.xy() / pos.z,
+                    ..vertex
+                }
+            })
+        };
+        for (i, tile) in self.tiles.iter().enumerate() {
+            if let Tile::Air = tile {
+                continue;
+            }
+
+            let neighbours = self.get_tile_neighbours(i);
+            if neighbours.contains(&Some(Tile::Grass)) {
+                let connections = self.get_tile_connections(i);
+                let geometry = calc_geometry(i, &Tile::Grass, Some(connections));
+                let mask = &assets.sprites.tiles.mask;
+                let mask = mask.get_tile_geometry(
+                    *mask
+                        .get_tile_connected(connections)
+                        .first()
+                        .expect("Failed to find a suitable tile geometry"),
+                );
+                let idx = [0, 1, 2, 0, 2, 3];
+                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
+                masked_geometry
+                    .entry(Tile::Grass)
+                    .or_default()
+                    .extend(geometry);
+            }
+
+            tiles_geometry
+                .entry(*tile)
+                .or_default()
+                .extend(calc_geometry(i, tile, None));
+        }
+        let tiles = tiles_geometry
+            .into_iter()
+            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
+            .collect();
+        let masked = masked_geometry
+            .into_iter()
+            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
+            .collect();
+        (tiles, masked)
     }
 }
 

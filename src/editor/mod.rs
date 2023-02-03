@@ -82,8 +82,9 @@ enum EditorMode {
 impl Editor {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, level_name: Option<String>) -> Self {
         let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
-        let level =
+        let mut level =
             util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
+        level.tiles.update_geometry(assets);
 
         let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
 
@@ -108,7 +109,7 @@ impl Editor {
                 fov: (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0,
             },
             framebuffer_size: vec2(1, 1),
-            geometry: level.calculate_geometry(geng, assets),
+            geometry: level.tiles.calculate_geometry(&level.grid, geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
             normal_geometry,
             normal_uv,

@@ -232,7 +232,7 @@ impl Level {
         }
     }
 
-    pub fn remove_blocks(&mut self, blocks: &[PlaceableId]) -> Vec<Placeable> {
+    pub fn remove_blocks(&mut self, blocks: &[PlaceableId], assets: &Assets) -> Vec<Placeable> {
         let mut spotlights = Vec::new();
         let mut props = Vec::new();
         let mut hazards = Vec::new();
@@ -274,19 +274,19 @@ impl Level {
             if let Some(tile) = self.tiles.get_tile_isize(pos) {
                 removed.push(Placeable::Tile((tile, pos)));
             }
-            self.tiles.set_tile_isize(pos, Tile::Air);
+            self.tiles.set_tile_isize(pos, Tile::Air, assets);
         }
 
         removed
     }
 
-    pub fn change_size(&mut self, size: vec2<usize>) {
-        self.tiles.change_size(size);
+    pub fn change_size(&mut self, size: vec2<usize>, assets: &Assets) {
+        self.tiles.change_size(size, assets);
         self.size = size;
     }
 
-    pub fn translate(&mut self, delta: vec2<isize>) {
-        self.tiles.translate(delta);
+    pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
+        self.tiles.translate(delta, assets);
 
         let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
         self.spawn_point += delta;
@@ -303,80 +303,6 @@ impl Level {
         for light in &mut self.spotlights {
             light.position += delta;
         }
-    }
-
-    pub fn calculate_geometry(
-        &self,
-        geng: &Geng,
-        assets: &Assets,
-    ) -> (
-        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
-        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
-    ) {
-        let mut tiles_geometry = HashMap::<Tile, Vec<Vertex>>::new();
-        let mut masked_geometry = HashMap::<Tile, Vec<MaskedVertex>>::new();
-        let calc_geometry = |i: usize, tile: &Tile, connections: [Connection; 8]| {
-            let pos = index_to_pos(i, self.size.x);
-            let pos = self.grid.grid_to_world(pos.map(|x| x as isize));
-            let pos = Aabb2::point(pos)
-                .extend_positive(self.grid.cell_size)
-                .map(Coord::as_f32);
-            let set = assets.sprites.tiles.get_tile_set(tile);
-            let geometry = set.get_tile_connected(connections);
-            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
-            let vertices = [0, 1, 2, 3].map(|i| Vertex {
-                a_pos: vec2(vertices[i].0, vertices[i].1),
-                a_uv: geometry[i],
-            });
-            let geometry = [
-                vertices[0],
-                vertices[1],
-                vertices[2],
-                vertices[0],
-                vertices[2],
-                vertices[3],
-            ];
-            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
-            geometry.map(|vertex| {
-                let pos = matrix * vertex.a_pos.extend(1.0);
-                Vertex {
-                    a_pos: pos.xy() / pos.z,
-                    ..vertex
-                }
-            })
-        };
-        for (i, tile) in self.tiles.tiles().iter().enumerate() {
-            if let Tile::Air = tile {
-                continue;
-            }
-
-            let connections = self.tiles.get_tile_connections(i);
-            let neighbours = self.tiles.get_tile_neighbours(i);
-            if neighbours.contains(&Some(Tile::Grass)) {
-                let geometry = calc_geometry(i, &Tile::Grass, connections);
-                let mask = assets.sprites.tiles.mask.get_tile_connected(connections);
-                let idx = [0, 1, 2, 0, 2, 3];
-                let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
-                masked_geometry
-                    .entry(Tile::Grass)
-                    .or_default()
-                    .extend(geometry);
-            }
-
-            tiles_geometry
-                .entry(*tile)
-                .or_default()
-                .extend(calc_geometry(i, tile, connections));
-        }
-        let tiles = tiles_geometry
-            .into_iter()
-            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
-            .collect();
-        let masked = masked_geometry
-            .into_iter()
-            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
-            .collect();
-        (tiles, masked)
     }
 
     pub fn calculate_light_geometry(&self, geng: &Geng) -> ugli::VertexBuffer<NormalVertex> {
@@ -456,8 +382,7 @@ impl Level {
             let tileset = assets.sprites.tiles.get_tile_set(tile);
             match tileset.texture.normal() {
                 Some(_) => {
-                    let connections = self.tiles.get_tile_connections(i);
-                    let uv = tileset.get_tile_connected(connections);
+                    let uv = tileset.get_tile_geometry(self.tiles.get_tile_index(i));
                     shaded_geom
                         .entry(*tile)
                         .or_default()

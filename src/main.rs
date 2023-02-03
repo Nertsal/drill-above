@@ -103,17 +103,38 @@ fn main() {
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::ChangeSize(config) => {
-                let level_path = opt
-                    .level
-                    .as_ref()
-                    .expect("change size requires a --level argument");
-                let size = parse_size(&config.size).expect("Failed to parse size");
-                let mut level = Level::load(level_path).expect("Failed to load the level");
-                level.change_size(size);
+                let state = {
+                    let future = {
+                        let geng = geng.clone();
+                        async move {
+                            let level_path = opt
+                                .level
+                                .as_ref()
+                                .expect("change size requires a --level argument");
+                            let size = parse_size(&config.size).expect("Failed to parse size");
+                            let mut level =
+                                Level::load(level_path).expect("Failed to load the level");
 
-                let level_path = "new_level.json";
-                level.save(level_path).expect("Failed to save the level");
-                info!("Saved the changed level at {}", level_path);
+                            let assets: Assets =
+                                geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+                                    .await
+                                    .expect("Failed to load assets");
+
+                            level.change_size(size, &assets);
+
+                            let level_path = "new_level.json";
+                            level.save(level_path).expect("Failed to save the level");
+                            info!("Saved the changed level at {}", level_path);
+
+                            std::process::exit(0);
+                            #[allow(unreachable_code)]
+                            geng::EmptyLoadingScreen
+                        }
+                    };
+                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future, |state| state)
+                };
+
+                geng::run(&geng, state)
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::Format => {

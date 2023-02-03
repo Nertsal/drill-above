@@ -26,7 +26,10 @@ impl Editor {
             Action::Remove { pos } => self.action_remove(pos),
             Action::Replace(block) => self.action_replace(block),
         };
-        self.geometry = self.level.calculate_geometry(&self.geng, &self.assets);
+        self.geometry =
+            self.level
+                .tiles
+                .calculate_geometry(&self.level.grid, &self.geng, &self.assets);
         self.light_geometry = self.level.calculate_light_geometry(&self.geng);
         let (normal_geom, normal_uv) = self
             .level
@@ -54,7 +57,9 @@ impl Editor {
         let grid_pos = self.level.grid.world_to_grid(position).0;
         match block {
             PlaceableType::Tile(tile) => {
-                self.level.tiles.set_tile_isize(grid_pos, tile);
+                self.level
+                    .tiles
+                    .set_tile_isize(grid_pos, tile, &self.assets);
             }
             PlaceableType::Hazard(hazard) => {
                 self.level.place_hazard(grid_pos, hazard);
@@ -84,7 +89,7 @@ impl Editor {
     fn action_replace(&mut self, block: Placeable) -> Vec<Action> {
         match block {
             Placeable::Tile((tile, pos)) => {
-                self.level.tiles.set_tile_isize(pos, tile);
+                self.level.tiles.set_tile_isize(pos, tile, &self.assets);
             }
             Placeable::Hazard(hazard) => {
                 self.level.hazards.push(hazard);
@@ -103,7 +108,7 @@ impl Editor {
     fn action_remove(&mut self, _pos: vec2<Coord>) -> Vec<Action> {
         let actions = self
             .level
-            .remove_blocks(&self.hovered)
+            .remove_blocks(&self.hovered, &self.assets)
             .into_iter()
             .map(Action::Replace)
             .collect();

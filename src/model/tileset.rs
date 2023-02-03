@@ -31,7 +31,15 @@ pub enum ConnectionFilter {
 }
 
 impl TileSet {
-    pub fn get_tile_connected(&self, connections: [Connection; 8]) -> UvRect {
+    pub fn get_tile_geometry(&self, index: usize) -> UvRect {
+        self.config
+            .tiles
+            .get(index)
+            .expect("Failed to find the tile by index")
+            .1
+    }
+
+    pub fn get_tile_connected(&self, connections: [Connection; 8]) -> Vec<usize> {
         let con_match = |pattern: &[ConnectionFilter; 8]| {
             connections
                 .iter()
@@ -42,12 +50,9 @@ impl TileSet {
         self.config
             .tiles
             .iter()
-            .find_map(|(pattern, uv)| con_match(pattern).then_some(uv).copied())
-            .unwrap_or_else(|| {
-                error!("Failed to find the uv for {:?}", connections);
-                self.config.tiles.first().unwrap().1
-            })
-        // .expect("Failed to find a suitable tile")
+            .enumerate()
+            .filter_map(|(i, (pattern, _))| con_match(pattern).then_some(i))
+            .collect()
     }
 }
 
