@@ -3,6 +3,7 @@ use super::*;
 pub struct TileSet {
     texture: ugli::Texture,
     pub config: TileSetConfig,
+    normal: Option<ugli::Texture>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
@@ -31,13 +32,28 @@ pub enum ConnectionFilter {
 }
 
 impl TileSet {
-    fn new(mut texture: ugli::Texture, config: TileSetConfig) -> Self {
+    fn new(
+        mut texture: ugli::Texture,
+        config: TileSetConfig,
+        mut normal: Option<ugli::Texture>,
+    ) -> Self {
         texture.set_filter(ugli::Filter::Nearest);
-        Self { texture, config }
+        if let Some(normal) = &mut normal {
+            normal.set_filter(ugli::Filter::Nearest);
+        }
+        Self {
+            texture,
+            config,
+            normal,
+        }
     }
 
     pub fn texture(&self) -> &ugli::Texture {
         &self.texture
+    }
+
+    pub fn normal_texture(&self) -> Option<&ugli::Texture> {
+        self.normal.as_ref()
     }
 
     pub fn get_tile_connected(&self, connections: [Connection; 8]) -> UvRect {
@@ -153,9 +169,20 @@ impl geng::LoadAsset for TileSet {
             let mut texture = ugli::Texture::load(&geng, &path).await?;
             texture.set_filter(ugli::Filter::Nearest);
             let name = path.file_stem().unwrap().to_str().unwrap();
-            let path = path.parent().unwrap().join(format!("{name}_config.json"));
-            let config = TileSetConfig::load(&geng, &path).await?;
-            Ok(Self::new(texture, config))
+            let config = path.parent().unwrap().join(format!("{name}_config.json"));
+            let config = TileSetConfig::load(&geng, &config).await?;
+            let normal = path.parent().unwrap().join(format!("{name}_normal.json"));
+            let normal = util::report_warn(
+                async {
+                    let mut texture = ugli::Texture::load(&geng, &normal).await?;
+                    texture.set_filter(ugli::Filter::Nearest);
+                    Result::<ugli::Texture, anyhow::Error>::Ok(texture)
+                }
+                .await,
+                "Failed to load tile normals",
+            )
+            .ok();
+            Ok(Self::new(texture, config, normal))
         }
         .boxed_local()
     }

@@ -41,7 +41,8 @@ pub struct World {
         HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
     ),
     pub light_geometry: ugli::VertexBuffer<NormalVertex>,
-    pub normal_geometry: Vec<ugli::VertexBuffer<NormalVertex>>,
+    pub normal_geometry: ugli::VertexBuffer<NormalVertex>,
+    pub normal_uv: HashMap<Tile, ugli::VertexBuffer<Vertex>>,
     pub level: Level,
     pub level_transition: Option<String>,
     pub coins_collected: usize,
@@ -86,6 +87,8 @@ impl World {
 
         actors.insert(player_actor);
 
+        let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
+
         Self {
             assets: assets.clone(),
             volume: 0.5,
@@ -103,7 +106,8 @@ impl World {
             },
             geometry: level.calculate_geometry(geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
-            normal_geometry: level.calculate_normal_geometry(geng),
+            normal_geometry,
+            normal_uv,
             level_transition: None,
             coins_collected: 0,
             time: Time::ZERO,

@@ -22,6 +22,7 @@ pub struct Shaders {
     pub point_light_shadow_map: ugli::Program,
     pub shadow_remove: ugli::Program,
     pub normal_map: ugli::Program,
+    pub normal_texture: ugli::Program,
 }
 
 #[derive(geng::Assets)]

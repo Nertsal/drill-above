@@ -55,12 +55,13 @@ impl LightsRender {
         &mut self,
         level: &Level,
         light_geometry: &ugli::VertexBuffer<NormalVertex>,
-        normal_geometry: &[ugli::VertexBuffer<NormalVertex>],
+        normal_geometry: &ugli::VertexBuffer<NormalVertex>,
+        normal_uv: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
         camera: &Camera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
         // Render normal map
-        self.render_normal_map(camera, normal_geometry);
+        self.render_normal_map(camera, normal_geometry, normal_uv);
 
         // Render lights
         self.render_lights(level, camera, light_geometry);
@@ -219,22 +220,46 @@ impl LightsRender {
     pub fn render_normal_map(
         &mut self,
         camera: &Camera2d,
-        geometry: &[ugli::VertexBuffer<NormalVertex>],
+        geometry: &ugli::VertexBuffer<NormalVertex>,
+        uv: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
     ) {
         let mut normal_framebuffer = attach_texture(&mut self.buffers.normal_texture, &self.geng);
         let framebuffer_size = normal_framebuffer.size().map(|x| x as f32);
 
-        for vertices in geometry {
-            // Render the polygon's normal map
+        ugli::draw(
+            &mut normal_framebuffer,
+            &self.assets.shaders.normal_map,
+            ugli::DrawMode::Triangles,
+            geometry,
+            (
+                ugli::uniforms! {
+                    u_model_matrix: mat3::identity(),
+                    u_normal_influence: 1.0,
+                },
+                geng::camera2d_uniforms(camera, framebuffer_size),
+            ),
+            ugli::DrawParameters {
+                blend_mode: Some(ugli::BlendMode::default()),
+                ..Default::default()
+            },
+        );
+
+        for (tile, geometry) in uv {
+            let Some(texture) = self.assets.sprites.tiles.get_tile_set(tile).normal_texture() else {
+                error!("Invalid normal uv geometry: received uv for tile {tile:?}, but it has no normal texture");
+                continue;
+            };
+
             ugli::draw(
                 &mut normal_framebuffer,
-                &self.assets.shaders.normal_map,
+                &self.assets.shaders.normal_texture,
                 ugli::DrawMode::TriangleFan,
-                vertices,
+                geometry,
                 (
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),
                         u_normal_influence: 1.0,
+                        u_normal_texture: texture,
                     },
                     geng::camera2d_uniforms(camera, framebuffer_size),
                 ),

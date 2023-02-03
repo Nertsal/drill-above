@@ -47,6 +47,7 @@ impl GameRender {
             &world.level,
             &world.light_geometry,
             &world.normal_geometry,
+            &world.normal_uv,
             &world.camera,
             framebuffer,
         );

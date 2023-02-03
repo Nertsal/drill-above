@@ -27,7 +27,8 @@ pub struct Editor {
         HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
     ),
     light_geometry: ugli::VertexBuffer<NormalVertex>,
-    normal_geometry: Vec<ugli::VertexBuffer<NormalVertex>>,
+    normal_geometry: ugli::VertexBuffer<NormalVertex>,
+    normal_uv: HashMap<Tile, ugli::VertexBuffer<Vertex>>,
     draw_grid: bool,
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
@@ -79,6 +80,9 @@ impl Editor {
         let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
         let level =
             util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
+
+        let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
+
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -101,7 +105,8 @@ impl Editor {
             framebuffer_size: vec2(1, 1),
             geometry: level.calculate_geometry(geng, assets),
             light_geometry: level.calculate_light_geometry(geng),
-            normal_geometry: level.calculate_normal_geometry(geng),
+            normal_geometry,
+            normal_uv,
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -349,6 +354,7 @@ impl geng::State for Editor {
             &self.level,
             &self.light_geometry,
             &self.normal_geometry,
+            &self.normal_uv,
             &self.camera,
             &mut pixel_framebuffer,
         );

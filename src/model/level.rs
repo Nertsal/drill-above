@@ -429,31 +429,66 @@ impl Level {
         ugli::VertexBuffer::new_dynamic(geng.ugli(), vertices)
     }
 
-    pub fn calculate_normal_geometry(&self, geng: &Geng) -> Vec<ugli::VertexBuffer<NormalVertex>> {
-        self.tiles
-            .tiles()
-            .iter()
-            .enumerate()
-            .filter_map(|(i, tile)| {
-                (!matches!(tile, Tile::Air)).then(|| {
-                    let pos = index_to_pos(i, self.size.x);
-                    let pos = self.grid.grid_to_world(pos.map(|x| x as isize));
-                    let pos = Aabb2::point(pos)
-                        .extend_positive(self.grid.cell_size)
-                        .map(Coord::as_f32);
-                    let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
-                    let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+    pub fn calculate_normal_geometry(
+        &self,
+        geng: &Geng,
+        assets: &Assets,
+    ) -> (
+        ugli::VertexBuffer<NormalVertex>,
+        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+    ) {
+        let mut static_geom = Vec::new();
+        let mut shaded_geom = HashMap::<Tile, Vec<Vertex>>::new();
+        for (i, tile) in self.tiles.tiles().iter().enumerate() {
+            if let Tile::Air = tile {
+                continue;
+            }
+
+            let pos = index_to_pos(i, self.size.x);
+            let pos = self.grid.grid_to_world(pos.map(|x| x as isize));
+            let pos = Aabb2::point(pos)
+                .extend_positive(self.grid.cell_size)
+                .map(Coord::as_f32);
+            let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
+            let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+
+            let tileset = assets.sprites.tiles.get_tile_set(tile);
+            match tileset.normal_texture() {
+                Some(_) => {
+                    let connections = self.tiles.get_tile_connections(i);
+                    let uv = tileset.get_tile_connected(connections);
+                    shaded_geom
+                        .entry(*tile)
+                        .or_default()
+                        .extend(std::iter::zip(vertices, uv).map(|((x, y), a_uv)| Vertex {
+                            a_pos: (matrix * vec2(x, y).extend(1.0)).into_2d(),
+                            a_uv,
+                        }));
+                }
+                None => {
                     let normals = self.tiles.get_tile_normals(i);
-                    let vertices = std::iter::zip(vertices, normals)
-                        .map(|((x, y), n)| NormalVertex {
+                    let indices = [0, 1, 2, 0, 2, 3];
+                    static_geom.extend(indices.into_iter().map(|i| {
+                        let (x, y) = vertices[i];
+                        let n = normals[i];
+                        NormalVertex {
                             a_pos: (matrix * vec2(x, y).extend(1.0)).into_2d(),
                             a_normal: n,
-                        })
-                        .collect();
-                    ugli::VertexBuffer::new_dynamic(geng.ugli(), vertices)
-                })
-            })
-            .collect()
+                        }
+                    }));
+                }
+            }
+        }
+
+        let shaded_geom = shaded_geom
+            .into_iter()
+            .map(|(tile, geom)| (tile, ugli::VertexBuffer::new_dynamic(geng.ugli(), geom)))
+            .collect();
+
+        (
+            ugli::VertexBuffer::new_dynamic(geng.ugli(), static_geom),
+            shaded_geom,
+        )
     }
 
     pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
