@@ -79,6 +79,7 @@ pub enum HazardType {
 pub enum PropType {
     DrillUse,
     DrillJump,
+    Tree2,
 }
 
 impl HazardType {
@@ -89,9 +90,9 @@ impl HazardType {
 }
 
 impl PropType {
-    pub fn all() -> [Self; 2] {
+    pub fn all() -> [Self; 3] {
         use PropType::*;
-        [DrillUse, DrillJump]
+        [DrillUse, DrillJump, Tree2]
     }
 }
 

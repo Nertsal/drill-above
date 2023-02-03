@@ -86,6 +86,7 @@ pub struct HazardSprites {
 pub struct PropSprites {
     pub tutorial_drill_use: Texture,
     pub tutorial_drill_jump: Texture,
+    pub tree_2: Texture,
 }
 
 #[derive(geng::Assets)]
@@ -143,6 +144,7 @@ impl PropSprites {
         match prop {
             PropType::DrillUse => &self.tutorial_drill_use,
             PropType::DrillJump => &self.tutorial_drill_jump,
+            PropType::Tree2 => &self.tree_2,
         }
     }
 }
