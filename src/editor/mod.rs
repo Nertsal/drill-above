@@ -6,6 +6,8 @@ mod ui_impl;
 use action::*;
 
 const CAMERA_MOVE_SPEED: f32 = 20.0;
+const EDITOR_FOV_MIN: usize = 10 * PIXELS_PER_UNIT;
+const EDITOR_FOV_MAX: usize = 70 * PIXELS_PER_UNIT;
 
 struct Render {
     world: WorldRender,
@@ -20,6 +22,8 @@ pub struct Editor {
     render: Render,
     camera: Camera2d,
     framebuffer_size: vec2<usize>,
+    screen_resolution: vec2<usize>,
+
     level_name: String,
     level: Level,
     geometry: (
@@ -97,6 +101,7 @@ impl Editor {
                 lights: LightsRender::new(geng, assets),
                 util: UtilRender::new(geng, assets),
             },
+            screen_resolution: SCREEN_RESOLUTION,
             camera: Camera2d {
                 center: vec2(0.0, 0.25),
                 rotation: 0.0,
@@ -316,6 +321,18 @@ impl Editor {
         }
     }
 
+    fn zoom(&mut self, delta: isize) {
+        let current = self.screen_resolution.x;
+        let delta = delta * PIXELS_PER_UNIT as isize;
+        let target_width = (delta.saturating_add_unsigned(current).max(0) as usize)
+            .clamp(EDITOR_FOV_MIN, EDITOR_FOV_MAX);
+        let ratio = self.screen_resolution.y as f32 / self.screen_resolution.x as f32;
+        self.screen_resolution = vec2(target_width, (target_width as f32 * ratio).round() as usize);
+        self.camera.fov = (self.screen_resolution.x / PIXELS_PER_UNIT) as f32 * ratio;
+
+        render::update_texture_size(&mut self.pixel_texture, self.screen_resolution, &self.geng);
+    }
+
     fn save_level(&self) {
         if let Ok(()) = util::report_err(self.level.save(&self.level_name), "Failed to save level")
         {
@@ -450,7 +467,7 @@ impl geng::State for Editor {
                 self.release(button);
             }
             geng::Event::Wheel { delta } => {
-                self.scroll_selected(delta.signum() as isize);
+                self.zoom(-delta.signum() as isize);
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::S if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
