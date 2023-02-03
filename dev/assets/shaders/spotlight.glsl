@@ -22,9 +22,11 @@ void main() {
 uniform vec2 u_light_pos;
 uniform float u_light_angle;
 uniform float u_light_angle_range;
+uniform float u_light_angle_gradient;
 uniform vec4 u_light_color;
 uniform float u_light_intensity;
 uniform float u_light_max_distance;
+uniform float u_light_distance_gradient;
 uniform float u_light_volume;
 uniform sampler2D u_normal_texture;
 uniform sampler2D u_source_texture;
@@ -48,10 +50,13 @@ void main() {
 
     // Radial falloff
     float distance_t = min(distance / u_light_max_distance, 1.0);
+    distance_t = pow(distance_t, u_light_distance_gradient);
     float radial_falloff = (1.0 - distance_t) * (1.0 - distance_t);
 
     // Angular falloff
-    float angular_falloff = smooth_step(u_light_angle_range, 0.0, abs(angle));
+    float angle_t = abs(angle / u_light_angle_range);
+    angle_t = pow(angle_t, u_light_angle_gradient);
+    float angular_falloff = smooth_step(1.0, 0.0, angle_t);
 
     // Normal falloff
     vec2 light_dir = -position / distance;
