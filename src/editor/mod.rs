@@ -344,6 +344,19 @@ impl Editor {
         render::update_texture_size(&mut self.pixel_texture, self.screen_resolution, &self.geng);
     }
 
+    fn update_geometry(&mut self) {
+        self.geometry =
+            self.level
+                .tiles
+                .calculate_geometry(&self.level.grid, &self.geng, &self.assets);
+        self.light_geometry = self.level.calculate_light_geometry(&self.geng);
+        let (normal_geom, normal_uv) = self
+            .level
+            .calculate_normal_geometry(&self.geng, &self.assets);
+        self.normal_geometry = normal_geom;
+        self.normal_uv = normal_uv;
+    }
+
     fn save_level(&self) {
         if let Ok(()) = util::report_err(self.level.save(&self.level_name), "Failed to save level")
         {

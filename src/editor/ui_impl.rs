@@ -20,8 +20,8 @@ impl Editor {
         let text_size = framebuffer_size.y * 0.05;
         let mut level_info = geng::ui::column![
             Text::new(
-                &self.level_name,
-                self.geng.default_font(),
+                self.level_name.clone(),
+                self.geng.default_font().clone(),
                 text_size,
                 Rgba::WHITE
             ),
@@ -34,13 +34,14 @@ impl Editor {
             },
         ];
 
+        let mut update_geometry = false;
         if let Some(tab) = self.tabs.get(self.active_tab) {
             if let EditorMode::Level = tab.mode {
                 level_info.extend([
                     Box::new(geng::ui::row![
                         Text::new(
                             format!("width: {}", self.level.size.x),
-                            self.geng.default_font(),
+                            self.geng.default_font().clone(),
                             text_size,
                             Rgba::WHITE
                         )
@@ -50,6 +51,7 @@ impl Editor {
                             if inc.was_clicked() {
                                 self.level
                                     .change_size(self.level.size + vec2(1, 0), &self.assets);
+                                update_geometry = true;
                             }
                             inc.padding_right(text_size.into())
                         },
@@ -58,6 +60,7 @@ impl Editor {
                             if dec.was_clicked() {
                                 self.level
                                     .change_size(self.level.size - vec2(1, 0), &self.assets);
+                                update_geometry = true;
                             }
                             dec.padding_right(text_size.into())
                         },
@@ -65,7 +68,7 @@ impl Editor {
                     Box::new(geng::ui::row![
                         Text::new(
                             format!("height: {}", self.level.size.y),
-                            self.geng.default_font(),
+                            self.geng.default_font().clone(),
                             text_size,
                             Rgba::WHITE
                         )
@@ -75,6 +78,7 @@ impl Editor {
                             if inc.was_clicked() {
                                 self.level
                                     .change_size(self.level.size + vec2(0, 1), &self.assets);
+                                update_geometry = true;
                             }
                             inc.padding_right(text_size.into())
                         },
@@ -83,20 +87,21 @@ impl Editor {
                             if dec.was_clicked() {
                                 self.level
                                     .change_size(self.level.size - vec2(0, 1), &self.assets);
+                                update_geometry = true;
                             }
                             dec.padding_right(text_size.into())
                         },
                     ]),
                     Box::new(Text::new(
                         "Translate",
-                        self.geng.default_font(),
+                        self.geng.default_font().clone(),
                         text_size,
                         Rgba::WHITE,
                     )),
                     Box::new(geng::ui::row![
                         Text::new(
                             "Horizontal",
-                            self.geng.default_font(),
+                            self.geng.default_font().clone(),
                             text_size,
                             Rgba::WHITE,
                         )
@@ -105,6 +110,7 @@ impl Editor {
                             let left = Button::new(cx, "left");
                             if left.was_clicked() {
                                 self.level.translate(vec2(-1, 0), &self.assets);
+                                update_geometry = true;
                             }
                             left.padding_right(text_size.into())
                         },
@@ -112,17 +118,24 @@ impl Editor {
                             let right = Button::new(cx, "right");
                             if right.was_clicked() {
                                 self.level.translate(vec2(1, 0), &self.assets);
+                                update_geometry = true;
                             }
                             right.padding_right(text_size.into())
                         },
                     ]),
                     Box::new(geng::ui::row![
-                        Text::new("Vertical", self.geng.default_font(), text_size, Rgba::WHITE,)
-                            .padding_right(text_size.into()),
+                        Text::new(
+                            "Vertical",
+                            self.geng.default_font().clone(),
+                            text_size,
+                            Rgba::WHITE,
+                        )
+                        .padding_right(text_size.into()),
                         {
                             let down = Button::new(cx, "down");
                             if down.was_clicked() {
                                 self.level.translate(vec2(0, -1), &self.assets);
+                                update_geometry = true;
                             }
                             down.padding_right(text_size.into())
                         },
@@ -130,12 +143,17 @@ impl Editor {
                             let up = Button::new(cx, "up");
                             if up.was_clicked() {
                                 self.level.translate(vec2(0, 1), &self.assets);
+                                update_geometry = true;
                             }
                             up.padding_right(text_size.into())
                         },
                     ]),
                 ]);
             }
+        }
+
+        if update_geometry {
+            self.update_geometry();
         }
 
         let tabs = self

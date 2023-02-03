@@ -287,6 +287,7 @@ impl Level {
 
     pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
         self.tiles.translate(delta, assets);
+        self.tiles.update_geometry(assets);
 
         let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
         self.spawn_point += delta;
@@ -461,12 +462,12 @@ impl Placeable {
 
 impl Hazard {
     pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.sprite.translate(pos - self.sprite.bottom_left());
+        self.sprite = self.sprite.translate(pos - self.sprite.bottom_left());
         self.collider.teleport(pos);
     }
 
     pub fn translate(&mut self, delta: vec2<Coord>) {
-        self.sprite.translate(delta);
+        self.sprite = self.sprite.translate(delta);
         self.collider.translate(delta);
     }
 }
@@ -483,11 +484,11 @@ impl Coin {
 
 impl Prop {
     pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.sprite.translate(pos - self.sprite.center());
+        self.sprite = self.sprite.translate(pos - self.sprite.center());
     }
 
     pub fn translate(&mut self, delta: vec2<Coord>) {
-        self.sprite.translate(delta);
+        self.sprite = self.sprite.translate(delta);
     }
 }
 

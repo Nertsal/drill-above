@@ -26,16 +26,7 @@ impl Editor {
             Action::Remove { pos } => self.action_remove(pos),
             Action::Replace(block) => self.action_replace(block),
         };
-        self.geometry =
-            self.level
-                .tiles
-                .calculate_geometry(&self.level.grid, &self.geng, &self.assets);
-        self.light_geometry = self.level.calculate_light_geometry(&self.geng);
-        let (normal_geom, normal_uv) = self
-            .level
-            .calculate_normal_geometry(&self.geng, &self.assets);
-        self.normal_geometry = normal_geom;
-        self.normal_uv = normal_uv;
+        self.update_geometry();
         actions
     }
 
