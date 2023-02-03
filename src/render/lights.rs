@@ -245,7 +245,7 @@ impl LightsRender {
         );
 
         for (tile, geometry) in uv {
-            let Some(texture) = self.assets.sprites.tiles.get_tile_set(tile).normal_texture() else {
+            let Some(texture) = self.assets.sprites.tiles.get_tile_set(tile).texture.normal() else {
                 error!("Invalid normal uv geometry: received uv for tile {tile:?}, but it has no normal texture");
                 continue;
             };

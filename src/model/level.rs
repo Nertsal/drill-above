@@ -453,7 +453,7 @@ impl Level {
             let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
 
             let tileset = assets.sprites.tiles.get_tile_set(tile);
-            match tileset.normal_texture() {
+            match tileset.texture.normal() {
                 Some(_) => {
                     let connections = self.tiles.get_tile_connections(i);
                     let uv = tileset.get_tile_connected(connections);

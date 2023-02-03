@@ -18,7 +18,7 @@ impl WorldRender {
         world: &World,
         draw_hitboxes: bool,
         framebuffer: &mut ugli::Framebuffer,
-        _normal_framebuffer: Option<&mut ugli::Framebuffer>,
+        normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
         // TODO: normals
         self.draw_background(world, framebuffer);
@@ -29,6 +29,7 @@ impl WorldRender {
             draw_hitboxes,
             &world.camera,
             framebuffer,
+            normal_framebuffer,
         );
         self.draw_player(world, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
@@ -139,6 +140,7 @@ impl WorldRender {
         );
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_level(
         &self,
         level: &Level,
@@ -147,8 +149,9 @@ impl WorldRender {
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
+        normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        self.draw_props(&level.props, camera, framebuffer);
+        self.draw_props(&level.props, camera, framebuffer, normal_framebuffer);
         self.draw_tiles(tiles_geometry, masked_geometry, camera, framebuffer);
         self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
         self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
@@ -174,6 +177,7 @@ impl WorldRender {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_level_editor(
         &self,
         level: &Level,
@@ -182,6 +186,7 @@ impl WorldRender {
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
+        normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
         self.draw_level(
             level,
@@ -190,6 +195,7 @@ impl WorldRender {
             draw_hitboxes,
             camera,
             framebuffer,
+            normal_framebuffer,
         );
 
         // Spawnpoint
@@ -224,10 +230,10 @@ impl WorldRender {
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        let mask = self.assets.sprites.tiles.mask.texture();
+        let mask = self.assets.sprites.tiles.mask.texture.texture();
         for (tile, geometry) in masked_geometry {
             let set = self.assets.sprites.tiles.get_tile_set(tile);
-            let texture = set.texture();
+            let texture = set.texture.texture();
             ugli::draw(
                 framebuffer,
                 &self.assets.shaders.texture_mask,
@@ -249,7 +255,7 @@ impl WorldRender {
         }
         for (tile, geometry) in tiles_geometry {
             let set = self.assets.sprites.tiles.get_tile_set(tile);
-            let texture = set.texture();
+            let texture = set.texture.texture();
             ugli::draw(
                 framebuffer,
                 &self.assets.shaders.texture,
@@ -275,14 +281,25 @@ impl WorldRender {
         props: &[Prop],
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
+        mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
         for prop in props {
             let texture = self.assets.sprites.props.get_texture(&prop.prop_type);
             self.geng.draw_2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(prop.sprite.map(Coord::as_f32), texture),
+                &draw_2d::TexturedQuad::new(prop.sprite.map(Coord::as_f32), texture.texture()),
             );
+
+            if let Some(framebuffer) = &mut normal_framebuffer {
+                if let Some(texture) = texture.normal() {
+                    self.geng.draw_2d(
+                        framebuffer,
+                        camera,
+                        &draw_2d::TexturedQuad::new(prop.sprite.map(Coord::as_f32), texture),
+                    );
+                }
+            }
         }
     }
 

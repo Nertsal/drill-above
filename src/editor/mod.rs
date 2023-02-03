@@ -337,7 +337,7 @@ impl geng::State for Editor {
         ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
 
         // Draw the world and normals ignoring lighting
-        let (mut world_framebuffer, _normal_framebuffer) =
+        let (mut world_framebuffer, mut normal_framebuffer) =
             self.render.lights.start_render(&mut pixel_framebuffer);
 
         // Render level
@@ -348,6 +348,7 @@ impl geng::State for Editor {
             true,
             &self.camera,
             &mut world_framebuffer,
+            Some(&mut normal_framebuffer),
         );
 
         self.render.lights.finish_render(

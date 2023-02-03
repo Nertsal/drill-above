@@ -169,13 +169,18 @@ impl Editor {
             let (texture, uv) = match block {
                 PlaceableType::Tile(tile) => {
                     let set = self.assets.sprites.tiles.get_tile_set(tile);
-                    (set.texture(), set.get_tile_connected([Connection::None; 8]))
+                    (
+                        set.texture.texture(),
+                        set.get_tile_connected([Connection::None; 8]),
+                    )
                 }
                 PlaceableType::Hazard(hazard) => {
                     (self.assets.sprites.hazards.get_texture(hazard), unit)
                 }
                 PlaceableType::Coin => (&self.assets.sprites.coin, unit),
-                PlaceableType::Prop(prop) => (self.assets.sprites.props.get_texture(prop), unit),
+                PlaceableType::Prop(prop) => {
+                    (self.assets.sprites.props.get_texture(prop).texture(), unit)
+                }
                 PlaceableType::Spotlight(..) => (&self.assets.sprites.spotlight, unit),
             };
             let texture_size = (uv[2] - uv[0]) * texture.size().map(|x| x as f32);

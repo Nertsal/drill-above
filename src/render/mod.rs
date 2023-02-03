@@ -32,15 +32,14 @@ impl GameRender {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         // Draw the world and normals ignoring lighting
-        let (mut world_framebuffer, _normal_framebuffer) = self.lights.start_render(framebuffer);
+        let (mut world_framebuffer, mut normal_framebuffer) = self.lights.start_render(framebuffer);
 
         // Render world
         self.world.draw_world(
             world,
             draw_hitboxes,
             &mut world_framebuffer,
-            None,
-            // Some(&mut normal_framebuffer),
+            Some(&mut normal_framebuffer),
         );
 
         self.lights.finish_render(

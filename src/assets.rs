@@ -84,10 +84,8 @@ pub struct HazardSprites {
 
 #[derive(geng::Assets)]
 pub struct PropSprites {
-    #[asset(postprocess = "pixel")]
-    pub tutorial_drill_use: ugli::Texture,
-    #[asset(postprocess = "pixel")]
-    pub tutorial_drill_jump: ugli::Texture,
+    pub tutorial_drill_use: Texture,
+    pub tutorial_drill_jump: Texture,
 }
 
 #[derive(geng::Assets)]
@@ -107,6 +105,13 @@ pub struct DrillSprites {
     pub drill_v0: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub drill_d0: ugli::Texture,
+}
+
+#[derive(Deref)]
+pub struct Texture {
+    #[deref]
+    texture: Rc<ugli::Texture>,
+    normal: Option<Rc<ugli::Texture>>,
 }
 
 #[derive(Deref)]
@@ -134,7 +139,7 @@ impl HazardSprites {
 }
 
 impl PropSprites {
-    pub fn get_texture(&self, prop: &PropType) -> &ugli::Texture {
+    pub fn get_texture(&self, prop: &PropType) -> &Texture {
         match prop {
             PropType::DrillUse => &self.tutorial_drill_use,
             PropType::DrillJump => &self.tutorial_drill_jump,
@@ -156,6 +161,47 @@ fn loop_sound(sound: &mut geng::Sound) {
 //         self.frames.get(i)
 //     }
 // }
+
+impl Texture {
+    pub fn texture(&self) -> &ugli::Texture {
+        self.texture.deref()
+    }
+
+    pub fn normal(&self) -> Option<&ugli::Texture> {
+        self.normal.as_deref()
+    }
+}
+
+impl geng::LoadAsset for Texture {
+    fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
+        let path = path.to_owned();
+        let geng = geng.clone();
+
+        async move {
+            let mut texture = ugli::Texture::load(&geng, &path).await?;
+            texture.set_filter(ugli::Filter::Nearest);
+            let texture = Rc::new(texture);
+
+            let name = path.file_stem().unwrap().to_str().unwrap();
+            let normal_path = path.with_file_name(format!("{name}_normal.png"));
+            let normal = util::report_warn(
+                async {
+                    let mut texture = ugli::Texture::load(&geng, &normal_path).await?;
+                    texture.set_filter(ugli::Filter::Nearest);
+                    Result::<_, anyhow::Error>::Ok(Rc::new(texture))
+                }
+                .await,
+                format!("Failed to load normals for {name}"),
+            )
+            .ok();
+
+            Ok(Self { texture, normal })
+        }
+        .boxed_local()
+    }
+
+    const DEFAULT_EXT: Option<&'static str> = Some("png");
+}
 
 impl geng::LoadAsset for Animation {
     fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
