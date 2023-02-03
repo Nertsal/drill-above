@@ -100,7 +100,7 @@ impl Editor {
             camera: Camera2d {
                 center: vec2(0.0, 0.25),
                 rotation: 0.0,
-                fov: 22.5,
+                fov: (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0,
             },
             framebuffer_size: vec2(1, 1),
             geometry: level.calculate_geometry(geng, assets),
