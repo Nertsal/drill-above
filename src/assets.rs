@@ -74,6 +74,8 @@ pub struct TileSprites {
     pub air: TileSet,
     pub grass: TileSet,
     pub stone: TileSet,
+    pub dirt: TileSet,
+    pub crystal_stone: TileSet,
 }
 
 #[derive(geng::Assets)]
@@ -127,6 +129,8 @@ impl TileSprites {
             Tile::Air => &self.air,
             Tile::Grass => &self.grass,
             Tile::Stone => &self.stone,
+            Tile::Dirt => &self.dirt,
+            Tile::CrystalStone => &self.crystal_stone,
         }
     }
 }

@@ -12,12 +12,14 @@ pub enum Tile {
     Air,
     Grass,
     Stone,
+    Dirt,
+    CrystalStone,
 }
 
 impl Tile {
-    pub fn all() -> [Self; 3] {
+    pub fn all() -> [Self; 5] {
         use Tile::*;
-        [Air, Grass, Stone]
+        [Air, Grass, Stone, Dirt, CrystalStone]
     }
 
     pub fn is_drillable(&self) -> bool {
@@ -25,6 +27,8 @@ impl Tile {
             Self::Air => true,
             Self::Grass => true,
             Self::Stone => false,
+            Self::Dirt => false,
+            Self::CrystalStone => true,
         }
     }
 }
