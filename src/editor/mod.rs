@@ -26,6 +26,7 @@ pub struct Editor {
 
     level_name: String,
     level: Level,
+    playtest: bool,
 
     geometry: (
         HashMap<Tile, ugli::VertexBuffer<Vertex>>,
@@ -163,6 +164,7 @@ impl Editor {
             hovered: Vec::new(),
             light_float_scale: true,
             light_hsv: None,
+            playtest: false,
             level,
             level_name,
         }
@@ -522,6 +524,22 @@ impl geng::State for Editor {
         }
     }
 
+    fn transition(&mut self) -> Option<geng::Transition> {
+        std::mem::take(&mut self.playtest).then(|| {
+            let state = game::Game::new(
+                &self.geng,
+                &self.assets,
+                self.level_name.clone(),
+                self.level.clone(),
+                0,
+                Time::ZERO,
+                0,
+                false,
+                None,
+            );
+            geng::Transition::Push(Box::new(state))
+        })
+    }
     fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         self.ui(cx)
     }

@@ -371,6 +371,10 @@ impl geng::State for Game {
     }
 
     fn transition(&mut self) -> Option<geng::Transition> {
+        if self.pause_menu.quit() {
+            return Some(geng::Transition::Pop);
+        }
+
         if let Some(level) = self.world.level_transition.take() {
             if level == self.level_name {
                 let coins = self.world.coins_collected;

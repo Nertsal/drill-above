@@ -32,6 +32,13 @@ impl Editor {
                 }
                 button.padding_bottom(text_size.into())
             },
+            {
+                let button = Button::new(cx, "Playtest");
+                if button.was_clicked() {
+                    self.playtest = true;
+                }
+                button.padding_bottom(text_size.into())
+            },
         ];
 
         let mut update_geometry = false;

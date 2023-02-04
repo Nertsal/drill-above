@@ -7,6 +7,7 @@ pub struct PauseMenu {
     assets: Rc<Assets>,
     state: MenuState,
     resume: bool,
+    quit: bool,
 }
 
 enum MenuState {
@@ -22,6 +23,7 @@ impl PauseMenu {
             assets: assets.clone(),
             state: MenuState::Paused,
             resume: false,
+            quit: false,
         }
     }
 
@@ -31,6 +33,10 @@ impl PauseMenu {
 
     pub fn resume(&mut self) -> bool {
         std::mem::take(&mut self.resume)
+    }
+
+    pub fn quit(&mut self) -> bool {
+        std::mem::take(&mut self.quit)
     }
 
     pub fn ui<'a>(
@@ -83,7 +89,15 @@ impl PauseMenu {
             button
         };
 
-        geng::ui::column![resume, retry, settings, rules,].align(vec2(0.5, 0.5))
+        let quit = {
+            let button = geng::ui::Button::new(cx, "Quit");
+            if button.was_clicked() {
+                self.quit = true;
+            }
+            button
+        };
+
+        geng::ui::column![resume, retry, settings, rules, quit,].align(vec2(0.5, 0.5))
     }
 
     fn rules_ui<'a>(
