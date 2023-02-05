@@ -53,7 +53,7 @@ impl Editor {
                     .set_tile_isize(grid_pos, tile, &self.assets);
             }
             PlaceableType::Hazard(hazard) => {
-                self.level.place_hazard(grid_pos, hazard);
+                self.level.place_hazard(position, hazard);
             }
             PlaceableType::Coin => {
                 self.level.place_coin(grid_pos);

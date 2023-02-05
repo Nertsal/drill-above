@@ -127,7 +127,8 @@ impl Level {
         )
     }
 
-    pub fn place_hazard(&mut self, pos: vec2<isize>, hazard: HazardType) {
+    pub fn place_hazard(&mut self, pos: vec2<Coord>, hazard: HazardType) {
+        let (pos, offset) = self.grid.world_to_grid(pos);
         let connect = |pos| {
             self.tiles
                 .get_tile_isize(pos)
@@ -137,9 +138,12 @@ impl Level {
         let (direction, collider) = match hazard {
             HazardType::Spikes => {
                 let size = vec2(0.8, 0.4);
-                let direction = -[vec2(1, 0), vec2(-1, 0), vec2(0, 1)]
+                let direction = -[vec2(0, -1), vec2(1, 0), vec2(-1, 0), vec2(0, 1)]
                     .into_iter()
-                    .find(|&d| connect(pos + d))
+                    .filter(|&d| connect(pos + d))
+                    .min_by_key(|dir| {
+                        (dir.map(|x| Coord::new(x as f32 * 0.5 + 0.5)) - offset).len()
+                    })
                     .unwrap_or(vec2(0, -1))
                     .map(|x| x as f32);
                 let pos = vec2(0.5, 0.5) - direction * 0.5;
@@ -462,7 +466,9 @@ impl Placeable {
 
 impl Hazard {
     pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.sprite = self.sprite.translate(pos - self.sprite.bottom_left());
+        self.sprite = self
+            .sprite
+            .translate(pos - vec2(self.sprite.center().x, self.sprite.min.y));
         self.collider.teleport(pos);
     }
 

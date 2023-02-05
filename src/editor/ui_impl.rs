@@ -30,7 +30,7 @@ impl Editor {
                 if button.was_clicked() {
                     self.save_level();
                 }
-                button.padding_bottom(text_size.into())
+                button
             },
             {
                 let button = Button::new(cx, "Playtest");
