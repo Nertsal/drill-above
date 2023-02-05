@@ -16,6 +16,16 @@ struct Render {
     util: UtilRender,
 }
 
+impl Render {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
+        Self {
+            world: WorldRender::new(geng, assets),
+            lights: LightsRender::new(geng, assets),
+            util: UtilRender::new(geng, assets),
+        }
+    }
+}
+
 pub struct Editor {
     geng: Geng,
     assets: Rc<Assets>,
@@ -29,6 +39,9 @@ pub struct Editor {
     level_name: String,
     world: World,
     playtest: bool,
+
+    #[cfg(not(target_arch = "wasm32"))]
+    hot_reload: Option<HotReload>,
 
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
@@ -45,6 +58,12 @@ pub struct Editor {
     preview: bool,
     light_float_scale: bool,
     color_mode: Option<ColorMode>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct HotReload {
+    receiver: std::sync::mpsc::Receiver<notify::Result<notify::Event>>,
+    _watcher: notify::RecommendedWatcher,
 }
 
 #[derive(Debug)]
@@ -83,11 +102,21 @@ enum EditorMode {
 }
 
 impl Editor {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, level_name: Option<String>) -> Self {
+    pub fn new(
+        geng: &Geng,
+        assets: &Rc<Assets>,
+        level_name: Option<String>,
+        hot_reload: bool,
+    ) -> Self {
         let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
         let mut level =
             util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
         level.tiles.update_geometry(assets);
+
+        #[cfg(target_arch = "wasm32")]
+        if hot_reload {
+            warn!("Hot reloading assets does nothing on the web");
+        }
 
         Self {
             geng: geng.clone(),
@@ -98,11 +127,7 @@ impl Editor {
                 texture.set_filter(ugli::Filter::Nearest);
                 texture
             },
-            render: Render {
-                world: WorldRender::new(geng, assets),
-                lights: LightsRender::new(geng, assets),
-                util: UtilRender::new(geng, assets),
-            },
+            render: Render::new(geng, assets),
             preview_render: GameRender::new(geng, assets),
             screen_resolution: SCREEN_RESOLUTION,
             camera: Camera2d {
@@ -161,7 +186,73 @@ impl Editor {
             playtest: false,
             preview: false,
             level_name,
+
+            #[cfg(not(target_arch = "wasm32"))]
+            hot_reload: hot_reload.then(|| {
+                use notify::Watcher;
+
+                let (tx, rx) = std::sync::mpsc::channel();
+                let mut watcher: notify::RecommendedWatcher = notify::Watcher::new(
+                    tx,
+                    notify::Config::default().with_poll_interval(std::time::Duration::from_secs(1)),
+                )
+                .expect("Failed to initialize the watcher");
+
+                watcher
+                    .watch(&run_dir().join("assets"), notify::RecursiveMode::Recursive)
+                    .expect("Failed to start watching assets directory");
+
+                info!("Initialized the watcher for assets");
+
+                HotReload {
+                    receiver: rx,
+                    _watcher: watcher,
+                }
+            }),
         }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn handle_notify(&mut self, event: notify::Result<notify::Event>) {
+        debug!("Received event from hot reload: {event:?}");
+        let event = match event {
+            Ok(event) => event,
+            Err(err) => {
+                error!("Received error from hot reload channel: {err}");
+                return;
+            }
+        };
+
+        if let notify::EventKind::Modify(notify::event::ModifyKind::Data(_)) = event.kind {
+            self.reload_assets();
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn reload_assets(&mut self) {
+        let assets = futures::executor::block_on({
+            let geng = self.geng.clone();
+            async move { <Assets as geng::LoadAsset>::load(&geng, &run_dir().join("assets")).await }
+        });
+
+        let assets = match assets {
+            Ok(assets) => assets,
+            Err(err) => {
+                error!("Failed to reload assets: {err}");
+                return;
+            }
+        };
+
+        let assets = Rc::new(assets);
+        self.world.assets = assets.clone();
+        self.assets = assets;
+
+        self.render = Render::new(&self.geng, &self.assets);
+        self.preview_render = GameRender::new(&self.geng, &self.assets);
+
+        self.update_geometry();
+
+        info!("Successfully reloaded assets");
     }
 
     fn scroll_selected(&mut self, delta: isize) {
@@ -582,6 +673,18 @@ impl geng::State for Editor {
         }
 
         self.update_selected_block();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(hot) = &self.hot_reload {
+            use std::sync::mpsc::TryRecvError;
+            match hot.receiver.try_recv() {
+                Ok(event) => self.handle_notify(event),
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => {
+                    error!("Disconnected from the hot reload channel");
+                }
+            }
+        }
     }
 
     fn handle_event(&mut self, event: geng::Event) {
@@ -666,14 +769,14 @@ impl EditorTab {
     }
 }
 
-pub fn run(geng: &Geng, level: Option<String>) -> impl geng::State {
+pub fn run(geng: &Geng, level: Option<String>, hot_reload: bool) -> impl geng::State {
     let future = {
         let geng = geng.clone();
         async move {
             let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
                 .await
                 .expect("Failed to load assets");
-            Editor::new(&geng, &assets, level)
+            Editor::new(&geng, &assets, level, hot_reload)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
