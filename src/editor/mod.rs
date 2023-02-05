@@ -443,22 +443,21 @@ impl geng::State for Editor {
         // Draw hovered
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selected_block] {
+            let Some(block) = self.level.get_block(block) else {
+                continue
+            };
             match block {
-                PlaceableId::Tile(_) => {}
-                PlaceableId::Hazard(id) => {
-                    let hazard = &self.level.hazards[id];
+                Placeable::Tile(_) => {}
+                Placeable::Hazard(hazard) => {
                     colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
                 }
-                PlaceableId::Prop(id) => {
-                    let prop = &self.level.props[id];
+                Placeable::Prop(prop) => {
                     colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
                 }
-                PlaceableId::Coin(id) => {
-                    let coin = &self.level.coins[id];
+                Placeable::Coin(coin) => {
                     colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
                 }
-                PlaceableId::Spotlight(id) => {
-                    let light = &self.level.spotlights[id];
+                Placeable::Spotlight(light) => {
                     let collider =
                         Collider::new(Aabb2::point(light.position).extend_uniform(Coord::new(0.5)));
                     let mut color = light.color;
@@ -526,6 +525,9 @@ impl geng::State for Editor {
                 self.zoom(-delta.signum() as isize);
             }
             geng::Event::KeyDown { key } => match key {
+                geng::Key::Escape => {
+                    self.selected_block = None;
+                }
                 geng::Key::S if ctrl => self.save_level(),
                 geng::Key::Z if ctrl => {
                     if shift {
