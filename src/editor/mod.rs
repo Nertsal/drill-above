@@ -32,7 +32,7 @@ pub struct Editor {
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
     dragging: Option<Dragging>,
-    selected_block: Option<PlaceableId>,
+    selection: Vec<PlaceableId>,
     hovered: Vec<PlaceableId>,
     undo_actions: Vec<Action>,
     redo_actions: Vec<Action>,
@@ -57,8 +57,8 @@ struct Dragging {
 enum DragAction {
     PlaceTile,
     RemoveTile,
-    MoveBlock {
-        id: PlaceableId,
+    MoveBlocks {
+        ids: Vec<(PlaceableId, vec2<Coord>)>,
         initial_pos: vec2<Coord>,
     },
 }
@@ -114,7 +114,7 @@ impl Editor {
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
             dragging: None,
-            selected_block: None,
+            selection: vec![],
             tabs: vec![
                 EditorTab {
                     name: "Level".into(),
@@ -198,53 +198,47 @@ impl Editor {
     }
 
     fn remove_selected(&mut self) {
-        if let Some(id) = self.selected_block {
-            self.action(Action::Remove { ids: vec![id] });
+        self.action(Action::Remove {
+            ids: self.selection.clone(),
+        });
+    }
+
+    fn move_blocks(&mut self, ids: &[(PlaceableId, vec2<Coord>)], pos: vec2<Coord>) {
+        for &(id, offset) in ids {
+            let pos = pos + offset;
+            match id {
+                PlaceableId::Tile(_) => unimplemented!(),
+                PlaceableId::Hazard(id) => {
+                    if let Some(hazard) = self.world.level.hazards.get_mut(id) {
+                        hazard.teleport(pos);
+                    }
+                }
+                PlaceableId::Prop(id) => {
+                    if let Some(prop) = self.world.level.props.get_mut(id) {
+                        prop.teleport(pos);
+                    }
+                }
+                PlaceableId::Coin(id) => {
+                    if let Some(coin) = self.world.level.coins.get_mut(id) {
+                        coin.teleport(pos);
+                    }
+                }
+                PlaceableId::Spotlight(id) => {
+                    if let Some(light) = self.world.level.spotlights.get_mut(id) {
+                        light.position = pos;
+                    }
+                }
+            }
         }
     }
 
-    fn move_block(&mut self, id: PlaceableId, pos: vec2<Coord>) {
-        match id {
-            PlaceableId::Tile(_) => unimplemented!(),
-            PlaceableId::Hazard(id) => {
-                if let Some(hazard) = self.world.level.hazards.get_mut(id) {
-                    hazard.teleport(pos);
-                }
-            }
-            PlaceableId::Prop(id) => {
-                if let Some(prop) = self.world.level.props.get_mut(id) {
-                    prop.teleport(pos);
-                }
-            }
-            PlaceableId::Coin(id) => {
-                if let Some(coin) = self.world.level.coins.get_mut(id) {
-                    coin.teleport(pos);
-                }
-            }
-            PlaceableId::Spotlight(id) => {
-                if let Some(light) = self.world.level.spotlights.get_mut(id) {
-                    light.position = pos;
-                }
-            }
-        }
-    }
-
-    fn select_block(&mut self, id: Option<PlaceableId>) {
-        if self.selected_block != id {
-            // Selected a different block
-            self.light_hsv = None;
-        }
-        self.selected_block = id;
-        let Some(id) = id else { return };
-        let Some(_block) = self.world.level.get_block(id) else {
-            return;
-        };
+    fn clear_selection(&mut self) {
+        self.selection.clear();
+        self.light_hsv = None;
     }
 
     fn update_selected_block(&mut self) {
-        let Some(_id) = self.selected_block else {
-            return;
-        };
+        for _id in &self.selection {}
     }
 
     fn update_cursor(&mut self, cursor_pos: vec2<f64>) {
@@ -270,17 +264,18 @@ impl Editor {
                 .retain(|id| tab.hoverable.iter().any(|&ty| id.fits_type(ty)))
         }
 
-        if let Some(dragging) = &self.dragging {
+        if let Some(dragging) = self.dragging.take() {
             if let Some(action) = &dragging.action {
                 match action {
                     DragAction::PlaceTile => self.place_block(),
                     DragAction::RemoveTile => self.remove_hovered(),
-                    &DragAction::MoveBlock { id, initial_pos } => self.move_block(
-                        id,
-                        initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
+                    DragAction::MoveBlocks { ids, initial_pos } => self.move_blocks(
+                        ids,
+                        *initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
                     ),
                 }
             }
+            self.dragging = Some(dragging);
         }
     }
 
@@ -293,13 +288,25 @@ impl Editor {
                 if let Some(PlaceableType::Tile(_)) = self.selected_block() {
                     Some(DragAction::PlaceTile)
                 } else if let Some(&id) = self.hovered.first() {
-                    self.world
-                        .level
-                        .get_block(id)
-                        .map(|block| DragAction::MoveBlock {
-                            id,
-                            initial_pos: block.position(),
-                        })
+                    self.world.level.get_block(id).map(|block| {
+                        let pos = block.position();
+                        let mut ids: Vec<_> = self
+                            .selection
+                            .iter()
+                            .filter_map(|&id| {
+                                self.world
+                                    .level
+                                    .get_block(id)
+                                    .map(|block| (id, block.position() - pos))
+                            })
+                            .collect();
+                        ids.push((id, vec2::ZERO));
+
+                        DragAction::MoveBlocks {
+                            ids,
+                            initial_pos: pos,
+                        }
+                    })
                 } else {
                     None
                 }
@@ -314,7 +321,6 @@ impl Editor {
             geng::MouseButton::Middle => None,
         };
 
-        self.select_block(None);
         self.dragging = Some(Dragging {
             initial_cursor_pos: position,
             initial_world_pos: self.cursor_world_pos,
@@ -331,7 +337,10 @@ impl Editor {
                 match button {
                     geng::MouseButton::Left => {
                         if let Some(&id) = self.hovered.first() {
-                            self.select_block(Some(id));
+                            if !self.geng.window().is_key_pressed(geng::Key::LShift) {
+                                self.clear_selection();
+                            }
+                            self.selection.push(id);
                         } else {
                             self.place_block()
                         }
@@ -360,14 +369,13 @@ impl Editor {
     }
 
     fn duplicate_selected(&mut self) {
-        let Some(id) = self.selected_block else {
-            return;
-        };
-        let Some(mut block) = self.world.level.get_block(id) else {
-            return;
-        };
-        block.translate(self.world.level.grid.cell_size);
-        self.world.level.place_block(block, &self.assets);
+        for &id in &self.selection {
+            let Some(mut block) = self.world.level.get_block(id) else {
+                continue;
+            };
+            block.translate(self.world.level.grid.cell_size);
+            self.world.level.place_block(block, &self.assets);
+        }
     }
 
     fn save_level(&self) {
@@ -436,7 +444,7 @@ impl geng::State for Editor {
 
         // Draw hovered
         let mut colliders = Vec::new();
-        for &block in itertools::chain![&self.hovered, &self.selected_block] {
+        for &block in itertools::chain![&self.hovered, &self.selection] {
             let Some(block) = self.world.level.get_block(block) else {
                 continue
             };
@@ -523,7 +531,7 @@ impl geng::State for Editor {
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::Escape => {
-                    self.select_block(None);
+                    self.clear_selection();
                 }
                 geng::Key::S if ctrl => self.save_level(),
                 geng::Key::Z if ctrl => {

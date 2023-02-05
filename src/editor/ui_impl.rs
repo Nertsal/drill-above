@@ -248,61 +248,86 @@ impl Editor {
             .boxed()
         };
 
-        let mut block_info: Option<Box<dyn geng::ui::Widget>> = self
-            .selected_block
-            .and_then(|id| self.world.level.get_block_mut(id))
-            .map(|block| match block {
-                PlaceableMut::Tile(_) => geng::ui::Void.boxed(),
-                PlaceableMut::Hazard(_) => {
-                    block_info_ui("Hazard".to_string(), true, geng::ui::Void.boxed())
-                }
-                PlaceableMut::Prop(_) => {
-                    block_info_ui("Prop".to_string(), true, geng::ui::Void.boxed())
-                }
-                PlaceableMut::Coin(_) => {
-                    block_info_ui("Coin".to_string(), true, geng::ui::Void.boxed())
-                }
-                PlaceableMut::Spotlight(config) => {
-                    // Spotlight
-                    let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
-                    let angle_range = slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
-                    let color = ui::color_selector(
-                        cx,
-                        &mut config.color,
-                        &mut self.light_float_scale,
-                        &mut self.light_hsv,
-                        font.clone(),
-                        text_size,
-                    );
-                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
-                    let max_distance = {
-                        let mut d = config.max_distance.as_f32();
-                        let slider = slider("Distance", 0.0..=50.0, &mut d);
-                        config.max_distance = Coord::new(d);
-                        slider
-                    };
-                    let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
-                    let angle_gradient =
-                        slider("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
-                    let distance_gradient = slider(
-                        "Distance Gradient",
-                        0.5..=5.0,
-                        &mut config.distance_gradient,
-                    );
+        let mut block_info: Option<Box<dyn geng::ui::Widget>> = if self.selection.len() == 1 {
+            self.selection
+                .first()
+                .and_then(|&id| self.world.level.get_block_mut(id))
+                .map(|block| match block {
+                    PlaceableMut::Tile(_) => {
+                        block_info_ui("Tile".to_string(), false, geng::ui::Void.boxed())
+                    }
+                    PlaceableMut::Hazard(_) => {
+                        block_info_ui("Hazard".to_string(), true, geng::ui::Void.boxed())
+                    }
+                    PlaceableMut::Prop(_) => {
+                        block_info_ui("Prop".to_string(), true, geng::ui::Void.boxed())
+                    }
+                    PlaceableMut::Coin(_) => {
+                        block_info_ui("Coin".to_string(), true, geng::ui::Void.boxed())
+                    }
+                    PlaceableMut::Spotlight(config) => {
+                        // Spotlight
+                        let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
+                        let angle_range =
+                            slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
+                        let color = ui::color_selector(
+                            cx,
+                            &mut config.color,
+                            &mut self.light_float_scale,
+                            &mut self.light_hsv,
+                            font.clone(),
+                            text_size,
+                        );
+                        let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
+                        let max_distance = {
+                            let mut d = config.max_distance.as_f32();
+                            let slider = slider("Distance", 0.0..=50.0, &mut d);
+                            config.max_distance = Coord::new(d);
+                            slider
+                        };
+                        let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
+                        let angle_gradient =
+                            slider("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
+                        let distance_gradient = slider(
+                            "Distance Gradient",
+                            0.5..=5.0,
+                            &mut config.distance_gradient,
+                        );
 
-                    let light = geng::ui::column![
-                        angle,
-                        angle_range,
-                        angle_gradient,
-                        color,
-                        intensity,
-                        max_distance,
-                        distance_gradient,
-                        volume,
-                    ];
-                    block_info_ui("Spotlight".to_string(), true, light.boxed())
-                }
-            });
+                        let light = geng::ui::column![
+                            angle,
+                            angle_range,
+                            angle_gradient,
+                            color,
+                            intensity,
+                            max_distance,
+                            distance_gradient,
+                            volume,
+                        ];
+                        block_info_ui("Spotlight".to_string(), true, light.boxed())
+                    }
+                })
+        } else if !self.selection.is_empty() {
+            let mut text = String::new();
+            for item in self.selection.iter().take(3) {
+                text += match item {
+                    PlaceableId::Tile(_) => "Tile",
+                    PlaceableId::Hazard(_) => "Hazard",
+                    PlaceableId::Prop(_) => "Prop",
+                    PlaceableId::Coin(_) => "Coin",
+                    PlaceableId::Spotlight(_) => "Spotlight",
+                };
+                text += ", ";
+            }
+            text.pop();
+            text.pop();
+            if self.selection.len() > 3 {
+                text += &format!(" + {} more", self.selection.len() - 3);
+            }
+            Some(block_info_ui(text, true, geng::ui::Void.boxed()))
+        } else {
+            None
+        };
 
         if block_info.is_none() {
             if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
