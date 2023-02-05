@@ -579,7 +579,7 @@ impl geng::State for Editor {
         // Render the texture onto the screen
         let reference_size = vec2(16.0, 9.0);
         let ratio = framebuffer.size().map(|x| x as f32) / reference_size;
-        let ratio = ratio.x.min(ratio.y);
+        let ratio = ratio.y; // ratio.x.min(ratio.y); // TODO: fix scaling for non 16/9 resolutions
         let target_size = reference_size * ratio;
         let target = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
             .extend_symmetric(target_size / 2.0);
