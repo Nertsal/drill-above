@@ -193,6 +193,134 @@ impl Editor {
             })
             .collect();
 
+        let text_size = framebuffer_size.y * 0.025;
+        // let font = &self.assets.font;
+        let font = self.geng.default_font();
+        let slider = |name, range, value: &mut f32| {
+            ui::slider(cx, name, value, range, font.clone(), text_size)
+        };
+
+        let mut duplicate = false;
+        let mut remove = false;
+        let mut block_info_ui = |name: String, dupe: bool, ui: Box<dyn geng::ui::Widget>| {
+            let mut column = geng::ui::column![geng::ui::Text::new(
+                name,
+                font.clone(),
+                text_size * 1.5,
+                Rgba::WHITE
+            )];
+
+            if dupe {
+                let button = geng::ui::Button::new(cx, "Duplicate");
+                if button.was_clicked() {
+                    duplicate = true;
+                }
+                column.push(button.boxed());
+
+                let button = geng::ui::Button::new(cx, "Remove");
+                if button.was_clicked() {
+                    remove = true;
+                }
+                column.push(button.boxed());
+            }
+            column.push(ui.padding_top(text_size.into()).boxed());
+
+            geng::ui::stack![
+                geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
+                column,
+            ]
+            .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.7))
+            .align(vec2(1.0, 0.5))
+            .boxed()
+        };
+
+        let mut block_info: Option<Box<dyn geng::ui::Widget>> = self
+            .selected_block
+            .and_then(|id| self.level.get_block_mut(id))
+            .map(|block| match block {
+                PlaceableMut::Tile(_) => geng::ui::Void.boxed(),
+                PlaceableMut::Hazard(_) => {
+                    block_info_ui("Hazard".to_string(), true, geng::ui::Void.boxed())
+                }
+                PlaceableMut::Prop(_) => {
+                    block_info_ui("Prop".to_string(), true, geng::ui::Void.boxed())
+                }
+                PlaceableMut::Coin(_) => {
+                    block_info_ui("Coin".to_string(), true, geng::ui::Void.boxed())
+                }
+                PlaceableMut::Spotlight(config) => {
+                    // Spotlight
+                    let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
+                    let angle_range = slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
+                    let color = ui::color_selector(
+                        cx,
+                        &mut config.color,
+                        &mut self.light_float_scale,
+                        &mut self.light_hsv,
+                        font.clone(),
+                        text_size,
+                    );
+                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
+                    let max_distance = {
+                        let mut d = config.max_distance.as_f32();
+                        let slider = slider("Distance", 0.0..=50.0, &mut d);
+                        config.max_distance = Coord::new(d);
+                        slider
+                    };
+                    let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
+                    let angle_gradient =
+                        slider("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
+                    let distance_gradient = slider(
+                        "Distance Gradient",
+                        0.5..=5.0,
+                        &mut config.distance_gradient,
+                    );
+
+                    let light = geng::ui::column![
+                        angle,
+                        angle_range,
+                        angle_gradient,
+                        color,
+                        intensity,
+                        max_distance,
+                        distance_gradient,
+                        volume,
+                    ];
+                    block_info_ui("Spotlight".to_string(), true, light.boxed())
+                }
+            });
+
+        if block_info.is_none() {
+            if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
+                if let EditorMode::Lights = &mut tab.mode {
+                    // Global light
+                    let config = &mut self.level.global_light;
+                    let color = ui::color_selector(
+                        cx,
+                        &mut config.color,
+                        &mut self.light_float_scale,
+                        &mut self.light_hsv,
+                        font.clone(),
+                        text_size,
+                    );
+                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
+                    let light = geng::ui::column![color, intensity];
+                    block_info = Some(block_info_ui(
+                        "Global light".to_string(),
+                        false,
+                        light.boxed(),
+                    ));
+                }
+            }
+        }
+
+        if duplicate {
+            self.duplicate_selected();
+        }
+        if remove {
+            self.remove_selected();
+        }
+
         let block_ui = |block: &PlaceableType| {
             let unit = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
             let (texture, uv) = match block {
@@ -245,88 +373,8 @@ impl Editor {
                 .uniform_padding(framebuffer_size.y as f64 * 0.05),
         ];
 
-        let text_size = framebuffer_size.y * 0.03;
-        // let font = &self.assets.font;
-        let font = self.geng.default_font();
-        let slider =
-            |name, range, value: &mut f32| ui::slider(cx, name, value, range, font, text_size);
-
-        if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
-            if let EditorMode::Lights = &mut tab.mode {
-                if let Some(config) = self.selected_block.and_then(|id| {
-                    if let PlaceableId::Spotlight(id) = id {
-                        self.level.spotlights.get_mut(id)
-                    } else {
-                        None
-                    }
-                }) {
-                    // Spotlight
-                    let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
-                    let angle_range = slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
-                    let color = ui::color_selector(
-                        cx,
-                        &mut config.color,
-                        &mut self.light_float_scale,
-                        &mut self.light_hsv,
-                        font,
-                        text_size,
-                    );
-                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
-                    let max_distance = {
-                        let mut d = config.max_distance.as_f32();
-                        let slider = slider("Distance", 0.0..=50.0, &mut d);
-                        config.max_distance = Coord::new(d);
-                        slider
-                    };
-                    let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
-                    let angle_gradient =
-                        slider("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
-                    let distance_gradient = slider(
-                        "Distance Gradient",
-                        0.5..=5.0,
-                        &mut config.distance_gradient,
-                    );
-
-                    let light = geng::ui::stack![
-                        geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
-                        geng::ui::column![
-                            angle,
-                            angle_range,
-                            angle_gradient,
-                            color,
-                            intensity,
-                            max_distance,
-                            distance_gradient,
-                            volume,
-                        ]
-                    ]
-                    .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.7))
-                    .align(vec2(1.0, 0.5))
-                    .uniform_padding(framebuffer_size.x as f64 * 0.05);
-                    stack.push(Box::new(light));
-                } else {
-                    // Global light
-                    let config = &mut self.level.global_light;
-                    let color = ui::color_selector(
-                        cx,
-                        &mut config.color,
-                        &mut self.light_float_scale,
-                        &mut self.light_hsv,
-                        font,
-                        text_size,
-                    );
-                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
-
-                    let light = geng::ui::stack![
-                        geng::ui::ColorBox::new(Rgba::new(0.0, 0.0, 0.0, 0.5)),
-                        geng::ui::column![color, intensity],
-                    ]
-                    .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.5))
-                    .align(vec2(1.0, 0.5))
-                    .uniform_padding(framebuffer_size.x as f64 * 0.05);
-                    stack.push(Box::new(light));
-                }
-            }
+        if let Some(ui) = block_info {
+            stack.push(ui);
         }
 
         Box::new(stack)

@@ -5,12 +5,13 @@ pub fn color_selector<'a>(
     color: &mut Rgba<f32>,
     float_scale: &mut bool,
     hsv_mode: &mut Option<Hsva<f32>>,
-    font: &'a Rc<geng::Font>,
+    font: Rc<geng::Font>,
     text_size: f32,
 ) -> impl geng::ui::Widget + 'a {
     use geng::ui::*;
 
-    let slider = |name, range, value: &mut f32| ui::slider(cx, name, value, range, font, text_size);
+    let slider =
+        |name, range, value: &mut f32| ui::slider(cx, name, value, range, font.clone(), text_size);
 
     let select = match hsv_mode {
         Some(hsva) => {

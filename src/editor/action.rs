@@ -7,7 +7,7 @@ pub enum Action {
         pos: vec2<Coord>,
     },
     Remove {
-        pos: vec2<Coord>,
+        ids: Vec<PlaceableId>,
     },
     Replace(Placeable),
 }
@@ -22,8 +22,7 @@ impl Editor {
     fn action_impl(&mut self, action: Action) -> Vec<Action> {
         let actions = match action {
             Action::Place { block, pos } => self.action_place(block, pos),
-
-            Action::Remove { pos } => self.action_remove(pos),
+            Action::Remove { ids } => self.action_remove(&ids),
             Action::Replace(block) => self.action_replace(block),
         };
         self.update_geometry();
@@ -96,10 +95,10 @@ impl Editor {
         vec![]
     }
 
-    fn action_remove(&mut self, _pos: vec2<Coord>) -> Vec<Action> {
+    fn action_remove(&mut self, ids: &[PlaceableId]) -> Vec<Action> {
         let actions = self
             .level
-            .remove_blocks(&self.hovered, &self.assets)
+            .remove_blocks(ids, &self.assets)
             .into_iter()
             .map(Action::Replace)
             .collect();

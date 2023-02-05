@@ -7,7 +7,7 @@ pub fn slider<'a, T: Float + 'a>(
     name: impl AsRef<str> + 'a,
     value: &mut T,
     range: RangeInclusive<f64>,
-    font: &'a Rc<geng::Font>,
+    font: Rc<geng::Font>,
     text_size: f32,
 ) -> impl geng::ui::Widget + 'a {
     let slider = ui::Slider::new(cx, value.as_f32().into(), range);
@@ -15,7 +15,7 @@ pub fn slider<'a, T: Float + 'a>(
         *value = T::from_f32(change as f32);
     }
 
-    let text = geng::ui::Text::new(format!("{value:.2}"), font, text_size, Rgba::WHITE);
+    let text = geng::ui::Text::new(format!("{value:.2}"), font.clone(), text_size, Rgba::WHITE);
 
     geng::ui::column![
         geng::ui::Text::new(name, font, text_size, Rgba::WHITE),

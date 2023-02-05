@@ -199,10 +199,16 @@ impl Editor {
         }
     }
 
-    fn remove_block(&mut self) {
+    fn remove_hovered(&mut self) {
         self.action(Action::Remove {
-            pos: self.cursor_world_pos,
+            ids: self.hovered.clone(),
         });
+    }
+
+    fn remove_selected(&mut self) {
+        if let Some(id) = self.selected_block {
+            self.action(Action::Remove { ids: vec![id] });
+        }
     }
 
     fn move_block(&mut self, id: PlaceableId, pos: vec2<Coord>) {
@@ -275,7 +281,7 @@ impl Editor {
             if let Some(action) = &dragging.action {
                 match action {
                     DragAction::PlaceTile => self.place_block(),
-                    DragAction::RemoveTile => self.remove_block(),
+                    DragAction::RemoveTile => self.remove_hovered(),
                     &DragAction::MoveBlock { id, initial_pos } => self.move_block(
                         id,
                         initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
@@ -334,7 +340,7 @@ impl Editor {
                             self.place_block()
                         }
                     }
-                    geng::MouseButton::Right => self.remove_block(),
+                    geng::MouseButton::Right => self.remove_hovered(),
                     geng::MouseButton::Middle => {}
                 }
             }

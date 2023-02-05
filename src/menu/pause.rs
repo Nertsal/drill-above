@@ -124,8 +124,9 @@ impl PauseMenu {
             button
         };
 
-        let slider =
-            |name, range, value: &mut R32| ui::slider(cx, name, value, range, font, text_size);
+        let slider = |name, range, value: &mut R32| {
+            ui::slider(cx, name, value, range, font.clone(), text_size)
+        };
 
         #[rustfmt::skip]
         let rules = geng::ui::column![

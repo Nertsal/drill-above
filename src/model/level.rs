@@ -50,6 +50,15 @@ pub enum Placeable {
     Spotlight(SpotlightSource),
 }
 
+#[derive(Debug)]
+pub enum PlaceableMut<'a> {
+    Tile((Tile, vec2<isize>)),
+    Hazard(&'a mut Hazard),
+    Prop(&'a mut Prop),
+    Coin(&'a mut Coin),
+    Spotlight(&'a mut SpotlightSource),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Coin {
     pub collider: Collider,
@@ -243,6 +252,19 @@ impl Level {
             PlaceableId::Spotlight(id) => {
                 self.spotlights.get(id).cloned().map(Placeable::Spotlight)
             }
+        }
+    }
+
+    pub fn get_block_mut(&mut self, id: PlaceableId) -> Option<PlaceableMut> {
+        match id {
+            PlaceableId::Tile(pos) => self
+                .tiles
+                .get_tile_isize(pos)
+                .map(|tile| PlaceableMut::Tile((tile, pos))),
+            PlaceableId::Hazard(id) => self.hazards.get_mut(id).map(PlaceableMut::Hazard),
+            PlaceableId::Prop(id) => self.props.get_mut(id).map(PlaceableMut::Prop),
+            PlaceableId::Coin(id) => self.coins.get_mut(id).map(PlaceableMut::Coin),
+            PlaceableId::Spotlight(id) => self.spotlights.get_mut(id).map(PlaceableMut::Spotlight),
         }
     }
 
