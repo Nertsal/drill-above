@@ -455,6 +455,9 @@ impl geng::State for Editor {
         if self.preview {
             // Render as in game
             self.world.camera = self.camera.clone();
+            if let Some(actor) = self.world.actors.get_mut(&self.world.player.id) {
+                actor.collider.teleport(self.world.level.spawn_point);
+            }
             self.preview_render
                 .draw_world(&self.world, false, &mut pixel_framebuffer);
         } else {
