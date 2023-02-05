@@ -366,6 +366,17 @@ impl Editor {
         self.normal_uv = normal_uv;
     }
 
+    fn duplicate_selected(&mut self) {
+        let Some(id) = self.selected_block else {
+            return;
+        };
+        let Some(mut block) = self.level.get_block(id) else {
+            return;
+        };
+        block.translate(self.level.grid.cell_size);
+        self.level.place_block(block, &self.assets);
+    }
+
     fn save_level(&self) {
         if let Ok(()) = util::report_err(self.level.save(&self.level_name), "Failed to save level")
         {
@@ -469,25 +480,31 @@ impl geng::State for Editor {
     fn update(&mut self, delta_time: f64) {
         let delta_time = delta_time as f32;
         let window = self.geng.window();
-        let mut dir = vec2::ZERO;
-        if window.is_key_pressed(geng::Key::A) {
-            dir.x -= 1.0;
+
+        let ctrl = window.is_key_pressed(geng::Key::LCtrl);
+        if !ctrl {
+            let mut dir = vec2::ZERO;
+            if window.is_key_pressed(geng::Key::A) {
+                dir.x -= 1.0;
+            }
+            if window.is_key_pressed(geng::Key::D) {
+                dir.x += 1.0;
+            }
+            if window.is_key_pressed(geng::Key::S) {
+                dir.y -= 1.0;
+            }
+            if window.is_key_pressed(geng::Key::W) {
+                dir.y += 1.0;
+            }
+            self.camera.center += dir * CAMERA_MOVE_SPEED * delta_time;
         }
-        if window.is_key_pressed(geng::Key::D) {
-            dir.x += 1.0;
-        }
-        if window.is_key_pressed(geng::Key::S) {
-            dir.y -= 1.0;
-        }
-        if window.is_key_pressed(geng::Key::W) {
-            dir.y += 1.0;
-        }
-        self.camera.center += dir * CAMERA_MOVE_SPEED * delta_time;
 
         self.update_selected_block();
     }
 
     fn handle_event(&mut self, event: geng::Event) {
+        let ctrl = self.geng.window().is_key_pressed(geng::Key::LCtrl);
+        let shift = self.geng.window().is_key_pressed(geng::Key::LShift);
         match event {
             geng::Event::MouseDown { position, button } => {
                 self.click(position, button);
@@ -503,16 +520,15 @@ impl geng::State for Editor {
                 self.zoom(-delta.signum() as isize);
             }
             geng::Event::KeyDown { key } => match key {
-                geng::Key::S if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
-                    self.save_level();
-                }
-                geng::Key::Z if self.geng.window().is_key_pressed(geng::Key::LCtrl) => {
-                    if self.geng.window().is_key_pressed(geng::Key::LShift) {
-                        self.redo();
+                geng::Key::S if ctrl => self.save_level(),
+                geng::Key::Z if ctrl => {
+                    if shift {
+                        self.redo()
                     } else {
-                        self.undo();
+                        self.undo()
                     }
                 }
+                geng::Key::D if ctrl => self.duplicate_selected(),
                 geng::Key::R => {
                     self.level.spawn_point = self.cursor_world_pos;
                 }

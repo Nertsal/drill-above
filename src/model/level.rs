@@ -127,6 +127,16 @@ impl Level {
         )
     }
 
+    pub fn place_block(&mut self, block: Placeable, assets: &Assets) {
+        match block {
+            Placeable::Tile((tile, pos)) => self.tiles.set_tile_isize(pos, tile, assets),
+            Placeable::Hazard(hazard) => self.hazards.push(hazard),
+            Placeable::Prop(prop) => self.props.push(prop),
+            Placeable::Coin(coin) => self.coins.push(coin),
+            Placeable::Spotlight(light) => self.spotlights.push(light),
+        }
+    }
+
     pub fn place_hazard(&mut self, pos: vec2<Coord>, hazard: HazardType) {
         let (pos, offset) = self.grid.world_to_grid(pos);
         let connect = |pos| {
@@ -456,10 +466,20 @@ impl Placeable {
     pub fn position(&self) -> vec2<Coord> {
         match self {
             Placeable::Tile(_) => unimplemented!(),
-            Placeable::Hazard(hazard) => hazard.collider.pos(),
+            Placeable::Hazard(hazard) => hazard.collider.feet(),
             Placeable::Prop(prop) => prop.sprite.center(),
-            Placeable::Coin(coin) => coin.collider.pos(),
+            Placeable::Coin(coin) => coin.collider.feet(),
             Placeable::Spotlight(light) => light.position,
+        }
+    }
+
+    pub fn translate(&mut self, offset: vec2<Coord>) {
+        match self {
+            Placeable::Tile(_) => unimplemented!(),
+            Placeable::Hazard(hazard) => hazard.translate(offset),
+            Placeable::Prop(prop) => prop.translate(offset),
+            Placeable::Coin(coin) => coin.translate(offset),
+            Placeable::Spotlight(light) => light.position += offset,
         }
     }
 }
