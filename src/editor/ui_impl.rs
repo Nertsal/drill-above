@@ -374,7 +374,9 @@ impl Editor {
             .map_or(Box::new(geng::ui::Void), |block| Box::new(block_ui(&block)));
 
         let mut stack = geng::ui::stack![
-            level_info.align(vec2(1.0, 1.0)),
+            level_info
+                .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.2))
+                .align(vec2(1.0, 1.0)),
             geng::ui::row(tabs)
                 .align(vec2(0.0, 1.0))
                 .padding_left(framebuffer_size.x as f64 * 0.02),

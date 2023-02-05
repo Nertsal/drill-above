@@ -460,40 +460,39 @@ impl geng::State for Editor {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
-        if !self.preview {
-            // Draw hovered
-            let mut colliders = Vec::new();
-            for &block in itertools::chain![&self.hovered, &self.selected_block] {
-                let Some(block) = self.level.get_block(block) else {
+        // Draw hovered
+        let mut colliders = Vec::new();
+        for &block in itertools::chain![&self.hovered, &self.selected_block] {
+            let Some(block) = self.level.get_block(block) else {
                 continue
             };
-                match block {
-                    Placeable::Tile(_) => {}
-                    Placeable::Hazard(hazard) => {
-                        colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
-                    }
-                    Placeable::Prop(prop) => {
-                        colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
-                    }
-                    Placeable::Coin(coin) => {
-                        colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
-                    }
-                    Placeable::Spotlight(light) => {
-                        let collider = Collider::new(
-                            Aabb2::point(light.position).extend_uniform(Coord::new(0.5)),
-                        );
-                        let mut color = light.color;
-                        color.a = 0.5;
-                        colliders.push((collider, color));
-                    }
+            match block {
+                Placeable::Tile(_) => {}
+                Placeable::Hazard(hazard) => {
+                    colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
+                }
+                Placeable::Prop(prop) => {
+                    colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
+                }
+                Placeable::Coin(coin) => {
+                    colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
+                }
+                Placeable::Spotlight(light) => {
+                    let collider =
+                        Collider::new(Aabb2::point(light.position).extend_uniform(Coord::new(0.5)));
+                    let mut color = light.color;
+                    color.a = 0.5;
+                    colliders.push((collider, color));
                 }
             }
-            for (collider, color) in colliders {
-                self.render
-                    .util
-                    .draw_collider(&collider, color, &self.camera, framebuffer);
-            }
+        }
+        for (collider, color) in colliders {
+            self.render
+                .util
+                .draw_collider(&collider, color, &self.camera, framebuffer);
+        }
 
+        if !self.preview {
             if self.draw_grid {
                 self.render.util.draw_grid(
                     &self.level.grid,
