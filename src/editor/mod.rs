@@ -237,12 +237,13 @@ impl Editor {
         }
     }
 
-    fn select_block(&mut self, id: PlaceableId) {
-        if self.selected_block != Some(id) {
+    fn select_block(&mut self, id: Option<PlaceableId>) {
+        if self.selected_block != id {
             // Selected a different block
             self.light_hsv = None;
         }
-        self.selected_block = Some(id);
+        self.selected_block = id;
+        let Some(id) = id else { return };
         let Some(_block) = self.level.get_block(id) else {
             return;
         };
@@ -318,7 +319,7 @@ impl Editor {
             geng::MouseButton::Middle => None,
         };
 
-        self.selected_block = None;
+        self.select_block(None);
         self.dragging = Some(Dragging {
             initial_cursor_pos: position,
             initial_world_pos: self.cursor_world_pos,
@@ -335,7 +336,7 @@ impl Editor {
                 match button {
                     geng::MouseButton::Left => {
                         if let Some(&id) = self.hovered.first() {
-                            self.select_block(id);
+                            self.select_block(Some(id));
                         } else {
                             self.place_block()
                         }
@@ -526,7 +527,7 @@ impl geng::State for Editor {
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::Escape => {
-                    self.selected_block = None;
+                    self.select_block(None);
                 }
                 geng::Key::S if ctrl => self.save_level(),
                 geng::Key::Z if ctrl => {
