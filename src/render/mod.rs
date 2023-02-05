@@ -1,9 +1,11 @@
 use super::*;
 
+mod cache;
 mod lights;
 mod util;
 mod world;
 
+pub use cache::*;
 pub use lights::*;
 pub use util::*;
 pub use world::*;
@@ -42,14 +44,8 @@ impl GameRender {
             Some(&mut normal_framebuffer),
         );
 
-        self.lights.finish_render(
-            &world.level,
-            &world.light_geometry,
-            &world.normal_geometry,
-            &world.normal_uv,
-            &world.camera,
-            framebuffer,
-        );
+        self.lights
+            .finish_render(&world.level, &world.cache, &world.camera, framebuffer);
     }
 
     pub fn draw_ui(

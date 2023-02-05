@@ -36,13 +36,7 @@ pub struct World {
     pub volume: f64,
     pub screen_resolution: vec2<usize>,
     pub camera: Camera2d,
-    pub geometry: (
-        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
-        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
-    ),
-    pub light_geometry: ugli::VertexBuffer<NormalVertex>,
-    pub normal_geometry: ugli::VertexBuffer<NormalVertex>,
-    pub normal_uv: HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+    pub cache: RenderCache,
     pub level: Level,
     pub level_transition: Option<String>,
     pub coins_collected: usize,
@@ -76,7 +70,17 @@ pub struct Block {
 }
 
 impl World {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, mut level: Level) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
+        let cache = RenderCache::calculate(&level, geng, assets);
+        Self::with_cache(assets, rules, level, cache)
+    }
+
+    pub fn with_cache(
+        assets: &Rc<Assets>,
+        rules: Rules,
+        mut level: Level,
+        cache: RenderCache,
+    ) -> Self {
         level.tiles.update_geometry(assets);
 
         let mut id_gen = IdGen::new();
@@ -88,8 +92,6 @@ impl World {
         let player_actor = Actor::new(player_id, collider);
 
         actors.insert(player_actor);
-
-        let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
 
         Self {
             assets: assets.clone(),
@@ -106,10 +108,6 @@ impl World {
                     fov,
                 }
             },
-            geometry: level.tiles.calculate_geometry(&level.grid, geng, assets),
-            light_geometry: level.calculate_light_geometry(geng),
-            normal_geometry,
-            normal_uv,
             level_transition: None,
             coins_collected: 0,
             time: Time::ZERO,
@@ -118,6 +116,7 @@ impl World {
             player: Player::new(player_id),
             blocks: default(),
             particles: default(),
+            cache,
             id_gen,
             actors,
             rules,

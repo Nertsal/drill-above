@@ -24,8 +24,8 @@ impl WorldRender {
         self.draw_background(world, framebuffer);
         self.draw_level(
             &world.level,
-            &world.geometry.0,
-            &world.geometry.1,
+            &world.cache.geometry.0,
+            &world.cache.geometry.1,
             draw_hitboxes,
             &world.camera,
             framebuffer,

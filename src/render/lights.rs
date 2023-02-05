@@ -54,17 +54,15 @@ impl LightsRender {
     pub fn finish_render(
         &mut self,
         level: &Level,
-        light_geometry: &ugli::VertexBuffer<NormalVertex>,
-        normal_geometry: &ugli::VertexBuffer<NormalVertex>,
-        normal_uv: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
+        cache: &RenderCache,
         camera: &Camera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
         // Render normal map
-        self.render_normal_map(camera, normal_geometry, normal_uv);
+        self.render_normal_map(camera, &cache.normal_geometry, &cache.normal_uv);
 
         // Render lights
-        self.render_lights(level, camera, light_geometry);
+        self.render_lights(level, camera, &cache.light_geometry);
 
         // Draw the texture to the screen
         self.geng.draw_2d(

@@ -14,7 +14,7 @@ impl Editor {
         };
         let font = self.geng.default_font();
 
-        // let (cell_pos, cell_offset) = self.level.grid.world_to_grid(self.cursor_world_pos);
+        // let (cell_pos, cell_offset) = self.world.level.grid.world_to_grid(self.cursor_world_pos);
         // let cell_pos = Text::new(
         //     format!(
         //         "({}, {}) + ({:.1}, {:.1})",
@@ -73,7 +73,7 @@ impl Editor {
                 level_info.extend([
                     geng::ui::row![
                         Text::new(
-                            format!("width: {}", self.level.size.x),
+                            format!("width: {}", self.world.level.size.x),
                             font.clone(),
                             text_size,
                             Rgba::WHITE
@@ -82,8 +82,9 @@ impl Editor {
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
-                                self.level
-                                    .change_size(self.level.size + vec2(1, 0), &self.assets);
+                                self.world
+                                    .level
+                                    .change_size(self.world.level.size + vec2(1, 0), &self.assets);
                                 update_geometry = true;
                             }
                             inc.padding_right(text_size.into())
@@ -91,8 +92,9 @@ impl Editor {
                         {
                             let dec = Button::new(cx, "-");
                             if dec.was_clicked() {
-                                self.level
-                                    .change_size(self.level.size - vec2(1, 0), &self.assets);
+                                self.world
+                                    .level
+                                    .change_size(self.world.level.size - vec2(1, 0), &self.assets);
                                 update_geometry = true;
                             }
                             dec.padding_right(text_size.into())
@@ -102,7 +104,7 @@ impl Editor {
                     .boxed(),
                     geng::ui::row![
                         Text::new(
-                            format!("height: {}", self.level.size.y),
+                            format!("height: {}", self.world.level.size.y),
                             font.clone(),
                             text_size,
                             Rgba::WHITE
@@ -111,8 +113,9 @@ impl Editor {
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
-                                self.level
-                                    .change_size(self.level.size + vec2(0, 1), &self.assets);
+                                self.world
+                                    .level
+                                    .change_size(self.world.level.size + vec2(0, 1), &self.assets);
                                 update_geometry = true;
                             }
                             inc.padding_right(text_size.into())
@@ -120,8 +123,9 @@ impl Editor {
                         {
                             let dec = Button::new(cx, "-");
                             if dec.was_clicked() {
-                                self.level
-                                    .change_size(self.level.size - vec2(0, 1), &self.assets);
+                                self.world
+                                    .level
+                                    .change_size(self.world.level.size - vec2(0, 1), &self.assets);
                                 update_geometry = true;
                             }
                             dec.padding_right(text_size.into())
@@ -135,7 +139,7 @@ impl Editor {
                         {
                             let left = Button::new(cx, "left");
                             if left.was_clicked() {
-                                self.level.translate(vec2(-1, 0), &self.assets);
+                                self.world.level.translate(vec2(-1, 0), &self.assets);
                                 update_geometry = true;
                             }
                             left.padding_right(text_size.into())
@@ -143,7 +147,7 @@ impl Editor {
                         {
                             let right = Button::new(cx, "right");
                             if right.was_clicked() {
-                                self.level.translate(vec2(1, 0), &self.assets);
+                                self.world.level.translate(vec2(1, 0), &self.assets);
                                 update_geometry = true;
                             }
                             right.padding_right(text_size.into())
@@ -156,7 +160,7 @@ impl Editor {
                         {
                             let down = Button::new(cx, "down");
                             if down.was_clicked() {
-                                self.level.translate(vec2(0, -1), &self.assets);
+                                self.world.level.translate(vec2(0, -1), &self.assets);
                                 update_geometry = true;
                             }
                             down.padding_right(text_size.into())
@@ -164,7 +168,7 @@ impl Editor {
                         {
                             let up = Button::new(cx, "up");
                             if up.was_clicked() {
-                                self.level.translate(vec2(0, 1), &self.assets);
+                                self.world.level.translate(vec2(0, 1), &self.assets);
                                 update_geometry = true;
                             }
                             up.padding_right(text_size.into())
@@ -246,7 +250,7 @@ impl Editor {
 
         let mut block_info: Option<Box<dyn geng::ui::Widget>> = self
             .selected_block
-            .and_then(|id| self.level.get_block_mut(id))
+            .and_then(|id| self.world.level.get_block_mut(id))
             .map(|block| match block {
                 PlaceableMut::Tile(_) => geng::ui::Void.boxed(),
                 PlaceableMut::Hazard(_) => {
@@ -304,7 +308,7 @@ impl Editor {
             if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
                 if let EditorMode::Lights = &mut tab.mode {
                     // Global light
-                    let config = &mut self.level.global_light;
+                    let config = &mut self.world.level.global_light;
                     let color = ui::color_selector(
                         cx,
                         &mut config.color,

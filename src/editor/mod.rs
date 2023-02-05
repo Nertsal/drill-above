@@ -26,16 +26,8 @@ pub struct Editor {
     screen_resolution: vec2<usize>,
 
     level_name: String,
-    level: Level,
+    world: World,
     playtest: bool,
-
-    geometry: (
-        HashMap<Tile, ugli::VertexBuffer<Vertex>>,
-        HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
-    ),
-    light_geometry: ugli::VertexBuffer<NormalVertex>,
-    normal_geometry: ugli::VertexBuffer<NormalVertex>,
-    normal_uv: HashMap<Tile, ugli::VertexBuffer<Vertex>>,
 
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
@@ -95,8 +87,6 @@ impl Editor {
             util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
         level.tiles.update_geometry(assets);
 
-        let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
-
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -119,10 +109,7 @@ impl Editor {
                 fov: (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0,
             },
             framebuffer_size: vec2(1, 1),
-            geometry: level.tiles.calculate_geometry(&level.grid, geng, assets),
-            light_geometry: level.calculate_light_geometry(geng),
-            normal_geometry,
-            normal_uv,
+            world: World::new(geng, assets, assets.rules.clone(), level),
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -171,7 +158,6 @@ impl Editor {
             light_hsv: None,
             playtest: false,
             preview: false,
-            level,
             level_name,
         }
     }
@@ -221,22 +207,22 @@ impl Editor {
         match id {
             PlaceableId::Tile(_) => unimplemented!(),
             PlaceableId::Hazard(id) => {
-                if let Some(hazard) = self.level.hazards.get_mut(id) {
+                if let Some(hazard) = self.world.level.hazards.get_mut(id) {
                     hazard.teleport(pos);
                 }
             }
             PlaceableId::Prop(id) => {
-                if let Some(prop) = self.level.props.get_mut(id) {
+                if let Some(prop) = self.world.level.props.get_mut(id) {
                     prop.teleport(pos);
                 }
             }
             PlaceableId::Coin(id) => {
-                if let Some(coin) = self.level.coins.get_mut(id) {
+                if let Some(coin) = self.world.level.coins.get_mut(id) {
                     coin.teleport(pos);
                 }
             }
             PlaceableId::Spotlight(id) => {
-                if let Some(light) = self.level.spotlights.get_mut(id) {
+                if let Some(light) = self.world.level.spotlights.get_mut(id) {
                     light.position = pos;
                 }
             }
@@ -250,7 +236,7 @@ impl Editor {
         }
         self.selected_block = id;
         let Some(id) = id else { return };
-        let Some(_block) = self.level.get_block(id) else {
+        let Some(_block) = self.world.level.get_block(id) else {
             return;
         };
     }
@@ -273,12 +259,12 @@ impl Editor {
 
         let snap_cursor = self.geng.window().is_key_pressed(geng::Key::LCtrl);
         if snap_cursor {
-            let snap_size = self.level.grid.cell_size / Coord::new(2.0);
+            let snap_size = self.world.level.grid.cell_size / Coord::new(2.0);
             self.cursor_world_pos =
                 (self.cursor_world_pos / snap_size).map(|x| x.floor()) * snap_size;
         }
 
-        self.hovered = self.level.get_hovered(self.cursor_world_pos);
+        self.hovered = self.world.level.get_hovered(self.cursor_world_pos);
         if let Some(tab) = &self.tabs.get(self.active_tab) {
             self.hovered
                 .retain(|id| tab.hoverable.iter().any(|&ty| id.fits_type(ty)))
@@ -307,10 +293,13 @@ impl Editor {
                 if let Some(PlaceableType::Tile(_)) = self.selected_block() {
                     Some(DragAction::PlaceTile)
                 } else if let Some(&id) = self.hovered.first() {
-                    self.level.get_block(id).map(|block| DragAction::MoveBlock {
-                        id,
-                        initial_pos: block.position(),
-                    })
+                    self.world
+                        .level
+                        .get_block(id)
+                        .map(|block| DragAction::MoveBlock {
+                            id,
+                            initial_pos: block.position(),
+                        })
                 } else {
                     None
                 }
@@ -367,32 +356,25 @@ impl Editor {
     }
 
     fn update_geometry(&mut self) {
-        self.geometry =
-            self.level
-                .tiles
-                .calculate_geometry(&self.level.grid, &self.geng, &self.assets);
-        self.light_geometry = self.level.calculate_light_geometry(&self.geng);
-        let (normal_geom, normal_uv) = self
-            .level
-            .calculate_normal_geometry(&self.geng, &self.assets);
-        self.normal_geometry = normal_geom;
-        self.normal_uv = normal_uv;
+        self.world.cache = RenderCache::calculate(&self.world.level, &self.geng, &self.assets);
     }
 
     fn duplicate_selected(&mut self) {
         let Some(id) = self.selected_block else {
             return;
         };
-        let Some(mut block) = self.level.get_block(id) else {
+        let Some(mut block) = self.world.level.get_block(id) else {
             return;
         };
-        block.translate(self.level.grid.cell_size);
-        self.level.place_block(block, &self.assets);
+        block.translate(self.world.level.grid.cell_size);
+        self.world.level.place_block(block, &self.assets);
     }
 
     fn save_level(&self) {
-        if let Ok(()) = util::report_err(self.level.save(&self.level_name), "Failed to save level")
-        {
+        if let Ok(()) = util::report_err(
+            self.world.level.save(&self.level_name),
+            "Failed to save level",
+        ) {
             info!("Saved the level");
         }
     }
@@ -412,15 +394,9 @@ impl geng::State for Editor {
 
         if self.preview {
             // Render as in game
-            let mut world = World::new(
-                &self.geng,
-                &self.assets,
-                self.assets.rules.clone(),
-                self.level.clone(),
-            );
-            world.camera = self.camera.clone();
+            self.world.camera = self.camera.clone();
             self.preview_render
-                .draw_world(&world, false, &mut pixel_framebuffer);
+                .draw_world(&self.world, false, &mut pixel_framebuffer);
         } else {
             // Draw the world and normals ignoring lighting
             let (mut world_framebuffer, mut normal_framebuffer) =
@@ -428,9 +404,9 @@ impl geng::State for Editor {
 
             // Render level
             self.render.world.draw_level_editor(
-                &self.level,
-                &self.geometry.0,
-                &self.geometry.1,
+                &self.world.level,
+                &self.world.cache.geometry.0,
+                &self.world.cache.geometry.1,
                 true,
                 &self.camera,
                 &mut world_framebuffer,
@@ -438,10 +414,8 @@ impl geng::State for Editor {
             );
 
             self.render.lights.finish_render(
-                &self.level,
-                &self.light_geometry,
-                &self.normal_geometry,
-                &self.normal_uv,
+                &self.world.level,
+                &self.world.cache,
                 &self.camera,
                 &mut pixel_framebuffer,
             );
@@ -463,7 +437,7 @@ impl geng::State for Editor {
         // Draw hovered
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selected_block] {
-            let Some(block) = self.level.get_block(block) else {
+            let Some(block) = self.world.level.get_block(block) else {
                 continue
             };
             match block {
@@ -492,11 +466,12 @@ impl geng::State for Editor {
                 .draw_collider(&collider, color, &self.camera, framebuffer);
         }
 
+        #[allow(clippy::collapsible_if)]
         if !self.preview {
             if self.draw_grid {
                 self.render.util.draw_grid(
-                    &self.level.grid,
-                    self.level.size,
+                    &self.world.level.grid,
+                    self.world.level.size,
                     &self.camera,
                     framebuffer,
                 );
@@ -560,10 +535,10 @@ impl geng::State for Editor {
                 }
                 geng::Key::D if ctrl => self.duplicate_selected(),
                 geng::Key::R => {
-                    self.level.spawn_point = self.cursor_world_pos;
+                    self.world.level.spawn_point = self.cursor_world_pos;
                 }
                 geng::Key::F => {
-                    self.level.finish = self.cursor_world_pos;
+                    self.world.level.finish = self.cursor_world_pos;
                 }
                 geng::Key::Left => {
                     self.scroll_selected(-1);
@@ -583,7 +558,7 @@ impl geng::State for Editor {
                 &self.geng,
                 &self.assets,
                 self.level_name.clone(),
-                self.level.clone(),
+                self.world.level.clone(),
                 0,
                 Time::ZERO,
                 0,

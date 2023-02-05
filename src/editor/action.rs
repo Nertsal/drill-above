@@ -44,18 +44,19 @@ impl Editor {
     }
 
     fn action_place(&mut self, block: PlaceableType, position: vec2<Coord>) -> Vec<Action> {
-        let grid_pos = self.level.grid.world_to_grid(position).0;
+        let grid_pos = self.world.level.grid.world_to_grid(position).0;
         match block {
             PlaceableType::Tile(tile) => {
-                self.level
+                self.world
+                    .level
                     .tiles
                     .set_tile_isize(grid_pos, tile, &self.assets);
             }
             PlaceableType::Hazard(hazard) => {
-                self.level.place_hazard(position, hazard);
+                self.world.level.place_hazard(position, hazard);
             }
             PlaceableType::Coin => {
-                self.level.place_coin(grid_pos);
+                self.world.level.place_coin(grid_pos);
             }
             PlaceableType::Prop(prop) => {
                 let size = self
@@ -66,9 +67,10 @@ impl Editor {
                     .size()
                     .map(|x| x as f32 / PIXELS_PER_UNIT as f32)
                     .map(Coord::new);
-                self.level.place_prop(grid_pos, size, prop);
+                self.world.level.place_prop(grid_pos, size, prop);
             }
             PlaceableType::Spotlight(light) => self
+                .world
                 .level
                 .spotlights
                 .push(SpotlightSource { position, ..light }),
@@ -79,24 +81,28 @@ impl Editor {
     fn action_replace(&mut self, block: Placeable) -> Vec<Action> {
         match block {
             Placeable::Tile((tile, pos)) => {
-                self.level.tiles.set_tile_isize(pos, tile, &self.assets);
+                self.world
+                    .level
+                    .tiles
+                    .set_tile_isize(pos, tile, &self.assets);
             }
             Placeable::Hazard(hazard) => {
-                self.level.hazards.push(hazard);
+                self.world.level.hazards.push(hazard);
             }
             Placeable::Coin(coin) => {
-                self.level.coins.push(coin);
+                self.world.level.coins.push(coin);
             }
             Placeable::Prop(prop) => {
-                self.level.props.push(prop);
+                self.world.level.props.push(prop);
             }
-            Placeable::Spotlight(spotlight) => self.level.spotlights.push(spotlight),
+            Placeable::Spotlight(spotlight) => self.world.level.spotlights.push(spotlight),
         }
         vec![]
     }
 
     fn action_remove(&mut self, ids: &[PlaceableId]) -> Vec<Action> {
         let actions = self
+            .world
             .level
             .remove_blocks(ids, &self.assets)
             .into_iter()
