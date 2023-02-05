@@ -70,19 +70,13 @@ pub struct Block {
 }
 
 impl World {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, level: Level) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, mut level: Level) -> Self {
+        level.tiles.update_geometry(assets);
         let cache = RenderCache::calculate(&level, geng, assets);
         Self::with_cache(assets, rules, level, cache)
     }
 
-    pub fn with_cache(
-        assets: &Rc<Assets>,
-        rules: Rules,
-        mut level: Level,
-        cache: RenderCache,
-    ) -> Self {
-        level.tiles.update_geometry(assets);
-
+    pub fn with_cache(assets: &Rc<Assets>, rules: Rules, level: Level, cache: RenderCache) -> Self {
         let mut id_gen = IdGen::new();
         let mut actors = Collection::new();
 
