@@ -36,9 +36,9 @@ pub struct Editor {
     normal_geometry: ugli::VertexBuffer<NormalVertex>,
     normal_uv: HashMap<Tile, ugli::VertexBuffer<Vertex>>,
 
-    draw_grid: bool,
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
+    draw_grid: bool,
     dragging: Option<Dragging>,
     selected_block: Option<PlaceableId>,
     tabs: Vec<EditorTab>,
@@ -257,6 +257,13 @@ impl Editor {
                 cursor_pos.map(|x| x as f32),
             )
             .map(Coord::new);
+
+        let snap_cursor = self.geng.window().is_key_pressed(geng::Key::LCtrl);
+        if snap_cursor {
+            let snap_size = self.level.grid.cell_size / Coord::new(2.0);
+            self.cursor_world_pos =
+                (self.cursor_world_pos / snap_size).map(|x| x.floor()) * snap_size;
+        }
 
         self.hovered = self.level.get_hovered(self.cursor_world_pos);
         if let Some(tab) = &self.tabs.get(self.active_tab) {
