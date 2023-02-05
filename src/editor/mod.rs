@@ -20,6 +20,7 @@ pub struct Editor {
     assets: Rc<Assets>,
     pixel_texture: ugli::Texture,
     render: Render,
+    preview_render: GameRender,
     camera: Camera2d,
     framebuffer_size: vec2<usize>,
     screen_resolution: vec2<usize>,
@@ -38,14 +39,17 @@ pub struct Editor {
 
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
-    draw_grid: bool,
     dragging: Option<Dragging>,
     selected_block: Option<PlaceableId>,
-    tabs: Vec<EditorTab>,
-    active_tab: usize,
+    hovered: Vec<PlaceableId>,
     undo_actions: Vec<Action>,
     redo_actions: Vec<Action>,
-    hovered: Vec<PlaceableId>,
+
+    tabs: Vec<EditorTab>,
+    active_tab: usize,
+
+    draw_grid: bool,
+    preview: bool,
     light_float_scale: bool,
     light_hsv: Option<Hsva<f32>>,
 }
@@ -107,6 +111,7 @@ impl Editor {
                 lights: LightsRender::new(geng, assets),
                 util: UtilRender::new(geng, assets),
             },
+            preview_render: GameRender::new(geng, assets),
             screen_resolution: SCREEN_RESOLUTION,
             camera: Camera2d {
                 center: vec2(0.0, 0.25),
@@ -165,6 +170,7 @@ impl Editor {
             light_float_scale: true,
             light_hsv: None,
             playtest: false,
+            preview: false,
             level,
             level_name,
         }
@@ -404,29 +410,42 @@ impl geng::State for Editor {
         );
         ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
 
-        // Draw the world and normals ignoring lighting
-        let (mut world_framebuffer, mut normal_framebuffer) =
-            self.render.lights.start_render(&mut pixel_framebuffer);
+        if self.preview {
+            // Render as in game
+            let mut world = World::new(
+                &self.geng,
+                &self.assets,
+                self.assets.rules.clone(),
+                self.level.clone(),
+            );
+            world.camera = self.camera.clone();
+            self.preview_render
+                .draw_world(&world, false, &mut pixel_framebuffer);
+        } else {
+            // Draw the world and normals ignoring lighting
+            let (mut world_framebuffer, mut normal_framebuffer) =
+                self.render.lights.start_render(&mut pixel_framebuffer);
 
-        // Render level
-        self.render.world.draw_level_editor(
-            &self.level,
-            &self.geometry.0,
-            &self.geometry.1,
-            true,
-            &self.camera,
-            &mut world_framebuffer,
-            Some(&mut normal_framebuffer),
-        );
+            // Render level
+            self.render.world.draw_level_editor(
+                &self.level,
+                &self.geometry.0,
+                &self.geometry.1,
+                true,
+                &self.camera,
+                &mut world_framebuffer,
+                Some(&mut normal_framebuffer),
+            );
 
-        self.render.lights.finish_render(
-            &self.level,
-            &self.light_geometry,
-            &self.normal_geometry,
-            &self.normal_uv,
-            &self.camera,
-            &mut pixel_framebuffer,
-        );
+            self.render.lights.finish_render(
+                &self.level,
+                &self.light_geometry,
+                &self.normal_geometry,
+                &self.normal_uv,
+                &self.camera,
+                &mut pixel_framebuffer,
+            );
+        }
 
         // Render the texture onto the screen
         let reference_size = vec2(16.0, 9.0);
@@ -441,45 +460,48 @@ impl geng::State for Editor {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
-        // Draw hovered
-        let mut colliders = Vec::new();
-        for &block in itertools::chain![&self.hovered, &self.selected_block] {
-            let Some(block) = self.level.get_block(block) else {
+        if !self.preview {
+            // Draw hovered
+            let mut colliders = Vec::new();
+            for &block in itertools::chain![&self.hovered, &self.selected_block] {
+                let Some(block) = self.level.get_block(block) else {
                 continue
             };
-            match block {
-                Placeable::Tile(_) => {}
-                Placeable::Hazard(hazard) => {
-                    colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
-                }
-                Placeable::Prop(prop) => {
-                    colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
-                }
-                Placeable::Coin(coin) => {
-                    colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
-                }
-                Placeable::Spotlight(light) => {
-                    let collider =
-                        Collider::new(Aabb2::point(light.position).extend_uniform(Coord::new(0.5)));
-                    let mut color = light.color;
-                    color.a = 0.5;
-                    colliders.push((collider, color));
+                match block {
+                    Placeable::Tile(_) => {}
+                    Placeable::Hazard(hazard) => {
+                        colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
+                    }
+                    Placeable::Prop(prop) => {
+                        colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
+                    }
+                    Placeable::Coin(coin) => {
+                        colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
+                    }
+                    Placeable::Spotlight(light) => {
+                        let collider = Collider::new(
+                            Aabb2::point(light.position).extend_uniform(Coord::new(0.5)),
+                        );
+                        let mut color = light.color;
+                        color.a = 0.5;
+                        colliders.push((collider, color));
+                    }
                 }
             }
-        }
-        for (collider, color) in colliders {
-            self.render
-                .util
-                .draw_collider(&collider, color, &self.camera, framebuffer);
-        }
+            for (collider, color) in colliders {
+                self.render
+                    .util
+                    .draw_collider(&collider, color, &self.camera, framebuffer);
+            }
 
-        if self.draw_grid {
-            self.render.util.draw_grid(
-                &self.level.grid,
-                self.level.size,
-                &self.camera,
-                framebuffer,
-            );
+            if self.draw_grid {
+                self.render.util.draw_grid(
+                    &self.level.grid,
+                    self.level.size,
+                    &self.camera,
+                    framebuffer,
+                );
+            }
         }
     }
 

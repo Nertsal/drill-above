@@ -6,6 +6,14 @@ impl Editor {
 
         let framebuffer_size = self.framebuffer_size.map(|x| x as f32);
 
+        let text_size = framebuffer_size.y * 0.025;
+        // let font = &self.assets.font;
+        let font = self.geng.default_font().clone();
+        let slider = move |name, range, value: &mut f32| {
+            ui::slider(cx, name, value, range, font.clone(), text_size)
+        };
+        let font = self.geng.default_font();
+
         // let (cell_pos, cell_offset) = self.level.grid.world_to_grid(self.cursor_world_pos);
         // let cell_pos = Text::new(
         //     format!(
@@ -17,7 +25,6 @@ impl Editor {
         //     Rgba::WHITE,
         // );
 
-        let text_size = framebuffer_size.y * 0.05;
         let mut level_info = geng::ui::column![
             Text::new(
                 self.level_name.clone(),
@@ -37,7 +44,26 @@ impl Editor {
                 if button.was_clicked() {
                     self.playtest = true;
                 }
-                button.padding_bottom(text_size.into())
+                button
+            },
+            {
+                let text = if self.draw_grid {
+                    "Hide grid"
+                } else {
+                    "Show grid"
+                };
+                let button = Button::new(cx, text);
+                if button.was_clicked() {
+                    self.draw_grid = !self.draw_grid;
+                }
+                button
+            },
+            {
+                let button = Button::new(cx, "Preview");
+                if button.was_clicked() {
+                    self.preview = !self.preview;
+                }
+                button
             },
         ];
 
@@ -45,10 +71,10 @@ impl Editor {
         if let Some(tab) = self.tabs.get(self.active_tab) {
             if let EditorMode::Level = tab.mode {
                 level_info.extend([
-                    Box::new(geng::ui::row![
+                    geng::ui::row![
                         Text::new(
                             format!("width: {}", self.level.size.x),
-                            self.geng.default_font().clone(),
+                            font.clone(),
                             text_size,
                             Rgba::WHITE
                         )
@@ -71,11 +97,13 @@ impl Editor {
                             }
                             dec.padding_right(text_size.into())
                         },
-                    ]) as Box<dyn Widget>,
-                    Box::new(geng::ui::row![
+                    ]
+                    .padding_top(text_size.into())
+                    .boxed(),
+                    geng::ui::row![
                         Text::new(
                             format!("height: {}", self.level.size.y),
-                            self.geng.default_font().clone(),
+                            font.clone(),
                             text_size,
                             Rgba::WHITE
                         )
@@ -98,21 +126,12 @@ impl Editor {
                             }
                             dec.padding_right(text_size.into())
                         },
-                    ]),
-                    Box::new(Text::new(
-                        "Translate",
-                        self.geng.default_font().clone(),
-                        text_size,
-                        Rgba::WHITE,
-                    )),
-                    Box::new(geng::ui::row![
-                        Text::new(
-                            "Horizontal",
-                            self.geng.default_font().clone(),
-                            text_size,
-                            Rgba::WHITE,
-                        )
-                        .padding_right(text_size.into()),
+                    ]
+                    .boxed(),
+                    Text::new("Translate", font.clone(), text_size, Rgba::WHITE).boxed(),
+                    geng::ui::row![
+                        Text::new("Horizontal", font.clone(), text_size, Rgba::WHITE,)
+                            .padding_right(text_size.into()),
                         {
                             let left = Button::new(cx, "left");
                             if left.was_clicked() {
@@ -129,15 +148,11 @@ impl Editor {
                             }
                             right.padding_right(text_size.into())
                         },
-                    ]),
-                    Box::new(geng::ui::row![
-                        Text::new(
-                            "Vertical",
-                            self.geng.default_font().clone(),
-                            text_size,
-                            Rgba::WHITE,
-                        )
-                        .padding_right(text_size.into()),
+                    ]
+                    .boxed(),
+                    geng::ui::row![
+                        Text::new("Vertical", font.clone(), text_size, Rgba::WHITE,)
+                            .padding_right(text_size.into()),
                         {
                             let down = Button::new(cx, "down");
                             if down.was_clicked() {
@@ -154,7 +169,8 @@ impl Editor {
                             }
                             up.padding_right(text_size.into())
                         },
-                    ]),
+                    ]
+                    .boxed(),
                 ]);
             }
         }
@@ -162,6 +178,7 @@ impl Editor {
         if update_geometry {
             self.update_geometry();
         }
+        let font = self.geng.default_font();
 
         let tabs = self
             .tabs
@@ -192,13 +209,6 @@ impl Editor {
                 ) as Box<dyn geng::ui::Widget>
             })
             .collect();
-
-        let text_size = framebuffer_size.y * 0.025;
-        // let font = &self.assets.font;
-        let font = self.geng.default_font();
-        let slider = |name, range, value: &mut f32| {
-            ui::slider(cx, name, value, range, font.clone(), text_size)
-        };
 
         let mut duplicate = false;
         let mut remove = false;
