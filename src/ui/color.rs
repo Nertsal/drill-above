@@ -1,10 +1,29 @@
+use batbox::color::Hsla;
+
 use super::*;
+
+#[derive(Debug, Clone, Copy)]
+pub enum ColorMode {
+    Rgb(Rgba<f32>),
+    Hsv(Hsva<f32>),
+    Hsl(Hsla<f32>),
+}
+
+impl ColorMode {
+    pub fn to_rgba(self) -> Rgba<f32> {
+        match self {
+            ColorMode::Rgb(rgba) => rgba,
+            ColorMode::Hsv(hsva) => hsva.into(),
+            ColorMode::Hsl(hsla) => hsla.into(),
+        }
+    }
+}
 
 pub fn color_selector<'a>(
     cx: &'a geng::ui::Controller,
     color: &mut Rgba<f32>,
     float_scale: &mut bool,
-    hsv_mode: &mut Option<Hsva<f32>>,
+    color_mode: &mut Option<ColorMode>,
     font: Rc<geng::Font>,
     text_size: f32,
 ) -> impl geng::ui::Widget + 'a {
@@ -13,55 +32,56 @@ pub fn color_selector<'a>(
     let slider =
         |name, range, value: &mut f32| ui::slider(cx, name, value, range, font.clone(), text_size);
 
-    let select = match hsv_mode {
-        Some(hsva) => {
-            let scale = if *float_scale {
-                0.0..=1.0
-            } else {
-                hsva.s *= 100.0;
-                hsva.v *= 100.0;
-                0.0..=100.0
-            };
-            let ui = geng::ui::column![
-                slider(
-                    "Hue",
-                    if *float_scale {
-                        0.0..=1.0
-                    } else {
-                        hsva.h *= 360.0;
-                        0.0..=360.0
-                    },
-                    &mut hsva.h
-                ),
-                slider("Saturation", scale.clone(), &mut hsva.s),
-                slider("Value", scale, &mut hsva.v),
-            ];
-            if !*float_scale {
-                hsva.h /= 360.0;
-                hsva.s /= 100.0;
-                hsva.v /= 100.0;
-            }
-            *color = (*hsva).into();
-            ui
-        }
-        None => {
-            let scale = if *float_scale {
-                0.0..=1.0
-            } else {
-                *color = color.map_rgb(|x| x * 255.0);
-                0.0..=255.0
-            };
-            let ui = geng::ui::column![
-                slider("Red", scale.clone(), &mut color.r),
-                slider("Green", scale.clone(), &mut color.g),
-                slider("Blue", scale, &mut color.b),
-            ];
-            if !*float_scale {
-                *color = color.map_rgb(|x| x / 255.0);
-            }
-            ui
-        }
+    if color_mode.is_none() {
+        *color_mode = Some(ColorMode::Rgb(*color));
+    }
+    let color_mode = color_mode.as_mut().unwrap();
+    let (mode_name, mut components) = match color_mode {
+        ColorMode::Rgb(rgba) => (
+            "RGB",
+            [
+                (&mut rgba.r, 0.0..=100.0, "Red"),
+                (&mut rgba.g, 0.0..=100.0, "Green"),
+                (&mut rgba.b, 0.0..=100.0, "Blue"),
+            ],
+        ),
+        ColorMode::Hsv(hsva) => (
+            "HSV",
+            [
+                (&mut hsva.h, 0.0..=360.0, "Hue"),
+                (&mut hsva.s, 0.0..=100.0, "Saturation"),
+                (&mut hsva.v, 0.0..=100.0, "Value"),
+            ],
+        ),
+        ColorMode::Hsl(hsla) => (
+            "HSL",
+            [
+                (&mut hsla.h, 0.0..=360.0, "Hue"),
+                (&mut hsla.s, 0.0..=100.0, "Saturation"),
+                (&mut hsla.l, 0.0..=100.0, "Lightness"),
+            ],
+        ),
     };
+
+    let select = {
+        let ui = geng::ui::column(
+            components
+                .iter_mut()
+                .map(|(value, range, name)| {
+                    **value *= *range.end();
+                    let range = *range.start() as f64..=*range.end() as f64;
+                    slider(name.to_owned(), range, value).boxed()
+                })
+                .collect(),
+        );
+        for (value, range, _) in components {
+            *value /= *range.end();
+        }
+        ui
+    };
+
+    *color = color_mode.to_rgba();
+
     geng::ui::row![
         geng::ui::ColorBox::divider(*color, text_size).padding_right(text_size.into()),
         geng::ui::column![
@@ -74,14 +94,14 @@ pub fn color_selector<'a>(
                     scale.padding_right(text_size.into())
                 },
                 {
-                    let text = if hsv_mode.is_some() { "HSV" } else { "RGB" };
-                    let mode = geng::ui::Button::new(cx, text);
+                    let mode = geng::ui::Button::new(cx, mode_name);
                     if mode.was_clicked() {
-                        if hsv_mode.is_some() {
-                            *hsv_mode = None;
-                        } else {
-                            *hsv_mode = Some((*color).into());
-                        }
+                        let color = *color;
+                        *color_mode = match color_mode {
+                            ColorMode::Rgb(_) => ColorMode::Hsv(color.into()),
+                            ColorMode::Hsv(_) => ColorMode::Hsl(color.into()),
+                            ColorMode::Hsl(_) => ColorMode::Rgb(color),
+                        };
                     }
                     mode
                 },

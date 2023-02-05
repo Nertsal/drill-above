@@ -1,4 +1,5 @@
 use super::*;
+use ui::ColorMode;
 
 mod action;
 mod ui_impl;
@@ -43,7 +44,7 @@ pub struct Editor {
     draw_grid: bool,
     preview: bool,
     light_float_scale: bool,
-    light_hsv: Option<Hsva<f32>>,
+    color_mode: Option<ColorMode>,
 }
 
 #[derive(Debug)]
@@ -156,7 +157,7 @@ impl Editor {
             redo_actions: default(),
             hovered: Vec::new(),
             light_float_scale: true,
-            light_hsv: None,
+            color_mode: None,
             playtest: false,
             preview: false,
             level_name,
@@ -264,7 +265,7 @@ impl Editor {
 
     fn clear_selection(&mut self) {
         self.selection.clear();
-        self.light_hsv = None;
+        self.color_mode = None;
     }
 
     fn update_selected_block(&mut self) {

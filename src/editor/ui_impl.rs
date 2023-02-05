@@ -275,7 +275,7 @@ impl Editor {
                             cx,
                             &mut config.color,
                             &mut self.light_float_scale,
-                            &mut self.light_hsv,
+                            &mut self.color_mode,
                             font.clone(),
                             text_size,
                         );
@@ -339,7 +339,7 @@ impl Editor {
                         cx,
                         &mut config.color,
                         &mut self.light_float_scale,
-                        &mut self.light_hsv,
+                        &mut self.color_mode,
                         font.clone(),
                         text_size,
                     );
