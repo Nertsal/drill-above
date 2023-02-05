@@ -18,6 +18,11 @@ impl Grid {
         mat3::translate(self.offset) * mat3::scale(self.cell_size)
     }
 
+    pub fn cell_collider(&self, pos: vec2<isize>) -> Collider {
+        let pos = self.grid_to_world(pos);
+        Collider::new(Aabb2::point(pos).extend_positive(self.cell_size))
+    }
+
     pub fn grid_to_world(&self, grid_pos: vec2<isize>) -> vec2<Coord> {
         let pos = self.matrix().inverse() * grid_pos.extend(1).map(|x| Coord::new(x as f32));
         pos.xy() / pos.z

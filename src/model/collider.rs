@@ -50,15 +50,8 @@ impl Collider {
         self.0 = self.0.translate(delta);
     }
 
-    pub fn contains(&self, pos: vec2<Coord>) -> bool {
-        self.0.contains(pos)
-    }
-
     pub fn check(&self, other: &Self) -> bool {
-        self.0.min.x < other.0.max.x
-            && other.0.min.x < self.0.max.x
-            && self.0.min.y < other.0.max.y
-            && other.0.min.y < self.0.max.y
+        self.0.intersects(&other.0)
     }
 
     pub fn collide(&self, other: &Self) -> Option<Collision> {

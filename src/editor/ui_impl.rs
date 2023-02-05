@@ -250,7 +250,8 @@ impl Editor {
 
         let mut block_info: Option<Box<dyn geng::ui::Widget>> = if self.selection.len() == 1 {
             self.selection
-                .first()
+                .iter()
+                .next()
                 .and_then(|&id| self.world.level.get_block_mut(id))
                 .map(|block| match block {
                     PlaceableMut::Tile(_) => {

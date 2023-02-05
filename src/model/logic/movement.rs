@@ -223,9 +223,7 @@ fn collide_tiles(
                     !air && !drill
                 })
                 .and_then(|_| {
-                    let tile = Collider::new(
-                        Aabb2::point(grid.grid_to_world(pos)).extend_positive(grid.cell_size),
-                    );
+                    let tile = grid.cell_collider(pos);
                     collider.collide(&tile).and_then(|collision| {
                         (vec2::dot(collision.normal, velocity) <= Coord::ZERO)
                             .then_some((pos, collision))

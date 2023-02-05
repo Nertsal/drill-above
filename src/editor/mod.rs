@@ -32,7 +32,7 @@ pub struct Editor {
     cursor_pos: vec2<f64>,
     cursor_world_pos: vec2<Coord>,
     dragging: Option<Dragging>,
-    selection: Vec<PlaceableId>,
+    selection: HashSet<PlaceableId>,
     hovered: Vec<PlaceableId>,
     undo_actions: Vec<Action>,
     redo_actions: Vec<Action>,
@@ -61,6 +61,7 @@ enum DragAction {
         ids: Vec<(PlaceableId, vec2<Coord>)>,
         initial_pos: vec2<Coord>,
     },
+    RectSelection,
 }
 
 #[derive(Debug, Clone)]
@@ -114,7 +115,7 @@ impl Editor {
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
             dragging: None,
-            selection: vec![],
+            selection: default(),
             tabs: vec![
                 EditorTab {
                     name: "Level".into(),
@@ -199,15 +200,28 @@ impl Editor {
 
     fn remove_selected(&mut self) {
         self.action(Action::Remove {
-            ids: self.selection.clone(),
+            ids: self.selection.iter().copied().collect(),
         });
     }
 
-    fn move_blocks(&mut self, ids: &[(PlaceableId, vec2<Coord>)], pos: vec2<Coord>) {
-        for &(id, offset) in ids {
-            let pos = pos + offset;
-            match id {
-                PlaceableId::Tile(_) => unimplemented!(),
+    fn move_blocks(&mut self, ids: &mut [(PlaceableId, vec2<Coord>)], pos: vec2<Coord>) {
+        let mut tile_clears = Vec::new();
+        let mut tile_moves = Vec::new();
+        let mut tile_selections = Vec::new();
+        for (id, offset) in ids {
+            let pos = pos + *offset;
+            let grid_pos = self.world.level.grid.world_to_grid(pos).0;
+            match *id {
+                PlaceableId::Tile(pos) => {
+                    if let Some(tile) = self.world.level.tiles.get_tile_isize(pos) {
+                        if self.selection.remove(id) {
+                            tile_selections.push(PlaceableId::Tile(grid_pos));
+                        }
+                        *id = PlaceableId::Tile(grid_pos);
+                        tile_clears.push(pos);
+                        tile_moves.push((tile, grid_pos));
+                    }
+                }
                 PlaceableId::Hazard(id) => {
                     if let Some(hazard) = self.world.level.hazards.get_mut(id) {
                         hazard.teleport(pos);
@@ -230,6 +244,22 @@ impl Editor {
                 }
             }
         }
+
+        for pos in tile_clears {
+            self.world
+                .level
+                .tiles
+                .set_tile_isize(pos, Tile::Air, &self.assets);
+        }
+        for (tile, pos) in tile_moves {
+            self.world
+                .level
+                .tiles
+                .set_tile_isize(pos, tile, &self.assets);
+        }
+        self.selection.extend(tile_selections);
+
+        self.update_geometry();
     }
 
     fn clear_selection(&mut self) {
@@ -239,6 +269,17 @@ impl Editor {
 
     fn update_selected_block(&mut self) {
         for _id in &self.selection {}
+    }
+
+    fn get_hovered(&self, aabb: Aabb2<Coord>) -> Vec<PlaceableId> {
+        let mut hovered = self.world.level.get_hovered(aabb);
+        if let Some(tab) = &self.tabs.get(self.active_tab) {
+            if let EditorMode::Level = tab.mode {
+            } else {
+                hovered.retain(|id| tab.hoverable.iter().any(|&ty| id.fits_type(ty)))
+            }
+        }
+        hovered
     }
 
     fn update_cursor(&mut self, cursor_pos: vec2<f64>) {
@@ -255,17 +296,13 @@ impl Editor {
         if snap_cursor {
             let snap_size = self.world.level.grid.cell_size / Coord::new(2.0);
             self.cursor_world_pos =
-                (self.cursor_world_pos / snap_size).map(|x| x.floor()) * snap_size;
+                (self.cursor_world_pos / snap_size).map(|x| x.round()) * snap_size;
         }
 
-        self.hovered = self.world.level.get_hovered(self.cursor_world_pos);
-        if let Some(tab) = &self.tabs.get(self.active_tab) {
-            self.hovered
-                .retain(|id| tab.hoverable.iter().any(|&ty| id.fits_type(ty)))
-        }
+        self.hovered = self.get_hovered(Aabb2::point(self.cursor_world_pos));
 
-        if let Some(dragging) = self.dragging.take() {
-            if let Some(action) = &dragging.action {
+        if let Some(mut dragging) = self.dragging.take() {
+            if let Some(action) = &mut dragging.action {
                 match action {
                     DragAction::PlaceTile => self.place_block(),
                     DragAction::RemoveTile => self.remove_hovered(),
@@ -273,6 +310,7 @@ impl Editor {
                         ids,
                         *initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
                     ),
+                    DragAction::RectSelection => {}
                 }
             }
             self.dragging = Some(dragging);
@@ -284,34 +322,39 @@ impl Editor {
         self.update_cursor(position);
 
         let action = match button {
-            geng::MouseButton::Left => {
-                if let Some(PlaceableType::Tile(_)) = self.selected_block() {
-                    Some(DragAction::PlaceTile)
-                } else if let Some(&id) = self.hovered.first() {
-                    self.world.level.get_block(id).map(|block| {
-                        let pos = block.position();
-                        let mut ids: Vec<_> = self
-                            .selection
-                            .iter()
-                            .filter_map(|&id| {
-                                self.world
-                                    .level
-                                    .get_block(id)
-                                    .map(|block| (id, block.position() - pos))
-                            })
-                            .collect();
-                        ids.push((id, vec2::ZERO));
+            geng::MouseButton::Left => (!self.geng.window().is_key_pressed(geng::Key::LShift))
+                .then(|| {
+                    if matches!(self.selected_block(), Some(PlaceableType::Tile(_)))
+                        && (self.selection.is_empty() || self.hovered.is_empty())
+                    {
+                        Some(DragAction::PlaceTile)
+                    } else if let Some(&id) = self.hovered.first() {
+                        self.world.level.get_block(id).map(|block| {
+                            let pos = block.position(&self.world.level.grid);
+                            let mut ids: Vec<_> = self
+                                .selection
+                                .iter()
+                                .filter_map(|&id| {
+                                    self.world.level.get_block(id).map(|block| {
+                                        (id, block.position(&self.world.level.grid) - pos)
+                                    })
+                                })
+                                .collect();
+                            ids.push((id, vec2::ZERO));
 
-                        DragAction::MoveBlocks {
-                            ids,
-                            initial_pos: pos,
-                        }
-                    })
-                } else {
-                    None
-                }
-            }
+                            DragAction::MoveBlocks {
+                                ids,
+                                initial_pos: pos,
+                            }
+                        })
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+                .or(Some(DragAction::RectSelection)),
             geng::MouseButton::Right => {
+                self.clear_selection();
                 if let Some(PlaceableType::Tile(_)) = self.selected_block() {
                     Some(DragAction::RemoveTile)
                 } else {
@@ -340,7 +383,9 @@ impl Editor {
                             if !self.geng.window().is_key_pressed(geng::Key::LShift) {
                                 self.clear_selection();
                             }
-                            self.selection.push(id);
+                            if !self.selection.insert(id) {
+                                self.selection.remove(&id);
+                            }
                         } else {
                             self.place_block()
                         }
@@ -348,6 +393,13 @@ impl Editor {
                     geng::MouseButton::Right => self.remove_hovered(),
                     geng::MouseButton::Middle => {}
                 }
+            } else if let Some(DragAction::RectSelection) = dragging.action {
+                if !self.geng.window().is_key_pressed(geng::Key::LShift) {
+                    self.clear_selection();
+                }
+                let aabb = Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos);
+                let hovered = self.get_hovered(aabb);
+                self.selection.extend(hovered);
             }
         }
     }
@@ -442,14 +494,17 @@ impl geng::State for Editor {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
-        // Draw hovered
+        // Draw hovered/selected
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selection] {
             let Some(block) = self.world.level.get_block(block) else {
                 continue
             };
             match block {
-                Placeable::Tile(_) => {}
+                Placeable::Tile((_, pos)) => {
+                    let collider = self.world.level.grid.cell_collider(pos);
+                    colliders.push((collider, Rgba::new(0.7, 0.7, 0.7, 0.5)));
+                }
                 Placeable::Hazard(hazard) => {
                     colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
                 }
@@ -474,7 +529,6 @@ impl geng::State for Editor {
                 .draw_collider(&collider, color, &self.camera, framebuffer);
         }
 
-        #[allow(clippy::collapsible_if)]
         if !self.preview {
             if self.draw_grid {
                 self.render.util.draw_grid(
@@ -483,6 +537,20 @@ impl geng::State for Editor {
                     &self.camera,
                     framebuffer,
                 );
+            }
+
+            if let Some(dragging) = &self.dragging {
+                if let Some(DragAction::RectSelection) = &dragging.action {
+                    self.geng.draw_2d(
+                        framebuffer,
+                        &self.camera,
+                        &draw_2d::Quad::new(
+                            Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos)
+                                .map(Coord::as_f32),
+                            Rgba::new(0.5, 0.5, 0.5, 0.5),
+                        ),
+                    );
+                }
             }
         }
     }

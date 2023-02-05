@@ -32,7 +32,7 @@ pub enum PlaceableType {
     Coin,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PlaceableId {
     Tile(vec2<isize>),
     Hazard(usize),
@@ -210,32 +210,37 @@ impl Level {
         });
     }
 
-    pub fn get_hovered(&mut self, pos: vec2<Coord>) -> Vec<PlaceableId> {
-        let grid_pos = self.grid.world_to_grid(pos).0;
+    pub fn get_hovered(&self, aabb: Aabb2<Coord>) -> Vec<PlaceableId> {
+        let grid_aabb = Collider::new(aabb).grid_aabb(&self.grid);
         itertools::chain![
             self.spotlights
                 .iter()
                 .enumerate()
-                .filter(|(_, spotlight)| (spotlight.position - pos).len() < Coord::new(0.5))
+                .filter(|(_, spotlight)| aabb
+                    .intersects(&Aabb2::point(spotlight.position).extend_uniform(Coord::new(0.5))))
                 .map(|(i, _)| PlaceableId::Spotlight(i)),
             self.props
                 .iter()
                 .enumerate()
-                .filter(|(_, prop)| prop.sprite.contains(pos))
+                .filter(|(_, prop)| prop.sprite.intersects(&aabb))
                 .map(|(i, _)| PlaceableId::Prop(i)),
             self.hazards
                 .iter()
                 .enumerate()
-                .filter(|(_, hazard)| hazard.collider.contains(pos))
+                .filter(|(_, hazard)| hazard.collider.raw().intersects(&aabb))
                 .map(|(i, _)| PlaceableId::Hazard(i)),
             self.coins
                 .iter()
                 .enumerate()
-                .filter(|(_, hazard)| hazard.collider.contains(pos))
+                .filter(|(_, coin)| coin.collider.raw().intersects(&aabb))
                 .map(|(i, _)| PlaceableId::Coin(i)),
-            self.tiles
-                .get_tile_isize(grid_pos)
-                .map(|_| PlaceableId::Tile(grid_pos)),
+            (grid_aabb.min.x..=grid_aabb.max.x)
+                .flat_map(move |x| (grid_aabb.min.y..=grid_aabb.max.y).map(move |y| vec2(x, y)))
+                .filter_map(|pos| self
+                    .tiles
+                    .get_tile_isize(pos)
+                    .filter(|tile| !matches!(tile, Tile::Air))
+                    .map(|_| PlaceableId::Tile(pos))),
         ]
         .collect()
     }
@@ -485,9 +490,9 @@ impl Level {
 }
 
 impl Placeable {
-    pub fn position(&self) -> vec2<Coord> {
+    pub fn position(&self, grid: &Grid) -> vec2<Coord> {
         match self {
-            Placeable::Tile(_) => unimplemented!(),
+            Placeable::Tile((_, pos)) => grid.grid_to_world(*pos),
             Placeable::Hazard(hazard) => hazard.collider.feet(),
             Placeable::Prop(prop) => prop.sprite.center(),
             Placeable::Coin(coin) => coin.collider.feet(),
