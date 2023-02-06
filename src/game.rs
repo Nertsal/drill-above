@@ -21,6 +21,14 @@ pub struct Game {
     show_debug: bool,
 }
 
+impl Drop for Game {
+    fn drop(&mut self) {
+        if let Some(mut music) = self.music.take() {
+            music.stop();
+        }
+    }
+}
+
 struct Controls {
     left: Vec<geng::Key>,
     right: Vec<geng::Key>,

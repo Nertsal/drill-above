@@ -26,9 +26,9 @@ struct Opt {
     editor: bool,
     #[clap(long)]
     level: Option<String>,
+    /// Hot reload assets on change detection.
     #[clap(long)]
-    #[cfg(not(target_arch = "wasm32"))]
-    change_size: Option<String>,
+    hot_reload: bool,
     #[clap(long)]
     #[cfg(not(target_arch = "wasm32"))]
     format: bool,
@@ -151,7 +151,7 @@ fn main() {
     }
 
     if opt.editor {
-        geng::run(&geng, editor::run(&geng, opt.level))
+        geng::run(&geng, editor::run(&geng, opt.level, opt.hot_reload))
     } else if let Some(level) = &opt.level {
         geng::run(&geng, game::run(&geng, None, level))
     } else {

@@ -64,6 +64,13 @@ impl Logic<'_> {
                     &self.world.blocks,
                     drill,
                 ) {
+                    if col.offset > Coord::ZERO && col.offset < self.world.rules.edge_correction_max
+                    {
+                        // Go up the platform
+                        actor.collider.translate(vec2::UNIT_Y * col.offset);
+                        continue;
+                    }
+
                     // Move back and report collision
                     actor.collider.translate(col.normal * col.penetration);
                     collision.x = Some((block, col));
@@ -84,6 +91,14 @@ impl Logic<'_> {
                     &self.world.blocks,
                     drill,
                 ) {
+                    if col.normal.y < Coord::ZERO
+                        && col.offset.abs() < self.world.rules.edge_correction_max
+                    {
+                        // Move to the side
+                        actor.collider.translate(vec2::UNIT_X * col.offset);
+                        continue;
+                    }
+
                     // Move back and report collision
                     actor.collider.translate(col.normal * col.penetration);
                     collision.y = Some((block, col));

@@ -20,7 +20,6 @@ impl WorldRender {
         framebuffer: &mut ugli::Framebuffer,
         normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        // TODO: normals
         self.draw_background(world, framebuffer);
         self.draw_level(
             &world.level,
@@ -39,7 +38,6 @@ impl WorldRender {
         let texture = &self.assets.sprites.background;
         let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32) / vec2(1.0, 4.0);
         let bounds = world.level.bounds().map(Coord::as_f32);
-        let texture_bounds = bounds.extend_positive(vec2(0.5, 0.0) - size);
         let camera_bounds = world.camera_bounds().map(Coord::as_f32);
 
         // Parallax background
@@ -59,22 +57,22 @@ impl WorldRender {
                 vertices[3],
             ];
 
-            let move_speed = 1.0 + (i as f32 / 3.0) * 0.1;
-            let mut pos =
-                (world.camera.center - camera_bounds.bottom_left()) / camera_bounds.size();
-            if camera_bounds.width().approx_eq(&0.0) {
-                pos.x = 0.0;
-            }
-            if camera_bounds.height().approx_eq(&0.0) {
-                pos.y = 0.0;
-            }
-            let pos = (texture_bounds.size() * pos - vec2(0.5, 0.5)) * move_speed;
-            let mut pos = texture_bounds.bottom_left() + pos;
-            let move_speed = (1.0 - i as f32 / 3.0) * 0.1;
-            pos.x = world.camera.center.x * move_speed;
-            pos.x = world.camera.center.x + pos.x - (pos.x / size.x + 0.5).floor() * size.x;
+            let camera_view = Aabb2::point(world.camera.center).extend_symmetric(
+                vec2(
+                    world.camera.fov * framebuffer.size().x as f32 / framebuffer.size().y as f32,
+                    world.camera.fov,
+                ) / 2.0,
+            );
+            let mut pos = camera_view.bottom_left();
+            let move_speed = 0.2 - (i as f32 / 3.0) * 0.1;
+            pos -= (world.camera.center - camera_bounds.bottom_left()) * move_speed;
+
+            // Horizontal correction
+            pos.x -= ((pos.x - world.camera.center.x) / size.x + 1.0).floor() * size.x;
+
             let pos = pixel_perfect_pos(pos.map(Coord::new));
 
+            // Horizontal tiling
             let geometry = itertools::chain![
                 geometry.iter().map(|&(mut v)| {
                     v.a_pos -= vec2(1.0, 0.0);

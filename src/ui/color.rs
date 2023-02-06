@@ -2,6 +2,7 @@ use batbox::color::Hsla;
 
 use super::*;
 
+/// The color mode that is used in color selection: RGB, HSV, or HSL.
 #[derive(Debug, Clone, Copy)]
 pub enum ColorMode {
     Rgb(Rgba<f32>),
@@ -68,6 +69,9 @@ pub fn color_selector<'a>(
             components
                 .iter_mut()
                 .map(|(value, range, name)| {
+                    if *float_scale {
+                        *range = 0.0..=1.0;
+                    }
                     **value *= *range.end();
                     let range = *range.start() as f64..=*range.end() as f64;
                     slider(name.to_owned(), range, value).boxed()
