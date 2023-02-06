@@ -7,6 +7,7 @@ pub struct Collider(Aabb2<Coord>);
 pub struct Collision {
     pub normal: vec2<Coord>,
     pub penetration: Coord,
+    pub offset_dir: vec2<Coord>,
     pub offset: Coord,
 }
 
@@ -82,14 +83,27 @@ impl Collider {
             Some(Collision {
                 normal: vec2(nx, Coord::ZERO),
                 penetration: px,
-                offset: py * ny,
+                offset_dir: vec2(Coord::ZERO, ny),
+                offset: py,
             })
         } else {
             Some(Collision {
                 normal: vec2(Coord::ZERO, ny),
                 penetration: py,
-                offset: px * nx,
+                offset_dir: vec2(nx, Coord::ZERO),
+                offset: px,
             })
+        }
+    }
+}
+
+impl Collision {
+    pub fn rotate(self) -> Self {
+        Self {
+            normal: self.offset_dir,
+            penetration: self.offset,
+            offset_dir: self.normal,
+            offset: self.penetration,
         }
     }
 }

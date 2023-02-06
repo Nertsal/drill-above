@@ -56,7 +56,7 @@ impl Logic<'_> {
             while steps.x > Coord::ZERO {
                 steps.x -= Coord::ONE;
                 actor.collider.translate(step_x);
-                if let Some((block, col)) = actor_collides(
+                if let Some((block, mut col)) = actor_collides(
                     &actor.collider,
                     velocity,
                     &self.world.level.grid,
@@ -64,10 +64,16 @@ impl Logic<'_> {
                     &self.world.blocks,
                     drill,
                 ) {
-                    if col.offset > Coord::ZERO && col.offset < self.world.rules.edge_correction_max
+                    if col.normal.x == Coord::ZERO {
+                        col = col.rotate();
+                    }
+
+                    if col.offset > Coord::ZERO
+                        && col.offset < self.world.rules.edge_correction_max
+                        && velocity.y.signum() == col.offset.signum()
                     {
                         // Go up the platform
-                        actor.collider.translate(vec2::UNIT_Y * col.offset);
+                        actor.collider.translate(col.offset_dir * col.offset);
                         continue;
                     }
 
@@ -83,7 +89,7 @@ impl Logic<'_> {
             while steps.y > Coord::ZERO {
                 steps.y -= Coord::ONE;
                 actor.collider.translate(step_y);
-                if let Some((block, col)) = actor_collides(
+                if let Some((block, mut col)) = actor_collides(
                     &actor.collider,
                     velocity,
                     &self.world.level.grid,
@@ -91,11 +97,15 @@ impl Logic<'_> {
                     &self.world.blocks,
                     drill,
                 ) {
+                    if col.normal.y == Coord::ZERO {
+                        col = col.rotate();
+                    }
+
                     if col.normal.y < Coord::ZERO
                         && col.offset.abs() < self.world.rules.edge_correction_max
                     {
                         // Move to the side
-                        actor.collider.translate(vec2::UNIT_X * col.offset);
+                        actor.collider.translate(col.offset_dir * col.offset);
                         continue;
                     }
 
