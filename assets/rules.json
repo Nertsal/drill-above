@@ -1,28 +1,33 @@
 {
   "gravity": [0.0, -20.0],
   "move_speed": 7.0,
-  "drill_release_time": 0.1,
-  "drill_speed_min": 15.0,
-  "drill_mistimed_inc": -5.0,
-  "drill_speed_inc": 0.0,
-  "can_drill_dash": false,
-  "drill_dash_time": 0.1,
-  "drill_dash_speed_min": 10.0,
-  "drill_dash_speed_inc": 0.0,
-  "drill_jump_speed_min": 20.0,
-  "drill_jump_speed_inc": 5.0,
   "full_control_acc": 100.0,
   "low_control_acc": 50.0,
+
   "jump_buffer_time": 0.10,
   "coyote_time": 0.10,
-  "predrill_time": 0.3,
-  "normal_jump_strength": 12.0,
-  "wall_jump_strength": 12.0,
-  "wall_jump_angle": 1.0,
-  "wall_jump_timeout": 0.2,
-  "fall_multiplier": 2.0,
-  "low_jump_multiplier": 5.0,
+  "edge_correction_max": 0.15,
+
   "free_fall_speed": 15.0,
   "wall_slide_speed": 5.0,
-  "edge_correction_max": 0.15
+
+  "jump": {
+    "normal_strength": 12.0,
+    "wall_strength": 12.0,
+    "wall_angle": 1.0,
+    "wall_timeout": 0.2,
+    "fall_multiplier": 2.0,
+    "low_multiplier": 5.0
+  },
+  "drill": {
+    "can_dash": false,
+    "release_time": 0.1,
+    "speed_min": 15.0,
+    "speed_inc": 0.0,
+    "dash_time": 0.1,
+    "dash_speed_min": 10.0,
+    "dash_speed_inc": 0.0,
+    "jump_speed_min": 20.0,
+    "jump_speed_inc": 5.0
+  }
 }

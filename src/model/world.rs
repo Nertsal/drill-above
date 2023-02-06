@@ -1,35 +1,5 @@
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
-#[asset(json)]
-pub struct Rules {
-    pub gravity: vec2<Coord>,
-    pub move_speed: Coord,
-    pub full_control_acc: Coord,
-    pub low_control_acc: Coord,
-    pub jump_buffer_time: Time,
-    pub coyote_time: Time,
-    pub normal_jump_strength: Coord,
-    pub wall_jump_strength: Coord,
-    pub wall_jump_angle: R32,
-    pub wall_jump_timeout: Time,
-    pub fall_multiplier: Coord,
-    pub low_jump_multiplier: Coord,
-    pub free_fall_speed: Coord,
-    pub wall_slide_speed: Coord,
-    pub can_drill_dash: bool,
-    pub drill_release_time: Time,
-    pub drill_speed_min: Coord,
-    pub drill_mistimed_inc: Coord,
-    pub drill_speed_inc: Coord,
-    pub drill_dash_time: Time,
-    pub drill_dash_speed_min: Coord,
-    pub drill_dash_speed_inc: Coord,
-    pub drill_jump_speed_min: Coord,
-    pub drill_jump_speed_inc: Coord,
-    pub edge_correction_max: Coord,
-}
-
 pub struct World {
     pub id_gen: IdGen,
     pub assets: Rc<Assets>,
