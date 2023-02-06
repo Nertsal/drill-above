@@ -27,6 +27,7 @@ pub struct Rules {
     pub drill_dash_speed_inc: Coord,
     pub drill_jump_speed_min: Coord,
     pub drill_jump_speed_inc: Coord,
+    pub edge_correction_max: Coord,
 }
 
 pub struct World {
