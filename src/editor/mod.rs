@@ -423,16 +423,27 @@ impl Editor {
                     } else if let Some(&id) = self.hovered.first() {
                         self.world.level.get_block(id).map(|block| {
                             let pos = block.position(&self.world.level.grid);
-                            let mut ids: Vec<_> = self
-                                .selection
-                                .iter()
-                                .filter_map(|&id| {
-                                    self.world.level.get_block(id).map(|block| {
-                                        (id, block.position(&self.world.level.grid) - pos)
+
+                            // If the block was already selected,
+                            // then we move all the selected blocks.
+                            // Otherwise, we create a new selection
+                            // with the block we just clicked.
+                            let ids: Vec<_> = if self.selection.contains(&id) {
+                                // Move all selection, and remember the offsets.
+                                self.selection
+                                    .iter()
+                                    .filter_map(|&id| {
+                                        self.world.level.get_block(id).map(|block| {
+                                            (id, block.position(&self.world.level.grid) - pos)
+                                        })
                                     })
-                                })
-                                .collect();
-                            ids.push((id, vec2::ZERO));
+                                    .collect()
+                            } else {
+                                // Create a new selection
+                                self.clear_selection();
+                                self.selection.insert(id);
+                                vec![(id, vec2::ZERO)]
+                            };
 
                             DragAction::MoveBlocks {
                                 ids,
