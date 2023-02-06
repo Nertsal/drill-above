@@ -44,7 +44,7 @@ impl Logic<'_> {
         // Update collider
         let actor = self.world.actors.get_mut(&self.world.player.id).unwrap();
         let pos = actor.collider.pos();
-        actor.collider = if matches!(self.world.player.state, PlayerState::Drilling) {
+        actor.collider = if self.world.player.state.using_drill() {
             Player::drill_collider()
         } else {
             Player::collider()
@@ -507,23 +507,22 @@ impl Logic<'_> {
             player.state = PlayerState::Airborn;
         }
 
-        if update_state {
-            let actor = self.world.actors.get(&self.world.player.id).unwrap();
-            let collider = actor.wall_collider();
+        let actor = self.world.actors.get(&self.world.player.id).unwrap();
+        let collider = actor.wall_collider();
 
-            if let Some((id, col)) = self.check_collision(&collider) {
-                let player = &mut self.world.player;
-                let tile = match id {
-                    ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
-                    ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
-                };
-                let wall_normal = col.normal;
-                player.touching_wall = Some((tile, wall_normal));
-                if let PlayerState::Airborn = player.state {
-                    player.state = PlayerState::WallSliding { tile, wall_normal };
-                    player.coyote_time =
-                        Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
-                }
+        if let Some((id, col)) = self.check_collision(&collider) {
+            let player = &mut self.world.player;
+            let tile = match id {
+                ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
+                ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
+            };
+            let wall_normal = col.normal;
+            player.touching_wall = Some((tile, wall_normal));
+
+            if let PlayerState::Airborn = player.state {
+                player.state = PlayerState::WallSliding { tile, wall_normal };
+                player.coyote_time =
+                    Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
             }
         }
     }
