@@ -10,6 +10,7 @@ const CAMERA_MOVE_SPEED: f32 = 20.0;
 const EDITOR_FOV_MIN: usize = 10 * PIXELS_PER_UNIT;
 const EDITOR_FOV_MAX: usize = 70 * PIXELS_PER_UNIT;
 
+/// A combination of all renderers used by the editor.
 struct Render {
     world: WorldRender,
     lights: LightsRender,
@@ -29,75 +30,125 @@ impl Render {
 pub struct Editor {
     geng: Geng,
     assets: Rc<Assets>,
+    /// The downscaled texture used for pixel-perfect rendering of the world.
     pixel_texture: ugli::Texture,
+    /// The renderer used by the editor.
     render: Render,
+    /// The renderer used for the preview.
     preview_render: GameRender,
+
     camera: Camera2d,
+    /// Size of the actual screen size of the application.
     framebuffer_size: vec2<usize>,
+    /// Size of the downscaled version of the screen.
     screen_resolution: vec2<usize>,
 
+    /// The name of the currently loaded level.
     level_name: String,
+    /// The world that contains the level.
     world: World,
+    /// Whether we should transition into the playtest state.
     playtest: bool,
 
     #[cfg(not(target_arch = "wasm32"))]
+    /// State for hot reloading assets.
     hot_reload: Option<HotReload>,
 
+    /// Current position of the cursor in screen coordinates.
     cursor_pos: vec2<f64>,
+    /// Current position of the cursor in world coordinates.
     cursor_world_pos: vec2<Coord>,
+    /// Dragging state (e.g. rectangular selection).
     dragging: Option<Dragging>,
+    /// Currently selected blocks.
     selection: HashSet<PlaceableId>,
+    /// Currently hovered blocks.
     hovered: Vec<PlaceableId>,
+    /// Stack of undo actions.
     undo_actions: Vec<Action>,
+    /// Stack of redo actions.
     redo_actions: Vec<Action>,
 
+    /// All available editor tabs.
     tabs: Vec<EditorTab>,
+    /// The currently active editor tab.
     active_tab: usize,
 
+    /// Whether the grid should be rendered.
     draw_grid: bool,
+    /// Whether the world should be rendered in preview mode or editor mode.
     preview: bool,
+    /// Whether the color values should be presented in float scale or integer scale.
     light_float_scale: bool,
+    /// The color mode that is used in color selection: RGB, HSV, or HSL.
     color_mode: Option<ColorMode>,
 }
 
+/// The hot reload state.
 #[cfg(not(target_arch = "wasm32"))]
 struct HotReload {
+    /// The receiver of the events sent by the watcher.
     receiver: std::sync::mpsc::Receiver<notify::Result<notify::Event>>,
+    /// The watcher that sends events on change detection.
     _watcher: notify::RecommendedWatcher,
 }
 
+/// The dragging state.
 #[derive(Debug)]
 struct Dragging {
+    /// Initial cursor positiion in screen coordinates.
     pub initial_cursor_pos: vec2<f64>,
+    /// Initial cursor positiion in world coordinates.
     pub initial_world_pos: vec2<Coord>,
+    /// The action of the drag (e.g. rectangular selection).
     pub action: Option<DragAction>,
 }
 
+/// The action of the drag (e.g. rectangular selection).
 #[derive(Debug)]
 enum DragAction {
+    /// Place tile under cursor.
     PlaceTile,
+    /// Remove tile under cursor.
     RemoveTile,
+    /// Move the specified blocks, respecting their offsets.
     MoveBlocks {
+        /// IDs of the blocks with their offsets, relative to the `initial_pos`.
         ids: Vec<(PlaceableId, vec2<Coord>)>,
+        /// The initial position used for reference.
         initial_pos: vec2<Coord>,
     },
+    /// Select blocks in a rectangle.
     RectSelection,
 }
 
+/// An editor tab.
 #[derive(Debug, Clone)]
 struct EditorTab {
+    /// The name of the tab.
     pub name: String,
+    /// Possible blocks that can be hovered (and selected),
+    /// when this tab is active.
     pub hoverable: Vec<PlaceableType>,
+    /// The mode of the tab.
     pub mode: EditorMode,
 }
 
+/// Mode of the editor tab.
 #[derive(Debug, Clone)]
 enum EditorMode {
+    /// Modify level information.
+    /// Also allows to select all blocks in the level,
+    /// regardless of the `hoverable` field in the tab.
     Level,
+    /// Place blocks.
     Block {
+        /// All placeable blocks in that mode.
         blocks: Vec<PlaceableType>,
+        /// Currently selected placeable block.
         selected: usize,
     },
+    /// Modify global light and other lights in the level.
     Lights,
 }
 
@@ -108,9 +159,11 @@ impl Editor {
         level_name: Option<String>,
         hot_reload: bool,
     ) -> Self {
+        // Load the level and update its geometry
         let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
         let mut level =
             util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
+        // Update geometry in case it was not specified in the json file.
         level.tiles.update_geometry(assets);
 
         #[cfg(target_arch = "wasm32")]
@@ -198,6 +251,7 @@ impl Editor {
                 )
                 .expect("Failed to initialize the watcher");
 
+                // Watch `assets` folder recursively
                 watcher
                     .watch(&run_dir().join("assets"), notify::RecursiveMode::Recursive)
                     .expect("Failed to start watching assets directory");
@@ -212,6 +266,7 @@ impl Editor {
         }
     }
 
+    /// Handles events from the hot reload watcher.
     #[cfg(not(target_arch = "wasm32"))]
     fn handle_notify(&mut self, event: notify::Result<notify::Event>) {
         debug!("Received event from hot reload: {event:?}");
@@ -228,6 +283,7 @@ impl Editor {
         }
     }
 
+    /// Reload all assets.
     #[cfg(not(target_arch = "wasm32"))]
     fn reload_assets(&mut self) {
         let assets = futures::executor::block_on({
@@ -255,6 +311,7 @@ impl Editor {
         info!("Successfully reloaded assets");
     }
 
+    /// Change the currently selected placeable block in the currently active tab.
     fn scroll_selected(&mut self, delta: isize) {
         if let Some(tab) = self.tabs.get_mut(self.active_tab) {
             if let EditorMode::Block { selected, blocks } = &mut tab.mode {
@@ -265,6 +322,7 @@ impl Editor {
         }
     }
 
+    /// Get the currently selected placeable block (if any).
     fn selected_block(&self) -> Option<PlaceableType> {
         self.tabs
             .get(self.active_tab)
@@ -275,6 +333,7 @@ impl Editor {
             })
     }
 
+    /// Place the currently selected placeable block.
     fn place_block(&mut self) {
         if let Some(block) = self.selected_block() {
             self.action(Action::Place {
@@ -284,22 +343,28 @@ impl Editor {
         }
     }
 
+    /// Delete all hovered blocks.
     fn remove_hovered(&mut self) {
         self.action(Action::Remove {
             ids: self.hovered.clone(),
         });
     }
 
+    /// Delete all selected blocks.
     fn remove_selected(&mut self) {
         self.action(Action::Remove {
             ids: self.selection.iter().copied().collect(),
         });
     }
 
+    /// Move blocks, respecting their offsets.
     fn move_blocks(&mut self, ids: &mut [(PlaceableId, vec2<Coord>)], pos: vec2<Coord>) {
+        // Remember all tile actions, since they need to be
+        // done in a specific order.
         let mut tile_clears = Vec::new();
         let mut tile_moves = Vec::new();
         let mut tile_selections = Vec::new();
+
         for (id, offset) in ids {
             let pos = pos + *offset;
             let grid_pos = self.world.level.grid.world_to_grid(pos).0;
@@ -337,6 +402,7 @@ impl Editor {
             }
         }
 
+        // Manage the tiles
         for pos in tile_clears {
             self.world
                 .level
@@ -351,9 +417,11 @@ impl Editor {
         }
         self.selection.extend(tile_selections);
 
+        // Update geometry
         self.update_geometry();
     }
 
+    /// Clear the selection and reset the color mode.
     fn clear_selection(&mut self) {
         self.selection.clear();
         self.color_mode = None;
@@ -363,6 +431,8 @@ impl Editor {
         for _id in &self.selection {}
     }
 
+    /// Get all blocks inside the `aabb`. The blocks are filtered
+    /// by the currently active tab's hovered list (unless it's in `Level` mode).
     fn get_hovered(&self, aabb: Aabb2<Coord>) -> Vec<PlaceableId> {
         let mut hovered = self.world.level.get_hovered(aabb);
         if let Some(tab) = &self.tabs.get(self.active_tab) {
@@ -374,8 +444,10 @@ impl Editor {
         hovered
     }
 
+    /// Update the cursor position.
     fn update_cursor(&mut self, cursor_pos: vec2<f64>) {
         self.cursor_pos = cursor_pos;
+        // Calculate world position
         self.cursor_world_pos = self
             .camera
             .screen_to_world(
@@ -384,6 +456,7 @@ impl Editor {
             )
             .map(Coord::new);
 
+        // Snap to grid if needed
         let snap_cursor = self.geng.window().is_key_pressed(geng::Key::LCtrl);
         if snap_cursor {
             let snap_size = self.world.level.grid.cell_size / Coord::new(2.0);
@@ -391,8 +464,10 @@ impl Editor {
                 (self.cursor_world_pos / snap_size).map(|x| x.round()) * snap_size;
         }
 
+        // Update hovered blocks
         self.hovered = self.get_hovered(Aabb2::point(self.cursor_world_pos));
 
+        // Update the dragging state
         if let Some(mut dragging) = self.dragging.take() {
             if let Some(action) = &mut dragging.action {
                 match action {
@@ -409,10 +484,14 @@ impl Editor {
         }
     }
 
+    /// Handle the click event.
     fn click(&mut self, position: vec2<f64>, button: geng::MouseButton) {
+        // Release in case the old click was not reset
         self.release(button);
+        // Update cursor position
         self.update_cursor(position);
 
+        // Check what action should be performed
         let action = match button {
             geng::MouseButton::Left => (!self.geng.window().is_key_pressed(geng::Key::LShift))
                 .then(|| {
@@ -467,15 +546,18 @@ impl Editor {
             geng::MouseButton::Middle => None,
         };
 
+        // Start the dragging state
         self.dragging = Some(Dragging {
             initial_cursor_pos: position,
             initial_world_pos: self.cursor_world_pos,
             action,
         });
 
+        // Update cursor again to act on the dragging state
         self.update_cursor(position);
     }
 
+    /// Handle release event.
     fn release(&mut self, button: geng::MouseButton) {
         if let Some(dragging) = self.dragging.take() {
             if dragging.initial_cursor_pos == self.cursor_pos {
@@ -483,6 +565,7 @@ impl Editor {
                 match button {
                     geng::MouseButton::Left => {
                         if let Some(&id) = self.hovered.first() {
+                            // Change selection
                             if !self.geng.window().is_key_pressed(geng::Key::LShift) {
                                 self.clear_selection();
                             }
@@ -497,6 +580,7 @@ impl Editor {
                     geng::MouseButton::Middle => {}
                 }
             } else if let Some(DragAction::RectSelection) = dragging.action {
+                // Select blocks in a rectangle
                 if !self.geng.window().is_key_pressed(geng::Key::LShift) {
                     self.clear_selection();
                 }
@@ -507,6 +591,7 @@ impl Editor {
         }
     }
 
+    /// Zoom in/out.
     fn zoom(&mut self, delta: isize) {
         let current = self.screen_resolution.x;
         let delta = delta * PIXELS_PER_UNIT as isize;
@@ -519,20 +604,24 @@ impl Editor {
         render::update_texture_size(&mut self.pixel_texture, self.screen_resolution, &self.geng);
     }
 
+    /// Update cached geometry.
     fn update_geometry(&mut self) {
         self.world.cache = RenderCache::calculate(&self.world.level, &self.geng, &self.assets);
     }
 
+    /// Duplicate all selected blocks.
     fn duplicate_selected(&mut self) {
         for &id in &self.selection {
             let Some(mut block) = self.world.level.get_block(id) else {
                 continue;
             };
+            // Translate the block a bit, so it is visibly distinct
             block.translate(self.world.level.grid.cell_size);
             self.world.level.place_block(block, &self.assets);
         }
     }
 
+    /// Save the level to file.
     fn save_level(&self) {
         if let Ok(()) = util::report_err(
             self.world.level.save(&self.level_name),
@@ -647,6 +736,7 @@ impl geng::State for Editor {
 
             if let Some(dragging) = &self.dragging {
                 if let Some(DragAction::RectSelection) = &dragging.action {
+                    // Draw the rectangular selection
                     self.geng.draw_2d(
                         framebuffer,
                         &self.camera,
@@ -667,6 +757,7 @@ impl geng::State for Editor {
 
         let ctrl = window.is_key_pressed(geng::Key::LCtrl);
         if !ctrl {
+            // Move camera
             let mut dir = vec2::ZERO;
             if window.is_key_pressed(geng::Key::A) {
                 dir.x -= 1.0;
@@ -687,6 +778,7 @@ impl geng::State for Editor {
 
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(hot) = &self.hot_reload {
+            // Check hot reload events
             use std::sync::mpsc::TryRecvError;
             match hot.receiver.try_recv() {
                 Ok(event) => self.handle_notify(event),
@@ -748,6 +840,7 @@ impl geng::State for Editor {
 
     fn transition(&mut self) -> Option<geng::Transition> {
         std::mem::take(&mut self.playtest).then(|| {
+            // Start the playtest state
             let state = game::Game::new(
                 &self.geng,
                 &self.assets,
@@ -759,15 +852,20 @@ impl geng::State for Editor {
                 false,
                 None,
             );
+
+            // The state is pushed on top of the editor state,
+            // so that when we exit the playtest, we return to the editor.
             geng::Transition::Push(Box::new(state))
         })
     }
+
     fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         self.ui(cx)
     }
 }
 
 impl EditorTab {
+    /// Constructor for the editor tab in `Block` mode.
     pub fn block(name: impl Into<String>, blocks: Vec<PlaceableType>) -> Self {
         Self {
             name: name.into(),
@@ -780,6 +878,7 @@ impl EditorTab {
     }
 }
 
+/// Run the editor.
 pub fn run(geng: &Geng, level: Option<String>, hot_reload: bool) -> impl geng::State {
     let future = {
         let geng = geng.clone();

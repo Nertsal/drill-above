@@ -2,6 +2,7 @@ use batbox::color::Hsla;
 
 use super::*;
 
+/// The color mode that is used in color selection: RGB, HSV, or HSL.
 #[derive(Debug, Clone, Copy)]
 pub enum ColorMode {
     Rgb(Rgba<f32>),
