@@ -1,8 +1,8 @@
 {
   "gravity": [0.0, -20.0],
   "move_speed": 7.0,
-  "full_control_acc": 100.0,
-  "low_control_acc": 50.0,
+  "full_control_acc": 50.0,
+  "low_control_acc": 20.0,
 
   "jump_buffer_time": 0.10,
   "coyote_time": 0.10,
@@ -13,9 +13,9 @@
 
   "jump": {
     "normal_strength": 12.0,
-    "wall_strength": 12.0,
+    "wall_strength": 15.0,
     "wall_angle": 1.0,
-    "wall_timeout": 0.2,
+    "wall_timeout": 0.1,
     "fall_multiplier": 2.0,
     "low_multiplier": 5.0
   },
@@ -29,5 +29,27 @@
     "dash_speed_inc": 0.0,
     "jump_speed_min": 20.0,
     "jump_speed_inc": 5.0
+  },
+  "tiles": {
+    "Air": {
+      "drillable": true,
+      "friction": 1.0
+    },
+    "Grass": {
+      "drillable": true,
+      "friction": 1.0
+    },
+    "Dirt": {
+      "drillable": true,
+      "friction": 1.0
+    },
+    "Stone": {
+      "drillable": false,
+      "friction": 1.0
+    },
+    "CrystalStone": {
+      "drillable": false,
+      "friction": 1.0
+    }
   }
 }
