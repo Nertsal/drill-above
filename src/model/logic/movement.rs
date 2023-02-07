@@ -23,6 +23,7 @@ impl Logic<'_> {
             &self.world.level.tiles,
             &self.world.blocks,
             false,
+            &self.world.rules,
         )
     }
 
@@ -63,6 +64,7 @@ impl Logic<'_> {
                     &self.world.level.tiles,
                     &self.world.blocks,
                     drill,
+                    &self.world.rules,
                 ) {
                     if col.normal.x == Coord::ZERO {
                         col = col.rotate();
@@ -96,6 +98,7 @@ impl Logic<'_> {
                     &self.world.level.tiles,
                     &self.world.blocks,
                     drill,
+                    &self.world.rules,
                 ) {
                     if col.normal.y == Coord::ZERO {
                         col = col.rotate();
@@ -207,8 +210,9 @@ fn actor_collides(
     tiles: &TileMap,
     blocks: &Collection<Block>,
     drill: bool,
+    rules: &Rules,
 ) -> Option<(ColliderId, Collision)> {
-    collide_tiles(collider, velocity, grid, tiles, drill)
+    collide_tiles(collider, velocity, grid, tiles, drill, rules)
         .map(|(pos, col)| (ColliderId::Tile(pos), col))
         .or_else(|| {
             blocks.iter().find_map(|block| {
@@ -235,6 +239,7 @@ fn collide_tiles(
     grid: &Grid,
     tiles: &TileMap,
     drill: bool,
+    rules: &Rules,
 ) -> Option<(vec2<isize>, Collision)> {
     let aabb = collider.grid_aabb(grid);
     (aabb.min.x..=aabb.max.x)
@@ -244,7 +249,7 @@ fn collide_tiles(
                 .get_tile_isize(pos)
                 .filter(|tile| {
                     let air = matches!(tile, Tile::Air);
-                    let drill = drill && tile.is_drillable();
+                    let drill = drill && rules.tiles[tile].drillable;
                     !air && !drill
                 })
                 .and_then(|_| {

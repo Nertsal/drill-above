@@ -266,16 +266,19 @@ impl Logic<'_> {
         {
             let dirs = itertools::chain![
                 match self.world.player.state {
-                    PlayerState::Grounded(tile) if tile.is_drillable() =>
+                    PlayerState::Grounded(tile) if self.world.rules.tiles[&tile].drillable =>
                         Some(vec2(0.0, -1.0).map(Coord::new)),
-                    PlayerState::WallSliding { tile, wall_normal } if tile.is_drillable() =>
+                    PlayerState::WallSliding { tile, wall_normal }
+                        if self.world.rules.tiles[&tile].drillable =>
                         Some(-wall_normal),
                     _ => None,
                 },
                 self.world
                     .player
                     .touching_wall
-                    .and_then(|(tile, normal)| tile.is_drillable().then_some(-normal))
+                    .and_then(|(tile, normal)| self.world.rules.tiles[&tile]
+                        .drillable
+                        .then_some(-normal))
             ];
             for drill_dir in dirs {
                 if vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
@@ -534,7 +537,8 @@ impl Logic<'_> {
             player.state = PlayerState::Airborn;
         }
         let update_state =
-            player.state.is_airborn() || was_grounded || player.state.is_wall_sliding();
+            (player.state.is_airborn() || was_grounded || player.state.is_wall_sliding())
+                && player.velocity.y <= Coord::ZERO;
 
         if update_state {
             let actor = self.world.actors.get(&self.world.player.id).unwrap();
@@ -579,7 +583,7 @@ impl Logic<'_> {
                     .get_tile_isize(pos)
                     .filter(|tile| {
                         let air = matches!(tile, Tile::Air);
-                        let drill = tile.is_drillable();
+                        let drill = self.world.rules.tiles[tile].drillable;
                         !air && drill
                     })
                     .filter(|_| {

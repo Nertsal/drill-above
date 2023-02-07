@@ -17,6 +17,13 @@ pub struct Rules {
 
     pub jump: JumpRules,
     pub drill: DrillRules,
+    pub tiles: HashMap<Tile, TileRules>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TileRules {
+    pub drillable: bool,
+    pub friction: Coord,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
