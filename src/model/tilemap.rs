@@ -7,27 +7,12 @@ pub struct TileMap {
     geometry: Option<Vec<usize>>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub enum Tile {
-    Air,
-    Grass,
-    Stone,
-    Dirt,
-    CrystalStone,
-    VillageGrass,
-}
-
-impl Tile {
-    pub fn all() -> [Self; 6] {
-        use Tile::*;
-        [Air, Grass, Stone, Dirt, CrystalStone, VillageGrass]
-    }
-}
+pub type Tile = String;
 
 impl TileMap {
     pub fn new(size: vec2<usize>) -> Self {
         Self {
-            tiles: (0..size.y * size.x).map(|_| Tile::Air).collect(),
+            tiles: (0..size.y * size.x).map(|_| "air".to_string()).collect(),
             geometry: None,
             size,
         }
@@ -61,16 +46,16 @@ impl TileMap {
         self.set_tile(pos.map(|x| x as usize), tile, assets);
     }
 
-    pub fn get_tile_isize(&self, pos: vec2<isize>) -> Option<Tile> {
+    pub fn get_tile_isize(&self, pos: vec2<isize>) -> Option<&Tile> {
         if pos.x < 0 || pos.y < 0 {
             None
         } else {
             let pos = pos.map(|x| x as usize);
-            pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get(index).copied())
+            pos_to_index(pos, self.size.x).and_then(|index| self.tiles.get(index))
         }
     }
 
-    pub fn get_tile_neighbours(&self, tile: usize) -> [Option<Tile>; 8] {
+    pub fn get_tile_neighbours(&self, tile: usize) -> [Option<&Tile>; 8] {
         let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
         let deltas = [
             (-1, -1),
@@ -95,7 +80,7 @@ impl TileMap {
         };
         self.get_tile_neighbours(tile).map(|tile| {
             tile.map(|tile| {
-                if matches!(tile, Tile::Air) {
+                if tile == "air" {
                     Connection::None
                 } else if tile == center {
                     Connection::Same
@@ -132,12 +117,12 @@ impl TileMap {
     }
 
     pub fn change_size(&mut self, size: vec2<usize>, assets: &Assets) {
-        let mut tiles = vec![Tile::Air; size.x * size.y];
+        let mut tiles = vec!["air".to_string(); size.x * size.y];
         for y in 0..size.y {
             for x in 0..size.x {
                 if x < self.size.x && y < self.size.y {
                     let i = x + y * size.x;
-                    tiles[i] = self.tiles[x + y * self.size.x];
+                    tiles[i] = self.tiles[x + y * self.size.x].to_owned();
                 }
             }
         }
@@ -147,7 +132,7 @@ impl TileMap {
     }
 
     pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
-        let mut tiles = vec![Tile::Air; self.size.x * self.size.y];
+        let mut tiles = vec!["air".to_string(); self.size.x * self.size.y];
         for y in 0..self.size.y {
             for x in 0..self.size.x {
                 let i = x + y * self.size.x;
@@ -159,7 +144,7 @@ impl TileMap {
                 let x = x as usize;
                 let y = y as usize;
                 if x < self.size.x && y < self.size.y {
-                    tiles[i] = self.tiles[x + y * self.size.x];
+                    tiles[i] = self.tiles[x + y * self.size.x].to_owned();
                 }
             }
         }
@@ -229,14 +214,18 @@ impl TileMap {
             })
         };
         for (i, tile) in self.tiles.iter().enumerate() {
-            if let Tile::Air = tile {
+            if tile == "air" {
                 continue;
             }
 
             let neighbours = self.get_tile_neighbours(i);
-            if neighbours.contains(&Some(Tile::Grass)) {
+            if let Some(masked) = neighbours.iter().find_map(|other| {
+                other.filter(|&other| {
+                    other != "air" && other != tile && assets.rules.tiles[other].drillable
+                })
+            }) {
                 let connections = self.get_tile_connections(i);
-                let geometry = calc_geometry(i, &Tile::Grass, Some(connections));
+                let geometry = calc_geometry(i, masked, Some(connections));
                 let mask = &assets.sprites.tiles.mask;
                 let mask = mask.get_tile_geometry(
                     *mask
@@ -247,13 +236,13 @@ impl TileMap {
                 let idx = [0, 1, 2, 0, 2, 3];
                 let geometry = geometry.into_iter().zip(idx).map(|(v, i)| v.mask(mask[i]));
                 masked_geometry
-                    .entry(Tile::Grass)
+                    .entry(masked.to_owned())
                     .or_default()
                     .extend(geometry);
             }
 
             tiles_geometry
-                .entry(*tile)
+                .entry(tile.to_owned())
                 .or_default()
                 .extend(calc_geometry(i, tile, None));
         }

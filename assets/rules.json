@@ -31,18 +31,18 @@
     "jump_speed_inc": 5.0
   },
   "tiles": {
-    "Air": {
+    "air": {
       "drillable": true
     },
-    "Grass": {
+    "grass": {
       "drillable": true
     },
-    "Dirt": {
+    "dirt": {
       "drillable": true
     },
-    "Stone": {},
-    "CrystalStone": {},
-    "VillageGrass": {
+    "stone": {},
+    "crystal_stone": {},
+    "village_grass": {
       "drillable": true,
       "friction": 50.0
     }

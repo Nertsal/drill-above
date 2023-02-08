@@ -203,9 +203,12 @@ impl Editor {
                 },
                 EditorTab::block(
                     "Tiles",
-                    Tile::all()
-                        .into_iter()
-                        .filter(|tile| !matches!(tile, Tile::Air))
+                    assets
+                        .rules
+                        .tiles
+                        .keys()
+                        .cloned()
+                        .filter(|tile| tile != "air")
                         .map(PlaceableType::Tile)
                         .collect(),
                 ),
@@ -328,7 +331,7 @@ impl Editor {
             .get(self.active_tab)
             .and_then(|tab| match &tab.mode {
                 EditorMode::Level => None,
-                EditorMode::Block { blocks, selected } => blocks.get(*selected).copied(),
+                EditorMode::Block { blocks, selected } => blocks.get(*selected).cloned(),
                 EditorMode::Lights => Some(PlaceableType::Spotlight(default())),
             })
     }
@@ -376,7 +379,7 @@ impl Editor {
                         }
                         *id = PlaceableId::Tile(grid_pos);
                         tile_clears.push(pos);
-                        tile_moves.push((tile, grid_pos));
+                        tile_moves.push((tile.to_owned(), grid_pos));
                     }
                 }
                 PlaceableId::Hazard(id) => {
@@ -407,7 +410,7 @@ impl Editor {
             self.world
                 .level
                 .tiles
-                .set_tile_isize(pos, Tile::Air, &self.assets);
+                .set_tile_isize(pos, "air".to_owned(), &self.assets);
         }
         for (tile, pos) in tile_moves {
             self.world
@@ -438,7 +441,7 @@ impl Editor {
         if let Some(tab) = &self.tabs.get(self.active_tab) {
             if let EditorMode::Level = tab.mode {
             } else {
-                hovered.retain(|id| tab.hoverable.iter().any(|&ty| id.fits_type(ty)))
+                hovered.retain(|id| tab.hoverable.iter().any(|ty| id.fits_type(ty)))
             }
         }
         hovered

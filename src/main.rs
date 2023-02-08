@@ -43,6 +43,8 @@ enum Command {
     #[cfg(not(target_arch = "wasm32"))]
     ChangeSize(ChangeSizeOpt),
     #[cfg(not(target_arch = "wasm32"))]
+    RenameTile(RenameTileOpt),
+    #[cfg(not(target_arch = "wasm32"))]
     Format,
 }
 
@@ -55,6 +57,12 @@ struct TileSetOpt {
 #[derive(clap::Args)]
 struct ChangeSizeOpt {
     size: String,
+}
+
+#[derive(clap::Args)]
+struct RenameTileOpt {
+    from: String,
+    to: String,
 }
 
 fn main() {
@@ -135,6 +143,23 @@ fn main() {
                 };
 
                 geng::run(&geng, state)
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            Command::RenameTile(config) => {
+                let level_path = opt
+                    .level
+                    .as_ref()
+                    .expect("format requires a --level argument");
+                let mut level = Level::load(level_path).expect("Failed to load the level");
+
+                for tile in &mut level.tiles.tiles {
+                    if *tile == config.from {
+                        *tile = config.to.to_owned();
+                    }
+                }
+
+                level.save(level_path).expect("Failed to save the level");
+                info!("Saved the changed level at {}", level_path);
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::Format => {

@@ -247,8 +247,8 @@ fn collide_tiles(
         .filter_map(|pos| {
             tiles
                 .get_tile_isize(pos)
-                .filter(|tile| {
-                    let air = matches!(tile, Tile::Air);
+                .filter(|&tile| {
+                    let air = *tile == "air";
                     let drill = drill && rules.tiles[tile].drillable;
                     !air && !drill
                 })

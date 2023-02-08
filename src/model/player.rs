@@ -24,7 +24,7 @@ pub struct Player {
     pub drill_release: Option<Time>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PlayerState {
     Grounded(Tile),
     WallSliding {
@@ -109,7 +109,7 @@ impl PlayerState {
     }
 
     pub fn finished_state(&self) -> Option<Self> {
-        self.has_finished().then_some(*self)
+        self.has_finished().then(|| self.clone())
     }
 
     pub fn has_finished(&self) -> bool {

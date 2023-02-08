@@ -23,7 +23,7 @@ pub struct Level {
     pub next_level: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum PlaceableType {
     Tile(Tile),
     Hazard(HazardType),
@@ -151,7 +151,7 @@ impl Level {
         let connect = |pos| {
             self.tiles
                 .get_tile_isize(pos)
-                .map(|tile| !matches!(tile, Tile::Air))
+                .map(|tile| tile != "air")
                 .unwrap_or(false)
         };
         let (direction, collider) = match hazard {
@@ -239,7 +239,7 @@ impl Level {
                 .filter_map(|pos| self
                     .tiles
                     .get_tile_isize(pos)
-                    .filter(|tile| !matches!(tile, Tile::Air))
+                    .filter(|tile| *tile != "air")
                     .map(|_| PlaceableId::Tile(pos))),
         ]
         .collect()
@@ -250,7 +250,7 @@ impl Level {
             PlaceableId::Tile(pos) => self
                 .tiles
                 .get_tile_isize(pos)
-                .map(|tile| Placeable::Tile((tile, pos))),
+                .map(|tile| Placeable::Tile((tile.to_owned(), pos))),
             PlaceableId::Hazard(id) => self.hazards.get(id).cloned().map(Placeable::Hazard),
             PlaceableId::Prop(id) => self.props.get(id).cloned().map(Placeable::Prop),
             PlaceableId::Coin(id) => self.coins.get(id).cloned().map(Placeable::Coin),
@@ -265,7 +265,7 @@ impl Level {
             PlaceableId::Tile(pos) => self
                 .tiles
                 .get_tile_isize(pos)
-                .map(|tile| PlaceableMut::Tile((tile, pos))),
+                .map(|tile| PlaceableMut::Tile((tile.to_owned(), pos))),
             PlaceableId::Hazard(id) => self.hazards.get_mut(id).map(PlaceableMut::Hazard),
             PlaceableId::Prop(id) => self.props.get_mut(id).map(PlaceableMut::Prop),
             PlaceableId::Coin(id) => self.coins.get_mut(id).map(PlaceableMut::Coin),
@@ -313,9 +313,9 @@ impl Level {
         }
         for pos in tiles {
             if let Some(tile) = self.tiles.get_tile_isize(pos) {
-                removed.push(Placeable::Tile((tile, pos)));
+                removed.push(Placeable::Tile((tile.to_owned(), pos)));
             }
-            self.tiles.set_tile_isize(pos, Tile::Air, assets);
+            self.tiles.set_tile_isize(pos, "air".to_string(), assets);
         }
 
         removed
@@ -354,7 +354,7 @@ impl Level {
             .iter()
             .enumerate()
             .filter_map(|(i, tile)| {
-                (!matches!(tile, Tile::Air)).then(|| {
+                (tile != "air").then(|| {
                     let grid_pos = index_to_pos(i, self.size.x).map(|x| x as isize);
                     let pos = self.grid.grid_to_world(grid_pos);
                     let aabb = Aabb2::point(pos)
@@ -376,7 +376,7 @@ impl Level {
                             let pos = grid_pos + n;
                             self.tiles
                                 .get_tile_isize(pos)
-                                .filter(|&neighbour| neighbour == Tile::Air)
+                                .filter(|&neighbour| neighbour == "air")
                                 .map(|_| {
                                     let a_normal = n.map(|x| x as f32);
                                     let [a, b] = [a, b].map(|v| NormalVertex {
@@ -409,7 +409,7 @@ impl Level {
         let mut static_geom = Vec::new();
         let mut shaded_geom = HashMap::<Tile, Vec<Vertex>>::new();
         for (i, tile) in self.tiles.tiles().iter().enumerate() {
-            if let Tile::Air = tile {
+            if tile == "air" {
                 continue;
             }
 
@@ -425,13 +425,12 @@ impl Level {
             match tileset.texture.normal() {
                 Some(_) => {
                     let uv = tileset.get_tile_geometry(self.tiles.get_tile_index(i));
-                    shaded_geom
-                        .entry(*tile)
-                        .or_default()
-                        .extend(std::iter::zip(vertices, uv).map(|((x, y), a_uv)| Vertex {
+                    shaded_geom.entry(tile.to_owned()).or_default().extend(
+                        std::iter::zip(vertices, uv).map(|((x, y), a_uv)| Vertex {
                             a_pos: (matrix * vec2(x, y).extend(1.0)).into_2d(),
                             a_uv,
-                        }));
+                        }),
+                    );
                 }
                 None => {
                     let normals = self.tiles.get_tile_normals(i);
@@ -546,7 +545,7 @@ impl Prop {
 }
 
 impl PlaceableId {
-    pub fn fits_type(&self, ty: PlaceableType) -> bool {
+    pub fn fits_type(&self, ty: &PlaceableType) -> bool {
         matches!(
             (self, ty),
             (PlaceableId::Tile(_), PlaceableType::Tile(_))

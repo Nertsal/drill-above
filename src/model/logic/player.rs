@@ -129,7 +129,7 @@ impl Logic<'_> {
                 (match id {
                     ColliderId::Tile(pos) => {
                         let tile = logic.world.level.tiles.get_tile_isize(pos).unwrap();
-                        logic.world.rules.tiles[&tile].drill_bounciness
+                        logic.world.rules.tiles[tile].drill_bounciness
                     }
                     ColliderId::Entity(_) => todo!(),
                 }) + Coord::ONE
@@ -281,20 +281,21 @@ impl Logic<'_> {
             && self.world.level.drill_allowed
         {
             let dirs = itertools::chain![
-                match self.world.player.state {
-                    PlayerState::Grounded(tile) if self.world.rules.tiles[&tile].drillable =>
+                match &self.world.player.state {
+                    PlayerState::Grounded(tile) if self.world.rules.tiles[tile].drillable =>
                         Some(vec2(0.0, -1.0).map(Coord::new)),
                     PlayerState::WallSliding { tile, wall_normal }
-                        if self.world.rules.tiles[&tile].drillable =>
-                        Some(-wall_normal),
+                        if self.world.rules.tiles[tile].drillable =>
+                        Some(-*wall_normal),
                     _ => None,
                 },
                 self.world
                     .player
                     .touching_wall
-                    .and_then(|(tile, normal)| self.world.rules.tiles[&tile]
+                    .as_ref()
+                    .and_then(|(tile, normal)| self.world.rules.tiles[tile]
                         .drillable
-                        .then_some(-normal))
+                        .then_some(-*normal))
             ];
             for drill_dir in dirs {
                 if vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
@@ -431,7 +432,7 @@ impl Logic<'_> {
         acc *= if let PlayerState::Grounded(tile) = &self.world.player.state {
             self.world.rules.tiles[tile].friction
         } else {
-            self.world.rules.tiles[&Tile::Air].friction
+            self.world.rules.tiles["air"].friction
         };
 
         // If target speed is aligned with velocity, then do not slow down
@@ -539,13 +540,16 @@ impl Logic<'_> {
             let player = &mut self.world.player;
             let tile = match id {
                 ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
-                ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
+                ColliderId::Entity(id) => &self.world.blocks.get(&id).unwrap().tile,
             };
             let wall_normal = col.normal;
-            player.touching_wall = Some((tile, wall_normal));
+            player.touching_wall = Some((tile.to_owned(), wall_normal));
 
             if let PlayerState::Airborn = player.state {
-                player.state = PlayerState::WallSliding { tile, wall_normal };
+                player.state = PlayerState::WallSliding {
+                    tile: tile.to_owned(),
+                    wall_normal,
+                };
                 player.coyote_time =
                     Some((Coyote::Wall { wall_normal }, self.world.rules.coyote_time));
             }
@@ -570,9 +574,9 @@ impl Logic<'_> {
                 let player = &mut self.world.player;
                 let tile = match id {
                     ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
-                    ColliderId::Entity(id) => self.world.blocks.get(&id).unwrap().tile,
+                    ColliderId::Entity(id) => &self.world.blocks.get(&id).unwrap().tile,
                 };
-                player.state = PlayerState::Grounded(tile);
+                player.state = PlayerState::Grounded(tile.to_owned());
                 player.coyote_time = Some((Coyote::Ground, self.world.rules.coyote_time));
 
                 if !was_grounded {
@@ -603,8 +607,8 @@ impl Logic<'_> {
                     .level
                     .tiles
                     .get_tile_isize(pos)
-                    .filter(|tile| {
-                        let air = matches!(tile, Tile::Air);
+                    .filter(|&tile| {
+                        let air = tile == "air";
                         let drill = self.world.rules.tiles[tile].drillable;
                         !air && drill
                     })

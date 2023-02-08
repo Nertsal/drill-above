@@ -68,15 +68,9 @@ pub struct Sprites {
     pub spotlight: ugli::Texture,
 }
 
-#[derive(geng::Assets)]
 pub struct TileSprites {
     pub mask: TileSet,
-    pub air: TileSet,
-    pub grass: TileSet,
-    pub stone: TileSet,
-    pub dirt: TileSet,
-    pub crystal_stone: TileSet,
-    pub village_grass: TileSet,
+    pub tiles: HashMap<Tile, TileSet>,
 }
 
 #[derive(geng::Assets)]
@@ -126,14 +120,9 @@ pub struct Animation {
 
 impl TileSprites {
     pub fn get_tile_set(&self, tile: &Tile) -> &TileSet {
-        match tile {
-            Tile::Air => &self.air,
-            Tile::Grass => &self.grass,
-            Tile::Stone => &self.stone,
-            Tile::Dirt => &self.dirt,
-            Tile::CrystalStone => &self.crystal_stone,
-            Tile::VillageGrass => &self.village_grass,
-        }
+        self.tiles
+            .get(tile)
+            .unwrap_or_else(|| panic!("Failed to find tileset of {tile:?}"))
     }
 }
 
@@ -236,6 +225,34 @@ impl geng::LoadAsset for Animation {
         .boxed_local()
     }
     const DEFAULT_EXT: Option<&'static str> = Some("gif");
+}
+
+impl geng::LoadAsset for TileSprites {
+    fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
+        let path = path.to_owned();
+        let geng = geng.clone();
+        async move {
+            // Load the list of tiles from the rules
+            let rules: Rules =
+                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("rules.json")).await?;
+
+            // Load tiles
+            let mut tiles = HashMap::with_capacity(rules.tiles.len());
+            for tile in rules.tiles.into_keys() {
+                let set: TileSet =
+                    geng::LoadAsset::load(&geng, &path.join(format!("{tile}.png"))).await?;
+                tiles.insert(tile, set);
+            }
+
+            // Load mask
+            let mask: TileSet = geng::LoadAsset::load(&geng, &path.join("mask.png")).await?;
+
+            Ok(Self { mask, tiles })
+        }
+        .boxed_local()
+    }
+
+    const DEFAULT_EXT: Option<&'static str> = None;
 }
 
 fn load_font(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Rc<geng::Font>> {
