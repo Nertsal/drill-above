@@ -404,13 +404,17 @@ impl Logic<'_> {
         }
 
         // Horizontal speed control
+        let current = self.world.player.velocity.x;
         let target = self.player_control.move_dir.x * self.world.rules.move_speed;
-        let acc = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
+
+        let mut acc = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
             self.world.rules.low_control_acc
         } else {
             self.world.rules.full_control_acc
         };
-        let current = self.world.player.velocity.x;
+        if let PlayerState::Grounded(tile) = &self.world.player.state {
+            acc += self.world.rules.tiles[tile].friction * self.world.rules.gravity.len();
+        }
 
         // If target speed is aligned with velocity, then do not slow down
         if target == Coord::ZERO
