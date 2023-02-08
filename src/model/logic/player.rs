@@ -218,7 +218,7 @@ impl Logic<'_> {
 
         let mut dash = None;
         let dir = self.player_control.move_dir;
-        if self.world.rules.can_drill_dash && self.world.player.can_drill_dash && dir != vec2::ZERO
+        if self.world.rules.drill.can_dash && self.world.player.can_drill_dash && dir != vec2::ZERO
         {
             // Dash
             let dir = dir.normalize_or_zero();
@@ -229,7 +229,7 @@ impl Logic<'_> {
             // let angle = Coord::new(vec2::dot(vel_dir, dir).as_f32().acos() / 2.0);
             // let current = speed * angle.cos();
             // let speed = (current + acceleration).max(rules.drill_dash_speed_min);
-            let speed = rules.drill_dash_speed_min;
+            let speed = rules.drill.dash_speed_min;
             let mut target = dir * speed;
 
             let real = self.world.player.velocity;
@@ -248,7 +248,7 @@ impl Logic<'_> {
 
             self.world.player.velocity = target;
             self.world.player.can_drill_dash = false;
-            dash = Some(self.world.rules.drill_dash_time);
+            dash = Some(self.world.rules.drill.dash_time);
 
             let actor = self.world.actors.get(&self.world.player.id).unwrap();
             self.spawn_particles(ParticleSpawn {
@@ -266,21 +266,24 @@ impl Logic<'_> {
         {
             let dirs = itertools::chain![
                 match self.world.player.state {
-                    PlayerState::Grounded(tile) if tile.is_drillable() =>
+                    PlayerState::Grounded(tile) if self.world.rules.tiles[&tile].drillable =>
                         Some(vec2(0.0, -1.0).map(Coord::new)),
-                    PlayerState::WallSliding { tile, wall_normal } if tile.is_drillable() =>
+                    PlayerState::WallSliding { tile, wall_normal }
+                        if self.world.rules.tiles[&tile].drillable =>
                         Some(-wall_normal),
                     _ => None,
                 },
                 self.world
                     .player
                     .touching_wall
-                    .and_then(|(tile, normal)| tile.is_drillable().then_some(-normal))
+                    .and_then(|(tile, normal)| self.world.rules.tiles[&tile]
+                        .drillable
+                        .then_some(-normal))
             ];
             for drill_dir in dirs {
                 if vec2::dot(self.player_control.move_dir, drill_dir) > Coord::ZERO {
                     self.world.player.velocity = self.player_control.move_dir.normalize_or_zero()
-                        * self.world.rules.drill_speed_min;
+                        * self.world.rules.drill.speed_min;
                 }
             }
         }
@@ -376,7 +379,7 @@ impl Logic<'_> {
         if self.world.player.velocity.y < Coord::ZERO {
             // Faster drop
             self.world.player.velocity.y += self.world.rules.gravity.y
-                * (self.world.rules.fall_multiplier - Coord::ONE)
+                * (self.world.rules.jump.fall_multiplier - Coord::ONE)
                 * self.delta_time;
             let cap = match self.world.player.state {
                 PlayerState::WallSliding { .. } => self.world.rules.wall_slide_speed,
@@ -388,7 +391,7 @@ impl Logic<'_> {
         {
             // Low jump
             self.world.player.velocity.y += self.world.rules.gravity.y
-                * (self.world.rules.low_jump_multiplier - Coord::ONE)
+                * (self.world.rules.jump.low_multiplier - Coord::ONE)
                 * self.delta_time;
         }
     }
@@ -442,7 +445,7 @@ impl Logic<'_> {
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
         match jump {
             Coyote::Ground => {
-                let jump_vel = rules.normal_jump_strength;
+                let jump_vel = rules.jump.normal_strength;
                 self.world.player.velocity.y = jump_vel;
                 self.world.player.state = PlayerState::Airborn;
                 self.world.play_sound(&self.world.assets.sounds.jump);
@@ -457,12 +460,12 @@ impl Logic<'_> {
                 });
             }
             Coyote::Wall { wall_normal } => {
-                let angle = rules.wall_jump_angle * wall_normal.x.signum();
-                let mut jump_vel = wall_normal.rotate(angle) * rules.wall_jump_strength;
+                let angle = rules.jump.wall_angle * wall_normal.x.signum();
+                let mut jump_vel = wall_normal.rotate(angle) * rules.jump.wall_strength;
                 let player = &mut self.world.player;
                 jump_vel.y = jump_vel.y.max(player.velocity.y);
                 player.velocity = jump_vel;
-                player.control_timeout = Some(self.world.rules.wall_jump_timeout);
+                player.control_timeout = Some(self.world.rules.jump.wall_timeout);
                 player.state = PlayerState::Airborn;
                 self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
@@ -478,10 +481,10 @@ impl Logic<'_> {
             }
             Coyote::DrillJump { direction } => {
                 let rules = &self.world.rules;
-                let acceleration = rules.drill_jump_speed_inc;
+                let acceleration = rules.drill.jump_speed_inc;
                 let current = vec2::dot(self.world.player.velocity, direction);
                 self.world.player.velocity =
-                    direction * (current + acceleration).max(rules.drill_jump_speed_min);
+                    direction * (current + acceleration).max(rules.drill.jump_speed_min);
                 self.world.play_sound(&self.world.assets.sounds.drill_jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,
@@ -534,7 +537,8 @@ impl Logic<'_> {
             player.state = PlayerState::Airborn;
         }
         let update_state =
-            player.state.is_airborn() || was_grounded || player.state.is_wall_sliding();
+            (player.state.is_airborn() || was_grounded || player.state.is_wall_sliding())
+                && player.velocity.y <= Coord::ZERO;
 
         if update_state {
             let actor = self.world.actors.get(&self.world.player.id).unwrap();
@@ -579,7 +583,7 @@ impl Logic<'_> {
                     .get_tile_isize(pos)
                     .filter(|tile| {
                         let air = matches!(tile, Tile::Air);
-                        let drill = tile.is_drillable();
+                        let drill = self.world.rules.tiles[tile].drillable;
                         !air && drill
                     })
                     .filter(|_| {
@@ -605,7 +609,7 @@ impl Logic<'_> {
                 // Exited the ground in drill mode
                 self.world.player.can_drill_dash = true;
                 self.world.player.state = if self.player_control.hold_drill {
-                    self.world.player.drill_release = Some(self.world.rules.drill_release_time);
+                    self.world.player.drill_release = Some(self.world.rules.drill.release_time);
                     PlayerState::AirDrill { dash: None }
                 } else {
                     PlayerState::Airborn
@@ -646,7 +650,7 @@ impl Logic<'_> {
                 Coyote::DrillDirection { initial: dir },
                 self.world.rules.coyote_time,
             ));
-            self.world.player.velocity = dir * speed.max(self.world.rules.drill_speed_min);
+            self.world.player.velocity = dir * speed.max(self.world.rules.drill.speed_min);
             self.world.player.state = PlayerState::Drilling;
 
             self.spawn_particles(ParticleSpawn {

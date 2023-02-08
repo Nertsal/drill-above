@@ -134,26 +134,31 @@ impl PauseMenu {
             slider("move_speed", 5.0..=20.0, &mut world.rules.move_speed),
             slider("full_control_acc", 10.0..=200.0, &mut world.rules.full_control_acc),
             slider("low_control_acc", 10.0..=100.0, &mut world.rules.low_control_acc),
+
             slider("jump_buffer_time", 0.0..=0.5, &mut world.rules.jump_buffer_time),
             slider("coyote_time", 0.0..=0.5, &mut world.rules.coyote_time),
-            slider("normal_jump_strength", 5.0..=20.0, &mut world.rules.normal_jump_strength),
-            slider("wall_jump_strength", 5.0..=20.0, &mut world.rules.wall_jump_strength),
-            slider("wall_jump_angle", 0.0..=f64::PI / 2.0, &mut world.rules.wall_jump_angle),
-            slider("wall_jump_timeout", 0.0..=0.5, &mut world.rules.wall_jump_timeout),
-            slider("fall_multiplier", 0.0..=10.0, &mut world.rules.fall_multiplier),
-            slider("low_jump_multiplier", 0.0..=10.0, &mut world.rules.low_jump_multiplier),
+            slider("edge_correction_max", 0.0..=0.5, &mut world.rules.edge_correction_max),
+
             slider("free_fall_speed", 5.0..=20.0, &mut world.rules.free_fall_speed),
             slider("wall_slide_speed", 1.0..=20.0, &mut world.rules.wall_slide_speed),
-            // slider("can_drill_dash", 0.0..=1.0, &mut world.rules.can_drill_dash),
-            slider("drill_release_time", 0.0..=0.5, &mut world.rules.drill_release_time),
-            slider("drill_speed_min", 5.0..=20.0, &mut world.rules.drill_speed_min),
-            // slider("drill_mistimed_inc", 0.0..=1.0, &mut world.rules.drill_mistimed_inc),
-            slider("drill_speed_inc", 0.0..=5.0, &mut world.rules.drill_speed_inc),
-            slider("drill_dash_time", 0.0..=0.5, &mut world.rules.drill_dash_time),
-            slider("drill_dash_speed_min", 5.0..=20.0, &mut world.rules.drill_dash_speed_min),
-            slider("drill_dash_speed_inc", 0.0..=10.0, &mut world.rules.drill_dash_speed_inc),
-            slider("drill_jump_speed_min", 5.0..=30.0, &mut world.rules.drill_jump_speed_min),
-            slider("drill_jump_speed_inc", 0.0..=10.0, &mut world.rules.drill_jump_speed_inc),
+
+            slider("normal_jump_strength", 5.0..=20.0, &mut world.rules.jump.normal_strength),
+            slider("wall_jump_strength", 5.0..=20.0, &mut world.rules.jump.wall_strength),
+            slider("wall_jump_angle", 0.0..=f64::PI / 2.0, &mut world.rules.jump.wall_angle),
+            slider("wall_jump_timeout", 0.0..=0.5, &mut world.rules.jump.wall_timeout),
+            slider("fall_multiplier", 0.0..=10.0, &mut world.rules.jump.fall_multiplier),
+            slider("low_jump_multiplier", 0.0..=10.0, &mut world.rules.jump.low_multiplier),
+
+            // &mut world.rules.can_drill_dash
+            slider("drill_release_time", 0.0..=0.5, &mut world.rules.drill.release_time),
+            slider("drill_speed_min", 5.0..=20.0, &mut world.rules.drill.speed_min),
+            slider("drill_speed_inc", 0.0..=5.0, &mut world.rules.drill.speed_inc),
+            slider("drill_dash_time", 0.0..=0.5, &mut world.rules.drill.dash_time),
+            slider("drill_dash_speed_min", 5.0..=20.0, &mut world.rules.drill.dash_speed_min),
+            slider("drill_dash_speed_inc", 0.0..=10.0, &mut world.rules.drill.dash_speed_inc),
+            slider("drill_jump_speed_min", 5.0..=30.0, &mut world.rules.drill.jump_speed_min),
+            slider("drill_jump_speed_inc", 0.0..=10.0, &mut world.rules.drill.jump_speed_inc),
+
             restore,
         ];
 

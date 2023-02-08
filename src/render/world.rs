@@ -402,7 +402,7 @@ impl WorldRender {
                     };
                     (drill, mat3::rotate(angle * f32::PI / 4.0))
                 }
-                PlayerState::WallSliding { wall_normal, .. } => {
+                PlayerState::WallSliding { wall_normal, .. } if player.velocity.y < Coord::ZERO => {
                     flip = wall_normal.x < Coord::ZERO;
                     (&sprites.slide0, mat3::identity())
                 }
