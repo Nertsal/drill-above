@@ -4,8 +4,8 @@
     -20.0
   ],
   "move_speed": 7.0,
-  "full_control_acc": 50.0,
-  "low_control_acc": 20.0,
+  "full_control_mult": 1.0,
+  "low_control_mult": 0.4,
   "jump_buffer_time": 0.10,
   "coyote_time": 0.10,
   "edge_correction_max": 0.15,
@@ -32,28 +32,19 @@
   },
   "tiles": {
     "Air": {
-      "drillable": true,
-      "friction": 1.0
+      "drillable": true
     },
     "Grass": {
-      "drillable": true,
-      "friction": 1.0
+      "drillable": true
     },
     "Dirt": {
-      "drillable": true,
-      "friction": 1.0
+      "drillable": true
     },
-    "Stone": {
-      "drillable": false,
-      "friction": 1.0
-    },
-    "CrystalStone": {
-      "drillable": false,
-      "friction": 1.0
-    },
+    "Stone": {},
+    "CrystalStone": {},
     "VillageGrass": {
       "drillable": true,
-      "friction": 1.0
+      "friction": 50.0
     }
   }
 }

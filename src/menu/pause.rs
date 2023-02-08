@@ -133,8 +133,8 @@ impl PauseMenu {
             geng::ui::column![
                 // slider(gravity: "vec2", 0.0..=1.0, &mut world.rules.vec2),
                 slider("move_speed", 5.0..=20.0, &mut world.rules.move_speed),
-                slider("full_control_acc", 10.0..=200.0, &mut world.rules.full_control_acc),
-                slider("low_control_acc", 10.0..=100.0, &mut world.rules.low_control_acc),
+                slider("full_control_mult", 0.0..=5.0, &mut world.rules.full_control_mult),
+                slider("low_control_mult", 0.0..=5.0, &mut world.rules.low_control_mult),
 
                 slider("jump_buffer_time", 0.0..=0.5, &mut world.rules.jump_buffer_time),
                 slider("coyote_time", 0.0..=0.5, &mut world.rules.coyote_time),

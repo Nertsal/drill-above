@@ -121,15 +121,31 @@ impl Logic<'_> {
                 player.state = PlayerState::Airborn;
             }
 
-            let bounciness = Coord::new(if player.state.using_drill() { 1.0 } else { 0.0 } + 1.0);
-            if let Some((_, col)) = col.y {
-                player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
-            }
+            let get_bounciness = |id| {
+                if !logic.world.player.state.using_drill() {
+                    return Coord::ONE;
+                }
 
-            let player = &mut logic.world.player;
-            if let Some((_, col)) = col.x {
-                player.velocity -= col.normal * vec2::dot(player.velocity, col.normal) * bounciness;
-            }
+                (match id {
+                    ColliderId::Tile(pos) => {
+                        let tile = logic.world.level.tiles.get_tile_isize(pos).unwrap();
+                        logic.world.rules.tiles[&tile].drill_bounciness
+                    }
+                    ColliderId::Entity(_) => todo!(),
+                }) + Coord::ONE
+            };
+
+            let mut handle = |col: Option<(ColliderId, Collision)>| {
+                if let Some((id, col)) = col {
+                    let bounciness = get_bounciness(id);
+                    logic.world.player.velocity -= col.normal
+                        * vec2::dot(logic.world.player.velocity, col.normal)
+                        * bounciness;
+                }
+            };
+
+            handle(col.x);
+            handle(col.y);
         });
         self.move_actor(self.world.player.id, delta, Some(callback));
 
@@ -408,13 +424,15 @@ impl Logic<'_> {
         let target = self.player_control.move_dir.x * self.world.rules.move_speed;
 
         let mut acc = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
-            self.world.rules.low_control_acc
+            self.world.rules.low_control_mult
         } else {
-            self.world.rules.full_control_acc
+            self.world.rules.full_control_mult
         };
-        if let PlayerState::Grounded(tile) = &self.world.player.state {
-            acc += self.world.rules.tiles[tile].friction * self.world.rules.gravity.len();
-        }
+        acc *= if let PlayerState::Grounded(tile) = &self.world.player.state {
+            self.world.rules.tiles[tile].friction
+        } else {
+            self.world.rules.tiles[&Tile::Air].friction
+        };
 
         // If target speed is aligned with velocity, then do not slow down
         if target == Coord::ZERO
