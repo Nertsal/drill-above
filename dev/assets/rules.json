@@ -1,16 +1,16 @@
 {
-  "gravity": [0.0, -20.0],
+  "gravity": [
+    0.0,
+    -20.0
+  ],
   "move_speed": 7.0,
   "full_control_acc": 50.0,
   "low_control_acc": 20.0,
-
   "jump_buffer_time": 0.10,
   "coyote_time": 0.10,
   "edge_correction_max": 0.15,
-
   "free_fall_speed": 15.0,
   "wall_slide_speed": 5.0,
-
   "jump": {
     "normal_strength": 12.0,
     "wall_strength": 15.0,
@@ -49,6 +49,10 @@
     },
     "CrystalStone": {
       "drillable": false,
+      "friction": 1.0
+    },
+    "VillageGrass": {
+      "drillable": true,
       "friction": 1.0
     }
   }
