@@ -422,27 +422,36 @@ impl Logic<'_> {
 
         // Horizontal speed control
         let current = self.world.player.velocity.x;
-        let target = self.player_control.move_dir.x * self.world.rules.move_speed;
+        let max_speed = self.world.rules.move_speed;
+        let target = self.player_control.move_dir.x * max_speed;
 
         let mut acc = Coord::ZERO;
 
-        // if target.signum() != current.signum() || current.abs() > self.world.rules.move_speed {
-        // Accelereate with friction
-        let friction = if let PlayerState::Grounded(tile) = &self.world.player.state {
-            self.world.rules.tiles[tile].friction
+        // Friction
+        let tile = if let PlayerState::Grounded(tile) = &self.world.player.state {
+            tile
         } else {
-            self.world.rules.tiles["air"].friction
+            "air"
         };
-        acc += friction;
-        // }
+        let tile = &self.world.rules.tiles[tile];
+        acc += if target.signum() == current.signum() && current.abs() > max_speed {
+            // Slow down to max speed
+            tile.deceleration
+        } else {
+            // Accelerate
+            tile.acceleration
+        };
 
-        // If target speed is aligned with velocity,
-        // then do not slow down intentionally
         if target == Coord::ZERO
             || target.signum() != current.signum()
             || target.abs() > current.abs()
         {
+            // Accelerate towards target
             acc += self.world.rules.acceleration;
+        } else {
+            // Target is aligned with current velocity and is higher
+            // Decelerate
+            acc += self.world.rules.deceleration;
         }
 
         self.world.player.velocity.x += (target - current).clamp_abs(acc * self.delta_time);
@@ -473,7 +482,11 @@ impl Logic<'_> {
         match jump {
             Coyote::Ground => {
                 let player = &mut self.world.player;
-                let push = rules.jump.normal_push * self.player_control.move_dir.x.signum();
+                let push = if self.player_control.move_dir.x == Coord::ZERO {
+                    Coord::ZERO
+                } else {
+                    rules.jump.normal_push * self.player_control.move_dir.x.signum()
+                };
                 let jump_vel = vec2(player.velocity.x + push, rules.jump.normal_strength);
                 player.velocity = jump_vel;
                 player.state = PlayerState::Airborn;

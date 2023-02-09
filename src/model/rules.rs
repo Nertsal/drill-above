@@ -6,6 +6,7 @@ pub struct Rules {
     pub gravity: vec2<Coord>,
     pub move_speed: Coord,
     pub acceleration: Coord,
+    pub deceleration: Coord,
 
     pub jump_buffer_time: Time,
     pub coyote_time: Time,
@@ -23,7 +24,8 @@ pub struct Rules {
 #[serde(default)]
 pub struct TileRules {
     pub drillable: bool,
-    pub friction: Coord,
+    pub acceleration: Coord,
+    pub deceleration: Coord,
     pub drill_bounciness: Coord,
 }
 
@@ -55,7 +57,8 @@ impl Default for TileRules {
     fn default() -> Self {
         Self {
             drillable: false,
-            friction: Coord::new(50.0),
+            acceleration: Coord::new(50.0),
+            deceleration: Coord::new(30.0),
             drill_bounciness: Coord::new(0.8),
         }
     }
