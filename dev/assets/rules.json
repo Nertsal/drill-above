@@ -47,6 +47,7 @@
     },
     "village_grass": {
       "drillable": true
-    }
+    },
+    "village_stone": {}
   }
 }
