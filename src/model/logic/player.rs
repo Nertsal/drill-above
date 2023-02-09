@@ -424,24 +424,28 @@ impl Logic<'_> {
         let current = self.world.player.velocity.x;
         let target = self.player_control.move_dir.x * self.world.rules.move_speed;
 
-        let mut acc = if self.world.player.velocity.x.abs() > self.world.rules.move_speed {
-            self.world.rules.low_control_mult
-        } else {
-            self.world.rules.full_control_mult
-        };
-        acc *= if let PlayerState::Grounded(tile) = &self.world.player.state {
+        let mut acc = Coord::ZERO;
+
+        // if target.signum() != current.signum() || current.abs() > self.world.rules.move_speed {
+        // Accelereate with friction
+        let friction = if let PlayerState::Grounded(tile) = &self.world.player.state {
             self.world.rules.tiles[tile].friction
         } else {
             self.world.rules.tiles["air"].friction
         };
+        acc += friction;
+        // }
 
-        // If target speed is aligned with velocity, then do not slow down
+        // If target speed is aligned with velocity,
+        // then do not slow down intentionally
         if target == Coord::ZERO
             || target.signum() != current.signum()
             || target.abs() > current.abs()
         {
-            self.world.player.velocity.x += (target - current).clamp_abs(acc * self.delta_time);
+            acc += self.world.rules.acceleration;
         }
+
+        self.world.player.velocity.x += (target - current).clamp_abs(acc * self.delta_time);
     }
 
     fn jump(&mut self) {
@@ -468,9 +472,11 @@ impl Logic<'_> {
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
         match jump {
             Coyote::Ground => {
-                let jump_vel = rules.jump.normal_strength;
-                self.world.player.velocity.y = jump_vel;
-                self.world.player.state = PlayerState::Airborn;
+                let player = &mut self.world.player;
+                let push = rules.jump.normal_push * self.player_control.move_dir.x.signum();
+                let jump_vel = vec2(player.velocity.x + push, rules.jump.normal_strength);
+                player.velocity = jump_vel;
+                player.state = PlayerState::Airborn;
                 self.world.play_sound(&self.world.assets.sounds.jump);
                 self.spawn_particles(ParticleSpawn {
                     lifetime: Time::ONE,

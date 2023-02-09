@@ -5,8 +5,7 @@ use super::*;
 pub struct Rules {
     pub gravity: vec2<Coord>,
     pub move_speed: Coord,
-    pub full_control_mult: Coord,
-    pub low_control_mult: Coord,
+    pub acceleration: Coord,
 
     pub jump_buffer_time: Time,
     pub coyote_time: Time,
@@ -30,6 +29,7 @@ pub struct TileRules {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JumpRules {
+    pub normal_push: Coord,
     pub normal_strength: Coord,
     pub wall_strength: Coord,
     pub wall_angle: R32,

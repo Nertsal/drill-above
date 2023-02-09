@@ -133,8 +133,7 @@ impl PauseMenu {
             geng::ui::column![
                 // slider(gravity: "vec2", 0.0..=1.0, &mut world.rules.vec2),
                 slider("move_speed", 5.0..=20.0, &mut world.rules.move_speed),
-                slider("full_control_mult", 0.0..=5.0, &mut world.rules.full_control_mult),
-                slider("low_control_mult", 0.0..=5.0, &mut world.rules.low_control_mult),
+                slider("acceleration", 0.0..=5.0, &mut world.rules.acceleration),
 
                 slider("jump_buffer_time", 0.0..=0.5, &mut world.rules.jump_buffer_time),
                 slider("coyote_time", 0.0..=0.5, &mut world.rules.coyote_time),
@@ -144,6 +143,7 @@ impl PauseMenu {
                 slider("wall_slide_speed", 1.0..=20.0, &mut world.rules.wall_slide_speed),
             ].padding_right(text_size as f64 * 2.0),
             geng::ui::column![
+                slider("normal_jump_push", 0.0..=5.0, &mut world.rules.jump.normal_push),
                 slider("normal_jump_strength", 5.0..=20.0, &mut world.rules.jump.normal_strength),
                 slider("wall_jump_strength", 5.0..=20.0, &mut world.rules.jump.wall_strength),
                 slider("wall_jump_angle", 0.0..=f64::PI / 2.0, &mut world.rules.jump.wall_angle),
