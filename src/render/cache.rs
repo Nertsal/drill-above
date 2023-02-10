@@ -15,7 +15,7 @@ impl RenderCache {
         let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
         Self {
             geometry: level.tiles.calculate_geometry(&level.grid, geng, assets),
-            light_geometry: level.calculate_light_geometry(geng),
+            light_geometry: level.calculate_light_geometry(geng, assets),
             normal_geometry,
             normal_uv,
         }

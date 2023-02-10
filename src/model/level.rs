@@ -347,7 +347,11 @@ impl Level {
         }
     }
 
-    pub fn calculate_light_geometry(&self, geng: &Geng) -> ugli::VertexBuffer<NormalVertex> {
+    pub fn calculate_light_geometry(
+        &self,
+        geng: &Geng,
+        assets: &Assets,
+    ) -> ugli::VertexBuffer<NormalVertex> {
         let vertices = self
             .tiles
             .tiles()
@@ -376,7 +380,11 @@ impl Level {
                             let pos = grid_pos + n;
                             self.tiles
                                 .get_tile_isize(pos)
-                                .filter(|&neighbour| neighbour == "air")
+                                .filter(|&neighbour| {
+                                    neighbour == "air"
+                                        || assets.rules.tiles[neighbour].layer
+                                            < assets.rules.tiles[tile].layer
+                                })
                                 .map(|_| {
                                     let a_normal = n.map(|x| x as f32);
                                     let [a, b] = [a, b].map(|v| NormalVertex {
