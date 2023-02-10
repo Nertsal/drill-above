@@ -110,6 +110,7 @@ impl LightsRender {
                 blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
                     src_factor: ugli::BlendFactor::One,
                     dst_factor: ugli::BlendFactor::One,
+                    equation: ugli::BlendEquation::Add,
                 })),
                 ..Default::default()
             },
@@ -151,6 +152,7 @@ impl LightsRender {
                     blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
                         src_factor: ugli::BlendFactor::Zero,
                         dst_factor: ugli::BlendFactor::One,
+                        equation: ugli::BlendEquation::Add,
                     })),
                     // Increment the shadow casters count
                     stencil_mode: Some(ugli::StencilMode::always(ugli::FaceStencilMode {
@@ -199,6 +201,7 @@ impl LightsRender {
                     blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
                         src_factor: ugli::BlendFactor::One,
                         dst_factor: ugli::BlendFactor::One,
+                        equation: ugli::BlendEquation::Add,
                     })),
                     // Ignore the parts in shadow
                     stencil_mode: Some(ugli::StencilMode::always(ugli::FaceStencilMode {
@@ -237,7 +240,7 @@ impl LightsRender {
                 geng::camera2d_uniforms(camera, framebuffer_size),
             ),
             ugli::DrawParameters {
-                blend_mode: Some(ugli::BlendMode::default()),
+                blend_mode: Some(ugli::BlendMode::straight_alpha()),
                 ..Default::default()
             },
         );
@@ -262,7 +265,7 @@ impl LightsRender {
                     geng::camera2d_uniforms(camera, framebuffer_size),
                 ),
                 ugli::DrawParameters {
-                    blend_mode: Some(ugli::BlendMode::default()),
+                    blend_mode: Some(ugli::BlendMode::straight_alpha()),
                     ..Default::default()
                 },
             );

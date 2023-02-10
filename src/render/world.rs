@@ -101,7 +101,7 @@ impl WorldRender {
                     geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
                 ),
                 ugli::DrawParameters {
-                    blend_mode: Some(ugli::BlendMode::default()),
+                    blend_mode: Some(ugli::BlendMode::straight_alpha()),
                     ..Default::default()
                 },
             );
@@ -132,7 +132,7 @@ impl WorldRender {
                 geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
             ),
             ugli::DrawParameters {
-                blend_mode: Some(ugli::BlendMode::default()),
+                blend_mode: Some(ugli::BlendMode::straight_alpha()),
                 ..Default::default()
             },
         );
@@ -246,7 +246,7 @@ impl WorldRender {
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
                 ),
                 ugli::DrawParameters {
-                    blend_mode: Some(ugli::BlendMode::default()),
+                    blend_mode: Some(ugli::BlendMode::straight_alpha()),
                     ..Default::default()
                 },
             );
@@ -267,7 +267,7 @@ impl WorldRender {
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
                 ),
                 ugli::DrawParameters {
-                    blend_mode: Some(ugli::BlendMode::default()),
+                    blend_mode: Some(ugli::BlendMode::straight_alpha()),
                     ..Default::default()
                 },
             );
