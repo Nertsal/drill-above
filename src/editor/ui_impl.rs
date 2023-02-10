@@ -324,7 +324,7 @@ impl Editor {
 
         if block_info.is_none() {
             if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
-                if let EditorMode::Lights = &mut tab.mode {
+                if let EditorMode::Lights { .. } = &mut tab.mode {
                     // Global light
                     let config = &mut self.world.level.global_light;
                     let color = ui::color_selector(

@@ -6,7 +6,7 @@ pub struct GlobalLightSource {
     pub intensity: f32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SpotlightSource {
     pub position: vec2<Coord>,
     pub angle: f32,

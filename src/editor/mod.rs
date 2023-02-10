@@ -152,7 +152,7 @@ enum EditorMode {
         selected: usize,
     },
     /// Modify global light and other lights in the level.
-    Lights,
+    Lights { spotlight: SpotlightSource },
 }
 
 impl Editor {
@@ -233,7 +233,9 @@ impl Editor {
                 EditorTab {
                     name: "Lights".into(),
                     hoverable: vec![PlaceableType::Spotlight(default())],
-                    mode: EditorMode::Lights,
+                    mode: EditorMode::Lights {
+                        spotlight: default(),
+                    },
                 },
             ],
             active_tab: 0,
@@ -335,7 +337,7 @@ impl Editor {
             .and_then(|tab| match &tab.mode {
                 EditorMode::Level => None,
                 EditorMode::Block { blocks, selected } => blocks.get(*selected).cloned(),
-                EditorMode::Lights => Some(PlaceableType::Spotlight(default())),
+                EditorMode::Lights { spotlight } => Some(PlaceableType::Spotlight(*spotlight)),
             })
     }
 
@@ -596,7 +598,9 @@ impl Editor {
                         }
                     }
                     geng::MouseButton::Right => self.remove_hovered(),
-                    geng::MouseButton::Middle => {}
+                    geng::MouseButton::Middle => {
+                        self.goto_hovered();
+                    }
                 }
             } else if let Some(DragAction::RectSelection) = dragging.action {
                 // Select blocks in a rectangle
@@ -637,6 +641,35 @@ impl Editor {
             // Translate the block a bit, so it is visibly distinct
             block.translate(self.world.level.grid.cell_size);
             self.world.level.place_block(block, &self.assets);
+        }
+    }
+
+    /// Swithes the tab and selects the hovered block.
+    fn goto_hovered(&mut self) {
+        let Some(&hovered_id) = self.hovered.first() else { return };
+        let Some(hovered) = self.world.level.get_block(hovered_id) else {
+            return
+        };
+        let hovered = hovered.get_type();
+
+        for (tab_i, tab) in self.tabs.iter_mut().enumerate() {
+            match &mut tab.mode {
+                EditorMode::Block { blocks, selected } => {
+                    if let Some(i) = blocks.iter().position(|block| *block == hovered) {
+                        *selected = i;
+                        self.active_tab = tab_i;
+                        break;
+                    }
+                }
+                EditorMode::Lights { spotlight } => {
+                    if let PlaceableType::Spotlight(selected) = hovered {
+                        *spotlight = selected;
+                        self.active_tab = tab_i;
+                        break;
+                    }
+                }
+                _ => (),
+            }
         }
     }
 

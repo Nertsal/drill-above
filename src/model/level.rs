@@ -23,7 +23,7 @@ pub struct Level {
     pub next_level: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PlaceableType {
     Tile(Tile),
     Hazard(HazardType),
@@ -79,12 +79,12 @@ pub struct Prop {
     pub prop_type: PropType,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum HazardType {
     Spikes,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum PropType {
     DrillUse,
     DrillJump,
@@ -514,6 +514,16 @@ impl Placeable {
             Placeable::Prop(prop) => prop.translate(offset),
             Placeable::Coin(coin) => coin.translate(offset),
             Placeable::Spotlight(light) => light.position += offset,
+        }
+    }
+
+    pub fn get_type(&self) -> PlaceableType {
+        match self {
+            Placeable::Tile((tile, _)) => PlaceableType::Tile(tile.to_owned()),
+            Placeable::Hazard(hazard) => PlaceableType::Hazard(hazard.hazard_type),
+            Placeable::Prop(prop) => PlaceableType::Prop(prop.prop_type),
+            Placeable::Coin(_) => PlaceableType::Coin,
+            Placeable::Spotlight(spotlight) => PlaceableType::Spotlight(*spotlight),
         }
     }
 }
