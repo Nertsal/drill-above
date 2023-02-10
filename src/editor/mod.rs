@@ -120,6 +120,9 @@ enum DragAction {
     },
     /// Select blocks in a rectangle.
     RectSelection,
+    MoveCamera {
+        initial_camera_pos: vec2<Coord>,
+    },
 }
 
 /// An editor tab.
@@ -481,6 +484,17 @@ impl Editor {
                         *initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
                     ),
                     DragAction::RectSelection => {}
+                    &mut DragAction::MoveCamera { initial_camera_pos } => {
+                        let from = self
+                            .camera
+                            .screen_to_world(
+                                self.framebuffer_size.map(|x| x as f32),
+                                dragging.initial_cursor_pos.map(|x| x as f32),
+                            )
+                            .map(Coord::new);
+                        self.camera.center =
+                            (initial_camera_pos + from - self.cursor_world_pos).map(Coord::as_f32);
+                    }
                 }
             }
             self.dragging = Some(dragging);
@@ -546,7 +560,9 @@ impl Editor {
                     None
                 }
             }
-            geng::MouseButton::Middle => None,
+            geng::MouseButton::Middle => Some(DragAction::MoveCamera {
+                initial_camera_pos: self.camera.center.map(Coord::new),
+            }),
         };
 
         // Start the dragging state
