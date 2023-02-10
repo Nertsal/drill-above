@@ -433,7 +433,7 @@ impl Level {
                     );
                 }
                 None => {
-                    let normals = self.tiles.get_tile_normals(i);
+                    let normals = self.tiles.get_tile_normals(i, &assets.rules);
                     let indices = [0, 1, 2, 0, 2, 3];
                     static_geom.extend(indices.into_iter().map(|i| {
                         let (x, y) = vertices[i];

@@ -73,16 +73,23 @@ impl TileMap {
         })
     }
 
-    pub fn get_tile_connections(&self, tile: usize) -> [Connection; 8] {
-        let pos = index_to_pos(tile, self.size.x).map(|x| x as isize);
-        let Some(center) = self.get_tile_isize(pos) else {
+    pub fn get_tile_connections(
+        &self,
+        index: usize,
+        tile: Option<&Tile>,
+        rules: &Rules,
+    ) -> [Connection; 8] {
+        let Some(center) = tile.or_else(|| {
+            let pos = index_to_pos(index, self.size.x).map(|x| x as isize);
+            self.get_tile_isize(pos)
+        }) else {
             return [Connection::None; 8];
         };
-        self.get_tile_neighbours(tile).map(|tile| {
+        self.get_tile_neighbours(index).map(|tile| {
             tile.map(|tile| {
                 if tile == "air" {
                     Connection::None
-                } else if tile == center {
+                } else if tile == center || rules.tiles[tile].layer > rules.tiles[center].layer {
                     Connection::Same
                 } else {
                     Connection::Other
@@ -92,8 +99,8 @@ impl TileMap {
         })
     }
 
-    pub fn get_tile_normals(&self, tile: usize) -> [vec2<f32>; 4] {
-        let connections = self.get_tile_connections(tile);
+    pub fn get_tile_normals(&self, tile: usize, rules: &Rules) -> [vec2<f32>; 4] {
+        let connections = self.get_tile_connections(tile, None, rules);
 
         [
             (vec2(-1, -1), (7, 0, 1)),
@@ -156,7 +163,7 @@ impl TileMap {
         let mut geometry = vec![0; self.tiles.len()];
         let mut rng = thread_rng();
         for (i, tile) in self.tiles.iter().enumerate() {
-            let connections = self.get_tile_connections(i);
+            let connections = self.get_tile_connections(i, None, &assets.rules);
             let set = assets.sprites.tiles.get_tile_set(tile);
             let options = set.get_tile_connected(connections);
             geometry[i] = *options
@@ -218,13 +225,19 @@ impl TileMap {
                 continue;
             }
 
+            // Put a masked tile under the current tile
             let neighbours = self.get_tile_neighbours(i);
-            if let Some(masked) = neighbours.iter().find_map(|other| {
-                other.filter(|&other| {
-                    other != "air" && other != tile && assets.rules.tiles[other].drillable
+            let masks: HashSet<&Tile> = neighbours
+                .iter()
+                .filter_map(|other| {
+                    other.filter(|&other| {
+                        other != "air"
+                            && assets.rules.tiles[other].layer < assets.rules.tiles[tile].layer
+                    })
                 })
-            }) {
-                let connections = self.get_tile_connections(i);
+                .collect();
+            for masked in masks {
+                let connections = self.get_tile_connections(i, Some(masked), &assets.rules);
                 let geometry = calc_geometry(i, masked, Some(connections));
                 let mask = &assets.sprites.tiles.mask;
                 let mask = mask.get_tile_geometry(

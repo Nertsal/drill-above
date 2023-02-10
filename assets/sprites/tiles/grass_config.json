@@ -7,13 +7,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -37,13 +37,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -67,13 +67,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -97,13 +97,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -126,14 +126,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some"
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -156,14 +156,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some"
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -186,14 +186,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some"
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -217,13 +217,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "Some",
-        "Some",
+        "Same",
+        "Same",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -247,13 +247,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -277,13 +277,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -307,13 +307,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -336,14 +336,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -366,14 +366,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some"
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -396,14 +396,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -427,13 +427,13 @@
     [
       [
         "Any",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -456,14 +456,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -486,14 +486,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
+        "Same",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -517,13 +517,13 @@
     [
       [
         "Any",
-        "Some",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -546,14 +546,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -576,14 +576,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -606,14 +606,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some"
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -637,13 +637,13 @@
     [
       [
         "Any",
-        "Some",
-        "Some",
-        "Some",
+        "Same",
+        "Same",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -666,14 +666,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "Some",
-        "Some",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -696,14 +696,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
+        "Same",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -727,13 +727,13 @@
     [
       [
         "Any",
-        "Some",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -756,14 +756,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -786,14 +786,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "Some"
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -816,14 +816,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -846,14 +846,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some"
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -876,14 +876,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -907,13 +907,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "None",
-        "Some",
+        "Same",
+        "Other",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -937,13 +937,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -967,13 +967,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -997,13 +997,13 @@
     [
       [
         "Any",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some",
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -1026,14 +1026,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
+        "Same",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -1057,13 +1057,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -1087,13 +1087,13 @@
     [
       [
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "Some",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Same",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -1117,13 +1117,13 @@
     [
       [
         "Any",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -1146,14 +1146,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some",
-        "None",
-        "Some"
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -1176,14 +1176,14 @@
     ],
     [
       [
-        "None",
-        "Some",
+        "Other",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "None",
-        "Some"
+        "Same",
+        "Other",
+        "Same"
       ],
       [
         [
@@ -1207,13 +1207,13 @@
     [
       [
         "Any",
-        "Some",
-        "None",
-        "Some",
-        "Some",
-        "Some",
+        "Same",
+        "Other",
+        "Same",
+        "Same",
+        "Same",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -1236,14 +1236,14 @@
     ],
     [
       [
-        "None",
-        "Some",
+        "Other",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some",
-        "Some",
-        "Some"
+        "Same",
+        "Same",
+        "Same"
       ],
       [
         [
@@ -1266,14 +1266,14 @@
     ],
     [
       [
-        "Some",
-        "Some",
-        "None",
-        "Some",
+        "Same",
+        "Same",
+        "Other",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -1296,14 +1296,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "Some",
-        "Some",
+        "Other",
+        "Same",
+        "Same",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -1327,13 +1327,13 @@
     [
       [
         "Any",
-        "Some",
-        "None",
-        "Some",
+        "Same",
+        "Other",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None"
+        "Other"
       ],
       [
         [
@@ -1356,14 +1356,14 @@
     ],
     [
       [
-        "None",
-        "Some",
-        "None",
-        "Some",
+        "Other",
+        "Same",
+        "Other",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [
@@ -1386,14 +1386,14 @@
     ],
     [
       [
-        "None",
-        "Some",
+        "Other",
+        "Same",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "None",
+        "Other",
         "Any",
-        "Some"
+        "Same"
       ],
       [
         [

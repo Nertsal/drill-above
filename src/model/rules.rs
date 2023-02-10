@@ -27,6 +27,7 @@ pub struct TileRules {
     pub acceleration: Coord,
     pub deceleration: Coord,
     pub drill_bounciness: Coord,
+    pub layer: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,6 +61,7 @@ impl Default for TileRules {
             acceleration: Coord::new(50.0),
             deceleration: Coord::new(30.0),
             drill_bounciness: Coord::new(0.8),
+            layer: 0,
         }
     }
 }
