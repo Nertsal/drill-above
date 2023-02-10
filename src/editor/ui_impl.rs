@@ -12,7 +12,8 @@ impl Editor {
         let slider = move |name, range, value: &mut f32| {
             ui::slider(cx, name, value, range, font.clone(), text_size)
         };
-        let font = self.geng.default_font();
+        let font = self.geng.default_font().clone();
+        let text = move |text| geng::ui::Text::new(text, font.clone(), text_size, Rgba::WHITE);
 
         // let (cell_pos, cell_offset) = self.world.level.grid.world_to_grid(self.cursor_world_pos);
         // let cell_pos = Text::new(
@@ -26,12 +27,7 @@ impl Editor {
         // );
 
         let mut level_info = geng::ui::column![
-            Text::new(
-                self.level_name.clone(),
-                self.geng.default_font().clone(),
-                text_size,
-                Rgba::WHITE
-            ),
+            text(self.level_name.clone()),
             {
                 let button = Button::new(cx, "Save");
                 if button.was_clicked() {
@@ -72,13 +68,8 @@ impl Editor {
             if let EditorMode::Level = tab.mode {
                 level_info.extend([
                     geng::ui::row![
-                        Text::new(
-                            format!("width: {}", self.world.level.size.x),
-                            font.clone(),
-                            text_size,
-                            Rgba::WHITE
-                        )
-                        .padding_right(text_size.into()),
+                        text(format!("width: {}", self.world.level.size.x))
+                            .padding_right(text_size.into()),
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
@@ -103,13 +94,8 @@ impl Editor {
                     .padding_top(text_size.into())
                     .boxed(),
                     geng::ui::row![
-                        Text::new(
-                            format!("height: {}", self.world.level.size.y),
-                            font.clone(),
-                            text_size,
-                            Rgba::WHITE
-                        )
-                        .padding_right(text_size.into()),
+                        text(format!("height: {}", self.world.level.size.y))
+                            .padding_right(text_size.into()),
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
@@ -132,10 +118,9 @@ impl Editor {
                         },
                     ]
                     .boxed(),
-                    Text::new("Translate", font.clone(), text_size, Rgba::WHITE).boxed(),
+                    text("Translate".to_string()).boxed(),
                     geng::ui::row![
-                        Text::new("Horizontal", font.clone(), text_size, Rgba::WHITE,)
-                            .padding_right(text_size.into()),
+                        text("Horizontal".to_string()).padding_right(text_size.into()),
                         {
                             let left = Button::new(cx, "left");
                             if left.was_clicked() {
@@ -155,8 +140,7 @@ impl Editor {
                     ]
                     .boxed(),
                     geng::ui::row![
-                        Text::new("Vertical", font.clone(), text_size, Rgba::WHITE,)
-                            .padding_right(text_size.into()),
+                        text("Vertical".to_string()).padding_right(text_size.into()),
                         {
                             let down = Button::new(cx, "down");
                             if down.was_clicked() {
@@ -254,8 +238,16 @@ impl Editor {
                 .next()
                 .and_then(|&id| self.world.level.get_block_mut(id))
                 .map(|block| match block {
-                    PlaceableMut::Tile(_) => {
-                        block_info_ui("Tile".to_string(), false, geng::ui::Void.boxed())
+                    PlaceableMut::Tile((name, _)) => {
+                        let config = &self.assets.rules.tiles[&name];
+                        let tile = geng::ui::column![
+                            text(format!("Layer: {}", config.layer)),
+                            text(format!("Drillable: {}", config.drillable)),
+                            text(format!("Acceleration: {:.2}", config.acceleration)),
+                            text(format!("Deceleration: {:.2}", config.deceleration)),
+                            text(format!("Drill bounciness: {:.2}", config.drill_bounciness)),
+                        ];
+                        block_info_ui(format!("Tile {name}"), false, tile.boxed())
                     }
                     PlaceableMut::Hazard(_) => {
                         block_info_ui("Hazard".to_string(), true, geng::ui::Void.boxed())
