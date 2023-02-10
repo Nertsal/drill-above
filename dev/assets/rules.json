@@ -52,6 +52,7 @@
       "drillable": true,
       "layer": -1
     },
-    "village_stone": {}
+    "village_stone": {},
+    "village_light_stone": {}
   }
 }
