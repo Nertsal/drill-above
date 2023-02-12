@@ -288,7 +288,11 @@ impl Level {
         }
     }
 
-    pub fn remove_blocks(&mut self, blocks: &[PlaceableId], assets: &Assets) -> Vec<Placeable> {
+    pub fn remove_blocks<'a>(
+        &mut self,
+        blocks: impl IntoIterator<Item = &'a PlaceableId>,
+        assets: &Assets,
+    ) -> Vec<Placeable> {
         let mut spotlights = Vec::new();
         let mut props = Vec::new();
         let mut hazards = Vec::new();

@@ -104,7 +104,7 @@ impl Editor {
         let actions = self
             .world
             .level
-            .remove_blocks(ids, &self.assets)
+            .remove_blocks(ids.iter(), &self.assets)
             .into_iter()
             .map(Action::Replace)
             .collect();

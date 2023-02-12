@@ -508,6 +508,38 @@ impl Editor {
     /// Handle release event.
     fn release(&mut self, button: geng::MouseButton) {
         if let Some(dragging) = self.dragging.take() {
+            if let Some(action) = dragging.action {
+                match action {
+                    DragAction::MoveBlocks {
+                        blocks,
+                        initial_pos,
+                    } => {
+                        // Move blocks and update selection
+                        self.selection.clear();
+                        let delta = self.cursor_world_pos - initial_pos;
+                        for mut block in blocks {
+                            block.translate(delta, &self.world.level.grid);
+                            let id = self.world.level.place_block(block, &self.assets);
+                            self.selection.insert(id);
+                        }
+                        self.update_geometry();
+                        return;
+                    }
+                    DragAction::RectSelection => {
+                        // Select blocks in a rectangle
+                        if !self.geng.window().is_key_pressed(geng::Key::LShift) {
+                            self.clear_selection();
+                        }
+                        let aabb =
+                            Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos);
+                        let hovered = self.get_hovered(aabb);
+                        self.selection.extend(hovered);
+                        return;
+                    }
+                    _ => (),
+                }
+            }
+
             if dragging.initial_cursor_pos == self.cursor_pos {
                 // Click
                 match button {
@@ -529,28 +561,6 @@ impl Editor {
                         self.goto_hovered();
                     }
                 }
-            } else if let Some(DragAction::RectSelection) = dragging.action {
-                // Select blocks in a rectangle
-                if !self.geng.window().is_key_pressed(geng::Key::LShift) {
-                    self.clear_selection();
-                }
-                let aabb = Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos);
-                let hovered = self.get_hovered(aabb);
-                self.selection.extend(hovered);
-            } else if let Some(DragAction::MoveBlocks {
-                blocks,
-                initial_pos,
-            }) = dragging.action
-            {
-                // Move blocks and update selection
-                self.selection.clear();
-                let delta = self.cursor_world_pos - initial_pos;
-                for mut block in blocks {
-                    block.translate(delta, &self.world.level.grid);
-                    let id = self.world.level.place_block(block, &self.assets);
-                    self.selection.insert(id);
-                }
-                self.update_geometry();
             }
         }
     }
@@ -575,13 +585,30 @@ impl Editor {
 
     /// Duplicate all selected blocks.
     fn duplicate_selected(&mut self) {
-        for &id in &self.selection {
-            let Some(mut block) = self.world.level.get_block(id) else {
-                continue;
-            };
-            // Translate the block a bit, so it is visibly distinct
-            block.translate(self.world.level.grid.cell_size, &self.world.level.grid);
-            self.world.level.place_block(block, &self.assets);
+        if let Some(initial_pos) = self
+            .selection
+            .iter()
+            .next()
+            .and_then(|id| self.world.level.get_block(*id))
+            .map(|block| block.position(&self.world.level.grid))
+        {
+            let mut blocks: Vec<_> = self
+                .selection
+                .iter()
+                .flat_map(|&id| self.world.level.get_block(id))
+                .collect();
+            for block in &mut blocks {
+                // Translate the block a bit, so it is visibly distinct
+                block.translate(self.world.level.grid.cell_size, &self.world.level.grid);
+            }
+            self.dragging = Some(Dragging {
+                initial_cursor_pos: self.cursor_pos,
+                initial_world_pos: self.cursor_world_pos,
+                action: Some(DragAction::MoveBlocks {
+                    blocks,
+                    initial_pos,
+                }),
+            });
         }
     }
 
@@ -610,6 +637,16 @@ impl Editor {
                     }
                 }
                 _ => (),
+            }
+        }
+    }
+
+    /// Cancels the current action, clears the selection.
+    fn cancel(&mut self) {
+        self.clear_selection();
+        if let Some(dragging) = &mut self.dragging {
+            if let Some(DragAction::MoveBlocks { .. }) = dragging.action {
+                self.dragging = None;
             }
         }
     }
@@ -690,9 +727,7 @@ impl geng::State for Editor {
                 self.zoom(-delta.signum() as isize);
             }
             geng::Event::KeyDown { key } => match key {
-                geng::Key::Escape => {
-                    self.clear_selection();
-                }
+                geng::Key::Escape => self.cancel(),
                 geng::Key::S if ctrl => self.save_level(),
                 geng::Key::Z if ctrl => {
                     if shift {
