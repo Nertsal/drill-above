@@ -136,13 +136,28 @@ impl Level {
         )
     }
 
-    pub fn place_block(&mut self, block: Placeable, assets: &Assets) {
+    pub fn place_block(&mut self, block: Placeable, assets: &Assets) -> PlaceableId {
         match block {
-            Placeable::Tile((tile, pos)) => self.tiles.set_tile_isize(pos, tile, assets),
-            Placeable::Hazard(hazard) => self.hazards.push(hazard),
-            Placeable::Prop(prop) => self.props.push(prop),
-            Placeable::Coin(coin) => self.coins.push(coin),
-            Placeable::Spotlight(light) => self.spotlights.push(light),
+            Placeable::Tile((tile, pos)) => {
+                self.tiles.set_tile_isize(pos, tile, assets);
+                PlaceableId::Tile(pos)
+            }
+            Placeable::Hazard(hazard) => {
+                self.hazards.push(hazard);
+                PlaceableId::Hazard(self.hazards.len() - 1)
+            }
+            Placeable::Prop(prop) => {
+                self.props.push(prop);
+                PlaceableId::Prop(self.props.len() - 1)
+            }
+            Placeable::Coin(coin) => {
+                self.coins.push(coin);
+                PlaceableId::Coin(self.coins.len() - 1)
+            }
+            Placeable::Spotlight(light) => {
+                self.spotlights.push(light);
+                PlaceableId::Spotlight(self.spotlights.len() - 1)
+            }
         }
     }
 
@@ -507,9 +522,12 @@ impl Placeable {
         }
     }
 
-    pub fn translate(&mut self, offset: vec2<Coord>) {
+    pub fn translate(&mut self, offset: vec2<Coord>, grid: &Grid) {
         match self {
-            Placeable::Tile(_) => unimplemented!(),
+            Placeable::Tile((_, pos)) => {
+                let offset = (offset / grid.cell_size).map(|x| x.round().as_f32() as isize);
+                *pos += offset;
+            }
             Placeable::Hazard(hazard) => hazard.translate(offset),
             Placeable::Prop(prop) => prop.translate(offset),
             Placeable::Coin(coin) => coin.translate(offset),
@@ -526,16 +544,24 @@ impl Placeable {
             Placeable::Spotlight(spotlight) => PlaceableType::Spotlight(*spotlight),
         }
     }
+
+    pub fn sprite(&self, grid: &Grid) -> Aabb2<Coord> {
+        match self {
+            Placeable::Tile((_, pos)) => {
+                let collider = grid.cell_collider(*pos);
+                collider.raw()
+            }
+            Placeable::Hazard(hazard) => hazard.collider.raw(),
+            Placeable::Prop(prop) => prop.sprite,
+            Placeable::Coin(coin) => coin.collider.raw(),
+            Placeable::Spotlight(light) => {
+                Aabb2::point(light.position).extend_uniform(Coord::new(0.5))
+            }
+        }
+    }
 }
 
 impl Hazard {
-    pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.sprite = self
-            .sprite
-            .translate(pos - vec2(self.sprite.center().x, self.sprite.min.y));
-        self.collider.teleport(pos);
-    }
-
     pub fn translate(&mut self, delta: vec2<Coord>) {
         self.sprite = self.sprite.translate(delta);
         self.collider.translate(delta);
@@ -543,20 +569,12 @@ impl Hazard {
 }
 
 impl Coin {
-    pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.collider.teleport(pos);
-    }
-
     pub fn translate(&mut self, delta: vec2<Coord>) {
         self.collider.translate(delta);
     }
 }
 
 impl Prop {
-    pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.sprite = self.sprite.translate(pos - self.sprite.center());
-    }
-
     pub fn translate(&mut self, delta: vec2<Coord>) {
         self.sprite = self.sprite.translate(delta);
     }

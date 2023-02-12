@@ -2,6 +2,7 @@ use super::*;
 use ui::ColorMode;
 
 mod action;
+mod draw;
 mod ui_impl;
 
 use action::*;
@@ -113,8 +114,7 @@ enum DragAction {
     RemoveTile,
     /// Move the specified blocks, respecting their offsets.
     MoveBlocks {
-        /// IDs of the blocks with their offsets, relative to the `initial_pos`.
-        ids: Vec<(PlaceableId, vec2<Coord>)>,
+        blocks: Vec<Placeable>,
         /// The initial position used for reference.
         initial_pos: vec2<Coord>,
     },
@@ -365,70 +365,6 @@ impl Editor {
         });
     }
 
-    /// Move blocks, respecting their offsets.
-    fn move_blocks(&mut self, ids: &mut [(PlaceableId, vec2<Coord>)], pos: vec2<Coord>) {
-        // Remember all tile actions, since they need to be
-        // done in a specific order.
-        let mut tile_clears = Vec::new();
-        let mut tile_moves = Vec::new();
-        let mut tile_selections = Vec::new();
-
-        for (id, offset) in ids {
-            let pos = pos + *offset;
-            let grid_pos = self.world.level.grid.world_to_grid(pos).0;
-            match *id {
-                PlaceableId::Tile(pos) => {
-                    if let Some(tile) = self.world.level.tiles.get_tile_isize(pos) {
-                        if self.selection.remove(id) {
-                            tile_selections.push(PlaceableId::Tile(grid_pos));
-                        }
-                        *id = PlaceableId::Tile(grid_pos);
-                        tile_clears.push(pos);
-                        tile_moves.push((tile.to_owned(), grid_pos));
-                    }
-                }
-                PlaceableId::Hazard(id) => {
-                    if let Some(hazard) = self.world.level.hazards.get_mut(id) {
-                        hazard.teleport(pos);
-                    }
-                }
-                PlaceableId::Prop(id) => {
-                    if let Some(prop) = self.world.level.props.get_mut(id) {
-                        prop.teleport(pos);
-                    }
-                }
-                PlaceableId::Coin(id) => {
-                    if let Some(coin) = self.world.level.coins.get_mut(id) {
-                        coin.teleport(pos);
-                    }
-                }
-                PlaceableId::Spotlight(id) => {
-                    if let Some(light) = self.world.level.spotlights.get_mut(id) {
-                        light.position = pos;
-                    }
-                }
-            }
-        }
-
-        // Manage the tiles
-        for pos in tile_clears {
-            self.world
-                .level
-                .tiles
-                .set_tile_isize(pos, "air".to_owned(), &self.assets);
-        }
-        for (tile, pos) in tile_moves {
-            self.world
-                .level
-                .tiles
-                .set_tile_isize(pos, tile, &self.assets);
-        }
-        self.selection.extend(tile_selections);
-
-        // Update geometry
-        self.update_geometry();
-    }
-
     /// Clear the selection and reset the color mode.
     fn clear_selection(&mut self) {
         self.selection.clear();
@@ -481,10 +417,7 @@ impl Editor {
                 match action {
                     DragAction::PlaceTile => self.place_block(),
                     DragAction::RemoveTile => self.remove_hovered(),
-                    DragAction::MoveBlocks { ids, initial_pos } => self.move_blocks(
-                        ids,
-                        *initial_pos + self.cursor_world_pos - dragging.initial_world_pos,
-                    ),
+                    DragAction::MoveBlocks { .. } => {}
                     DragAction::RectSelection => {}
                     &mut DragAction::MoveCamera { initial_camera_pos } => {
                         let from = self
@@ -527,24 +460,18 @@ impl Editor {
                             // Otherwise, we create a new selection
                             // with the block we just clicked.
                             let ids: Vec<_> = if self.selection.contains(&id) {
-                                // Move all selection, and remember the offsets.
-                                self.selection
-                                    .iter()
-                                    .filter_map(|&id| {
-                                        self.world.level.get_block(id).map(|block| {
-                                            (id, block.position(&self.world.level.grid) - pos)
-                                        })
-                                    })
-                                    .collect()
+                                // Move all selection
+                                self.selection.iter().copied().collect()
                             } else {
                                 // Create a new selection
                                 self.clear_selection();
                                 self.selection.insert(id);
-                                vec![(id, vec2::ZERO)]
+                                vec![id]
                             };
 
+                            let blocks = self.world.level.remove_blocks(&ids, &self.assets);
                             DragAction::MoveBlocks {
-                                ids,
+                                blocks,
                                 initial_pos: pos,
                             }
                         })
@@ -610,6 +537,20 @@ impl Editor {
                 let aabb = Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos);
                 let hovered = self.get_hovered(aabb);
                 self.selection.extend(hovered);
+            } else if let Some(DragAction::MoveBlocks {
+                blocks,
+                initial_pos,
+            }) = dragging.action
+            {
+                // Move blocks and update selection
+                self.selection.clear();
+                let delta = self.cursor_world_pos - initial_pos;
+                for mut block in blocks {
+                    block.translate(delta, &self.world.level.grid);
+                    let id = self.world.level.place_block(block, &self.assets);
+                    self.selection.insert(id);
+                }
+                self.update_geometry();
             }
         }
     }
@@ -639,7 +580,7 @@ impl Editor {
                 continue;
             };
             // Translate the block a bit, so it is visibly distinct
-            block.translate(self.world.level.grid.cell_size);
+            block.translate(self.world.level.grid.cell_size, &self.world.level.grid);
             self.world.level.place_block(block, &self.assets);
         }
     }
@@ -689,118 +630,7 @@ impl geng::State for Editor {
         self.framebuffer_size = framebuffer.size();
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
 
-        // Render the game onto the texture
-        let mut pixel_framebuffer = ugli::Framebuffer::new_color(
-            self.geng.ugli(),
-            ugli::ColorAttachment::Texture(&mut self.pixel_texture),
-        );
-        ugli::clear(&mut pixel_framebuffer, Some(Rgba::BLACK), None, None);
-
-        if self.preview {
-            // Render as in game
-            self.world.camera = self.camera.clone();
-            if let Some(actor) = self.world.actors.get_mut(&self.world.player.id) {
-                actor.collider.teleport(self.world.level.spawn_point);
-            }
-            self.preview_render
-                .draw_world(&self.world, false, &mut pixel_framebuffer);
-        } else {
-            // Draw the world and normals ignoring lighting
-            let (mut world_framebuffer, mut normal_framebuffer) =
-                self.render.lights.start_render(&mut pixel_framebuffer);
-
-            // Render level
-            self.render.world.draw_level_editor(
-                &self.world.level,
-                &self.world.cache.geometry.0,
-                &self.world.cache.geometry.1,
-                true,
-                &self.camera,
-                &mut world_framebuffer,
-                Some(&mut normal_framebuffer),
-            );
-
-            self.render.lights.finish_render(
-                &self.world.level,
-                &self.world.cache,
-                &self.camera,
-                &mut pixel_framebuffer,
-            );
-        }
-
-        // Render the texture onto the screen
-        let reference_size = vec2(16.0, 9.0);
-        let ratio = framebuffer.size().map(|x| x as f32) / reference_size;
-        let ratio = ratio.y; // ratio.x.min(ratio.y); // TODO: fix scaling for non 16/9 resolutions
-        let target_size = reference_size * ratio;
-        let target = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
-            .extend_symmetric(target_size / 2.0);
-        self.geng.draw_2d(
-            framebuffer,
-            &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
-        );
-
-        // Draw hovered/selected
-        let mut colliders = Vec::new();
-        for &block in itertools::chain![&self.hovered, &self.selection] {
-            let Some(block) = self.world.level.get_block(block) else {
-                continue
-            };
-            match block {
-                Placeable::Tile((_, pos)) => {
-                    let collider = self.world.level.grid.cell_collider(pos);
-                    colliders.push((collider, Rgba::new(0.7, 0.7, 0.7, 0.5)));
-                }
-                Placeable::Hazard(hazard) => {
-                    colliders.push((hazard.collider, Rgba::new(1.0, 0.0, 0.0, 0.5)));
-                }
-                Placeable::Prop(prop) => {
-                    colliders.push((Collider::new(prop.sprite), Rgba::new(1.0, 1.0, 1.0, 0.5)));
-                }
-                Placeable::Coin(coin) => {
-                    colliders.push((coin.collider, Rgba::new(1.0, 1.0, 0.0, 0.5)));
-                }
-                Placeable::Spotlight(light) => {
-                    let collider =
-                        Collider::new(Aabb2::point(light.position).extend_uniform(Coord::new(0.5)));
-                    let mut color = light.color;
-                    color.a = 0.5;
-                    colliders.push((collider, color));
-                }
-            }
-        }
-        for (collider, color) in colliders {
-            self.render
-                .util
-                .draw_collider(&collider, color, &self.camera, framebuffer);
-        }
-
-        if !self.preview {
-            if self.draw_grid {
-                self.render.util.draw_grid(
-                    &self.world.level.grid,
-                    self.world.level.size,
-                    &self.camera,
-                    framebuffer,
-                );
-            }
-
-            if let Some(dragging) = &self.dragging {
-                if let Some(DragAction::RectSelection) = &dragging.action {
-                    // Draw the rectangular selection
-                    self.geng.draw_2d(
-                        framebuffer,
-                        &self.camera,
-                        &draw_2d::Quad::new(
-                            Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos)
-                                .map(Coord::as_f32),
-                            Rgba::new(0.5, 0.5, 0.5, 0.5),
-                        ),
-                    );
-                }
-            }
-        }
+        self.draw(framebuffer)
     }
 
     fn update(&mut self, delta_time: f64) {
