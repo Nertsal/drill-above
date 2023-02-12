@@ -286,7 +286,7 @@ impl Editor {
             }
         };
 
-        if let notify::EventKind::Modify(notify::event::ModifyKind::Data(_)) = event.kind {
+        if let notify::EventKind::Modify(_) = event.kind {
             self.reload_assets();
         }
     }
