@@ -1,49 +1,31 @@
 use super::*;
 
-#[derive(Debug, Clone)]
-pub enum Action {
-    Place {
-        block: PlaceableType,
-        pos: vec2<Coord>,
-    },
-    Remove {
-        ids: Vec<PlaceableId>,
-    },
-    Replace(Placeable),
-}
-
 impl Editor {
-    pub fn action(&mut self, action: Action) {
-        self.redo_actions.clear();
-        let undo_action = self.action_impl(action);
-        self.undo_actions.extend(undo_action);
-    }
-
-    fn action_impl(&mut self, action: Action) -> Vec<Action> {
-        let actions = match action {
-            Action::Place { block, pos } => self.action_place(block, pos),
-            Action::Remove { ids } => self.action_remove(&ids),
-            Action::Replace(block) => self.action_replace(block),
-        };
-        self.update_geometry();
-        actions
-    }
-
+    /// Undoes the last action and puts its reverse in the redo stack.
     pub fn undo(&mut self) {
-        if let Some(action) = self.undo_actions.pop() {
-            let redo_action = self.action_impl(action);
-            self.redo_actions.extend(redo_action);
+        if let Some(mut state) = self.undo_stack.pop() {
+            std::mem::swap(&mut self.world.level, &mut state);
+            self.redo_stack.push(state);
+            self.update_geometry();
         }
     }
 
+    /// Redoes the last undid action and puts its reverse in the undo stack.
     pub fn redo(&mut self) {
-        if let Some(action) = self.redo_actions.pop() {
-            let undo_action = self.action_impl(action);
-            self.undo_actions.extend(undo_action);
+        if let Some(mut state) = self.redo_stack.pop() {
+            std::mem::swap(&mut self.world.level, &mut state);
+            self.undo_stack.push(state);
+            self.update_geometry();
         }
     }
 
-    fn action_place(&mut self, block: PlaceableType, position: vec2<Coord>) -> Vec<Action> {
+    /// Remembers the current state in the undo stack and clear the redo stack.
+    pub fn keep_state(&mut self) {
+        self.redo_stack.clear();
+        self.undo_stack.push(self.world.level.clone());
+    }
+
+    pub fn action_place(&mut self, block: PlaceableType, position: vec2<Coord>) {
         let grid_pos = self.world.level.grid.world_to_grid(position).0;
         match block {
             PlaceableType::Tile(tile) => {
@@ -69,46 +51,19 @@ impl Editor {
                     .map(Coord::new);
                 self.world.level.place_prop(grid_pos, size, prop);
             }
-            PlaceableType::Spotlight(light) => self
-                .world
-                .level
-                .spotlights
-                .push(SpotlightSource { position, ..light }),
-        }
-        vec![]
-    }
-
-    fn action_replace(&mut self, block: Placeable) -> Vec<Action> {
-        match block {
-            Placeable::Tile((tile, pos)) => {
+            PlaceableType::Spotlight(light) => {
                 self.world
                     .level
-                    .tiles
-                    .set_tile_isize(pos, tile, &self.assets);
+                    .spotlights
+                    .push(SpotlightSource { position, ..light });
             }
-            Placeable::Hazard(hazard) => {
-                self.world.level.hazards.push(hazard);
-            }
-            Placeable::Coin(coin) => {
-                self.world.level.coins.push(coin);
-            }
-            Placeable::Prop(prop) => {
-                self.world.level.props.push(prop);
-            }
-            Placeable::Spotlight(spotlight) => self.world.level.spotlights.push(spotlight),
-        }
-        vec![]
+        };
+        self.update_geometry();
     }
 
-    fn action_remove(&mut self, ids: &[PlaceableId]) -> Vec<Action> {
-        let actions = self
-            .world
-            .level
-            .remove_blocks(ids.iter(), &self.assets)
-            .into_iter()
-            .map(Action::Replace)
-            .collect();
+    pub fn action_remove<'a>(&mut self, ids: impl IntoIterator<Item = &'a PlaceableId>) {
+        self.world.level.remove_blocks(ids, &self.assets);
         self.hovered.clear();
-        actions
+        self.update_geometry();
     }
 }

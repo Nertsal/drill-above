@@ -5,8 +5,6 @@ mod action;
 mod draw;
 mod ui_impl;
 
-use action::*;
-
 const CAMERA_MOVE_SPEED: f32 = 20.0;
 const EDITOR_FOV_MIN: usize = 10 * PIXELS_PER_UNIT;
 const EDITOR_FOV_MAX: usize = 70 * PIXELS_PER_UNIT;
@@ -66,9 +64,9 @@ pub struct Editor {
     /// Currently hovered blocks.
     hovered: Vec<PlaceableId>,
     /// Stack of undo actions.
-    undo_actions: Vec<Action>,
+    undo_stack: Vec<Level>,
     /// Stack of redo actions.
-    redo_actions: Vec<Action>,
+    redo_stack: Vec<Level>,
 
     /// All available editor tabs.
     tabs: Vec<EditorTab>,
@@ -239,8 +237,8 @@ impl Editor {
                 },
             ],
             active_tab: 0,
-            undo_actions: default(),
-            redo_actions: default(),
+            undo_stack: default(),
+            redo_stack: default(),
             hovered: Vec::new(),
             light_float_scale: true,
             color_mode: None,
@@ -344,25 +342,20 @@ impl Editor {
     /// Place the currently selected placeable block.
     fn place_block(&mut self) {
         if let Some(block) = self.selected_block() {
-            self.action(Action::Place {
-                block,
-                pos: self.cursor_world_pos,
-            });
+            self.action_place(block, self.cursor_world_pos);
         }
     }
 
     /// Delete all hovered blocks.
     fn remove_hovered(&mut self) {
-        self.action(Action::Remove {
-            ids: self.hovered.clone(),
-        });
+        self.keep_state();
+        self.action_remove(&self.hovered.clone());
     }
 
     /// Delete all selected blocks.
     fn remove_selected(&mut self) {
-        self.action(Action::Remove {
-            ids: self.selection.iter().copied().collect(),
-        });
+        self.keep_state();
+        self.action_remove(&self.selection.clone());
     }
 
     /// Clear the selection and reset the color mode.
@@ -450,6 +443,7 @@ impl Editor {
                     if matches!(self.selected_block(), Some(PlaceableType::Tile(_)))
                         && (self.selection.is_empty() || self.hovered.is_empty())
                     {
+                        self.keep_state();
                         Some(DragAction::PlaceTile)
                     } else if let Some(&id) = self.hovered.first() {
                         self.world.level.get_block(id).map(|block| {
@@ -469,6 +463,7 @@ impl Editor {
                                 vec![id]
                             };
 
+                            self.keep_state();
                             let blocks = self.world.level.remove_blocks(&ids, &self.assets);
                             DragAction::MoveBlocks {
                                 blocks,
@@ -484,6 +479,7 @@ impl Editor {
             geng::MouseButton::Right => {
                 self.clear_selection();
                 if let Some(PlaceableType::Tile(_)) = self.selected_block() {
+                    self.keep_state();
                     Some(DragAction::RemoveTile)
                 } else {
                     None
@@ -515,6 +511,7 @@ impl Editor {
                         initial_pos,
                     } => {
                         // Move blocks and update selection
+                        self.keep_state();
                         self.selection.clear();
                         let delta = self.cursor_world_pos - initial_pos;
                         for mut block in blocks {
@@ -592,15 +589,12 @@ impl Editor {
             .and_then(|id| self.world.level.get_block(*id))
             .map(|block| block.position(&self.world.level.grid))
         {
-            let mut blocks: Vec<_> = self
+            self.keep_state();
+            let blocks: Vec<_> = self
                 .selection
                 .iter()
                 .flat_map(|&id| self.world.level.get_block(id))
                 .collect();
-            for block in &mut blocks {
-                // Translate the block a bit, so it is visibly distinct
-                block.translate(self.world.level.grid.cell_size, &self.world.level.grid);
-            }
             self.dragging = Some(Dragging {
                 initial_cursor_pos: self.cursor_pos,
                 initial_world_pos: self.cursor_world_pos,

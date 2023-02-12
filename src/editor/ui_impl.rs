@@ -73,6 +73,7 @@ impl Editor {
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
+                                self.keep_state();
                                 self.world
                                     .level
                                     .change_size(self.world.level.size + vec2(1, 0), &self.assets);
@@ -83,6 +84,7 @@ impl Editor {
                         {
                             let dec = Button::new(cx, "-");
                             if dec.was_clicked() {
+                                self.keep_state();
                                 self.world
                                     .level
                                     .change_size(self.world.level.size - vec2(1, 0), &self.assets);
@@ -99,6 +101,7 @@ impl Editor {
                         {
                             let inc = Button::new(cx, "+");
                             if inc.was_clicked() {
+                                self.keep_state();
                                 self.world
                                     .level
                                     .change_size(self.world.level.size + vec2(0, 1), &self.assets);
@@ -109,6 +112,7 @@ impl Editor {
                         {
                             let dec = Button::new(cx, "-");
                             if dec.was_clicked() {
+                                self.keep_state();
                                 self.world
                                     .level
                                     .change_size(self.world.level.size - vec2(0, 1), &self.assets);
@@ -124,6 +128,7 @@ impl Editor {
                         {
                             let left = Button::new(cx, "left");
                             if left.was_clicked() {
+                                self.keep_state();
                                 self.world.level.translate(vec2(-1, 0), &self.assets);
                                 update_geometry = true;
                             }
@@ -132,6 +137,7 @@ impl Editor {
                         {
                             let right = Button::new(cx, "right");
                             if right.was_clicked() {
+                                self.keep_state();
                                 self.world.level.translate(vec2(1, 0), &self.assets);
                                 update_geometry = true;
                             }
@@ -144,6 +150,7 @@ impl Editor {
                         {
                             let down = Button::new(cx, "down");
                             if down.was_clicked() {
+                                self.keep_state();
                                 self.world.level.translate(vec2(0, -1), &self.assets);
                                 update_geometry = true;
                             }
@@ -152,6 +159,7 @@ impl Editor {
                         {
                             let up = Button::new(cx, "up");
                             if up.was_clicked() {
+                                self.keep_state();
                                 self.world.level.translate(vec2(0, 1), &self.assets);
                                 update_geometry = true;
                             }
