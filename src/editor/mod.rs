@@ -446,29 +446,25 @@ impl Editor {
                         self.keep_state();
                         Some(DragAction::PlaceTile)
                     } else if let Some(&id) = self.hovered.first() {
-                        self.world.level.get_block(id).map(|block| {
-                            let pos = block.position(&self.world.level.grid);
+                        // If the block was already selected,
+                        // then we move all the selected blocks.
+                        // Otherwise, we create a new selection
+                        // with the block we just clicked.
+                        let ids: Vec<_> = if self.selection.contains(&id) {
+                            // Move all selection
+                            self.selection.iter().copied().collect()
+                        } else {
+                            // Create a new selection
+                            self.clear_selection();
+                            self.selection.insert(id);
+                            vec![id]
+                        };
 
-                            // If the block was already selected,
-                            // then we move all the selected blocks.
-                            // Otherwise, we create a new selection
-                            // with the block we just clicked.
-                            let ids: Vec<_> = if self.selection.contains(&id) {
-                                // Move all selection
-                                self.selection.iter().copied().collect()
-                            } else {
-                                // Create a new selection
-                                self.clear_selection();
-                                self.selection.insert(id);
-                                vec![id]
-                            };
-
-                            self.keep_state();
-                            let blocks = self.world.level.remove_blocks(&ids, &self.assets);
-                            DragAction::MoveBlocks {
-                                blocks,
-                                initial_pos: pos,
-                            }
+                        self.keep_state();
+                        let blocks = self.world.level.remove_blocks(&ids, &self.assets);
+                        Some(DragAction::MoveBlocks {
+                            blocks,
+                            initial_pos: self.cursor_world_pos,
                         })
                     } else {
                         None
@@ -520,7 +516,9 @@ impl Editor {
                             self.selection.insert(id);
                         }
                         self.update_geometry();
-                        return;
+
+                        // Update hovered blocks
+                        self.hovered = self.get_hovered(Aabb2::point(self.cursor_world_pos));
                     }
                     DragAction::RectSelection => {
                         // Select blocks in a rectangle
@@ -531,7 +529,6 @@ impl Editor {
                             Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos);
                         let hovered = self.get_hovered(aabb);
                         self.selection.extend(hovered);
-                        return;
                     }
                     _ => (),
                 }
@@ -550,6 +547,7 @@ impl Editor {
                                 self.selection.remove(&id);
                             }
                         } else {
+                            self.clear_selection();
                             self.place_block()
                         }
                     }
