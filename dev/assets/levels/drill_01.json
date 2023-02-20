@@ -1142,7 +1142,7 @@
           9.0
         ]
       },
-      "prop_type": "DrillUse"
+      "prop_type": "tutorial_drill_use"
     },
     {
       "sprite": {
@@ -1155,7 +1155,7 @@
           9.0
         ]
       },
-      "prop_type": "DrillUse"
+      "prop_type": "tutorial_drill_use"
     }
   ],
   "global_light": {
