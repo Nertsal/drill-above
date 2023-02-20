@@ -84,6 +84,8 @@ pub struct PropSprites {
     pub tutorial_drill_use: Texture,
     pub tutorial_drill_jump: Texture,
     pub tree_2: Texture,
+    pub village_house_1: Texture,
+    pub mine_entrance: Texture,
 }
 
 #[derive(geng::Assets)]
@@ -140,6 +142,8 @@ impl PropSprites {
             PropType::DrillUse => &self.tutorial_drill_use,
             PropType::DrillJump => &self.tutorial_drill_jump,
             PropType::Tree2 => &self.tree_2,
+            PropType::VillageHouse1 => &self.village_house_1,
+            PropType::MineEntrance => &self.mine_entrance,
         }
     }
 }

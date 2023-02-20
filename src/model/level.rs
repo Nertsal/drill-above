@@ -89,6 +89,8 @@ pub enum PropType {
     DrillUse,
     DrillJump,
     Tree2,
+    VillageHouse1,
+    MineEntrance,
 }
 
 impl HazardType {
