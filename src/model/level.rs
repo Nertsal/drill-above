@@ -79,33 +79,8 @@ pub struct Prop {
     pub prop_type: PropType,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum HazardType {
-    Spikes,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum PropType {
-    DrillUse,
-    DrillJump,
-    Tree2,
-    VillageHouse1,
-    MineEntrance,
-}
-
-impl HazardType {
-    pub fn all() -> [Self; 1] {
-        use HazardType::*;
-        [Spikes]
-    }
-}
-
-impl PropType {
-    pub fn all() -> [Self; 3] {
-        use PropType::*;
-        [DrillUse, DrillJump, Tree2]
-    }
-}
+pub type HazardType = String;
+pub type PropType = String;
 
 impl Level {
     pub fn new(size: vec2<usize>) -> Self {
@@ -171,32 +146,28 @@ impl Level {
                 .map(|tile| tile != "air")
                 .unwrap_or(false)
         };
-        let (direction, collider) = match hazard {
-            HazardType::Spikes => {
-                let size = vec2(0.8, 0.4);
-                let direction = -[vec2(0, -1), vec2(1, 0), vec2(-1, 0), vec2(0, 1)]
-                    .into_iter()
-                    .filter(|&d| connect(pos + d))
-                    .min_by_key(|dir| {
-                        (dir.map(|x| Coord::new(x as f32 * 0.5 + 0.5)) - offset).len()
-                    })
-                    .unwrap_or(vec2(0, -1))
-                    .map(|x| x as f32);
-                let pos = vec2(0.5, 0.5) - direction * 0.5;
-                let aabb = Aabb2::from_corners(
-                    pos + vec2(-size.x * direction.y * 0.5, -size.x * direction.x * 0.5),
-                    pos + vec2(
-                        size.x * direction.y * 0.5 + size.y * direction.x,
-                        size.y * direction.y + size.x * direction.x * 0.5,
-                    ),
-                );
-                let aabb = aabb.map(Coord::new);
-                (
-                    Some(direction.map(Coord::new)),
-                    Aabb2::point(aabb.bottom_left() * self.grid.cell_size)
-                        .extend_positive(aabb.size() * self.grid.cell_size),
-                )
-            }
+        let (direction, collider) = {
+            let size = vec2(0.8, 0.4);
+            let direction = -[vec2(0, -1), vec2(1, 0), vec2(-1, 0), vec2(0, 1)]
+                .into_iter()
+                .filter(|&d| connect(pos + d))
+                .min_by_key(|dir| (dir.map(|x| Coord::new(x as f32 * 0.5 + 0.5)) - offset).len())
+                .unwrap_or(vec2(0, -1))
+                .map(|x| x as f32);
+            let pos = vec2(0.5, 0.5) - direction * 0.5;
+            let aabb = Aabb2::from_corners(
+                pos + vec2(-size.x * direction.y * 0.5, -size.x * direction.x * 0.5),
+                pos + vec2(
+                    size.x * direction.y * 0.5 + size.y * direction.x,
+                    size.y * direction.y + size.x * direction.x * 0.5,
+                ),
+            );
+            let aabb = aabb.map(Coord::new);
+            (
+                Some(direction.map(Coord::new)),
+                Aabb2::point(aabb.bottom_left() * self.grid.cell_size)
+                    .extend_positive(aabb.size() * self.grid.cell_size),
+            )
         };
         let pos = self.grid.grid_to_world(pos);
         let collider = Collider::new(collider.translate(pos));
@@ -544,8 +515,8 @@ impl Placeable {
     pub fn get_type(&self) -> PlaceableType {
         match self {
             Placeable::Tile((tile, _)) => PlaceableType::Tile(tile.to_owned()),
-            Placeable::Hazard(hazard) => PlaceableType::Hazard(hazard.hazard_type),
-            Placeable::Prop(prop) => PlaceableType::Prop(prop.prop_type),
+            Placeable::Hazard(hazard) => PlaceableType::Hazard(hazard.hazard_type.to_owned()),
+            Placeable::Prop(prop) => PlaceableType::Prop(prop.prop_type.to_owned()),
             Placeable::Coin(_) => PlaceableType::Coin,
             Placeable::Spotlight(spotlight) => PlaceableType::Spotlight(*spotlight),
         }

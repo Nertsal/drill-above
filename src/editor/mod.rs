@@ -216,15 +216,23 @@ impl Editor {
                 EditorTab::block("Collectables", vec![PlaceableType::Coin]),
                 EditorTab::block(
                     "Hazards",
-                    HazardType::all()
-                        .into_iter()
+                    assets
+                        .sprites
+                        .hazards
+                        .0
+                        .keys()
+                        .cloned()
                         .map(PlaceableType::Hazard)
                         .collect(),
                 ),
                 EditorTab::block(
                     "Props",
-                    PropType::all()
-                        .into_iter()
+                    assets
+                        .sprites
+                        .props
+                        .0
+                        .keys()
+                        .cloned()
                         .map(PlaceableType::Prop)
                         .collect(),
                 ),

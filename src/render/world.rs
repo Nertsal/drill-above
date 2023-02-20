@@ -322,7 +322,7 @@ impl WorldRender {
                 camera,
                 &draw_2d::TexturedQuad::new(
                     Aabb2::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
-                    texture,
+                    texture.texture(),
                 ),
                 transform,
             );

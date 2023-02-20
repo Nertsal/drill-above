@@ -1886,7 +1886,7 @@
           3.125
         ]
       },
-      "prop_type": "Tree2"
+      "prop_type": "tree2"
     },
     {
       "sprite": {
@@ -1899,7 +1899,7 @@
           2.125
         ]
       },
-      "prop_type": "Tree2"
+      "prop_type": "tree2"
     }
   ],
   "global_light": {

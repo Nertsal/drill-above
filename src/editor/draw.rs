@@ -81,7 +81,11 @@ impl Editor {
                             )
                         }
                         Placeable::Hazard(hazard) => (
-                            self.assets.sprites.hazards.get_texture(&hazard.hazard_type),
+                            self.assets
+                                .sprites
+                                .hazards
+                                .get_texture(&hazard.hazard_type)
+                                .texture(),
                             unit,
                         ),
                         Placeable::Coin(_) => (&self.assets.sprites.coin, unit),

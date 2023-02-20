@@ -41,9 +41,9 @@ pub struct Sounds {
 #[derive(geng::Assets)]
 pub struct Sprites {
     pub tiles: TileSprites,
-    pub hazards: HazardSprites,
+    pub hazards: SpriteCollection,
     pub player: PlayerSprites,
-    pub props: PropSprites,
+    pub props: SpriteCollection,
     #[asset(postprocess = "pixel")]
     pub partner: ugli::Texture,
     #[asset(postprocess = "pixel")]
@@ -73,20 +73,7 @@ pub struct TileSprites {
     pub tiles: HashMap<Tile, TileSet>,
 }
 
-#[derive(geng::Assets)]
-pub struct HazardSprites {
-    #[asset(postprocess = "pixel")]
-    pub spikes: ugli::Texture,
-}
-
-#[derive(geng::Assets)]
-pub struct PropSprites {
-    pub tutorial_drill_use: Texture,
-    pub tutorial_drill_jump: Texture,
-    pub tree_2: Texture,
-    pub village_house_1: Texture,
-    pub mine_entrance: Texture,
-}
+pub struct SpriteCollection(pub HashMap<String, Texture>);
 
 #[derive(geng::Assets)]
 pub struct PlayerSprites {
@@ -128,23 +115,11 @@ impl TileSprites {
     }
 }
 
-impl HazardSprites {
-    pub fn get_texture(&self, hazard: &HazardType) -> &ugli::Texture {
-        match hazard {
-            HazardType::Spikes => &self.spikes,
-        }
-    }
-}
-
-impl PropSprites {
-    pub fn get_texture(&self, prop: &PropType) -> &Texture {
-        match prop {
-            PropType::DrillUse => &self.tutorial_drill_use,
-            PropType::DrillJump => &self.tutorial_drill_jump,
-            PropType::Tree2 => &self.tree_2,
-            PropType::VillageHouse1 => &self.village_house_1,
-            PropType::MineEntrance => &self.mine_entrance,
-        }
+impl SpriteCollection {
+    pub fn get_texture(&self, name: &str) -> &Texture {
+        self.0
+            .get(&name.to_lowercase())
+            .expect("Failed to find texture")
     }
 }
 
@@ -252,6 +227,32 @@ impl geng::LoadAsset for TileSprites {
             let mask: TileSet = geng::LoadAsset::load(&geng, &path.join("mask.png")).await?;
 
             Ok(Self { mask, tiles })
+        }
+        .boxed_local()
+    }
+
+    const DEFAULT_EXT: Option<&'static str> = None;
+}
+
+impl geng::LoadAsset for SpriteCollection {
+    fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
+        let path = path.to_owned();
+        let geng = geng.clone();
+        async move {
+            // Load the list of textures
+            let list: Vec<String> = file::load_json(path.join("_list.json"))
+                .await
+                .context("Failed to load _list.json")?;
+
+            // Load tiles
+            let mut textures = HashMap::with_capacity(list.len());
+            for name in list {
+                let texture: Texture =
+                    geng::LoadAsset::load(&geng, &path.join(format!("{name}.png"))).await?;
+                textures.insert(name, texture);
+            }
+
+            Ok(Self(textures))
         }
         .boxed_local()
     }
