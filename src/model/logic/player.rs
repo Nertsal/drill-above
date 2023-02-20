@@ -41,16 +41,6 @@ impl Player {
 
 impl Logic<'_> {
     pub fn process_player(&mut self) {
-        // Update collider
-        let actor = self.world.actors.get_mut(&self.world.player.id).unwrap();
-        let pos = actor.collider.pos();
-        actor.collider = if self.world.player.state.using_drill() {
-            Player::drill_collider()
-        } else {
-            Player::collider()
-        };
-        actor.collider.translate(pos);
-
         if !matches!(self.world.player.state, PlayerState::Drilling) {
             if let Some(mut sound) = self.world.drill_sound.take() {
                 sound.stop();

@@ -71,14 +71,8 @@ impl Player {
     }
 
     pub fn collider() -> Collider {
-        let height = Coord::new(1.5);
-        let width = Coord::new(0.7);
-        Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
-    }
-
-    pub fn drill_collider() -> Collider {
-        let height = Coord::new(0.7);
-        let width = Coord::new(0.7);
+        let height = Coord::new(0.9);
+        let width = Coord::new(0.9);
         Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
     }
 }
