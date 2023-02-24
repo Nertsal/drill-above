@@ -105,7 +105,7 @@ fn main() {
                             geng::EmptyLoadingScreen
                         }
                     };
-                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future, |state| state)
+                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future)
                 };
                 geng::run(&geng, state)
             }
@@ -139,7 +139,7 @@ fn main() {
                             geng::EmptyLoadingScreen
                         }
                     };
-                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future, |state| state)
+                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future)
                 };
 
                 geng::run(&geng, state)

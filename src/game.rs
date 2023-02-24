@@ -464,5 +464,5 @@ fn level_change(
             )
         }
     };
-    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
+    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)
 }

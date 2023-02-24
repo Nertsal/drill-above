@@ -806,5 +806,5 @@ pub fn run(geng: &Geng, level: Option<String>, hot_reload: bool) -> impl geng::S
             Editor::new(&geng, &assets, level, hot_reload)
         }
     };
-    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
+    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)
 }

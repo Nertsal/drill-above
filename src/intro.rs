@@ -173,5 +173,5 @@ pub fn run(geng: &Geng) -> impl geng::State {
             Intro::new(&geng, &assets, intro)
         }
     };
-    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future, |state| state)
+    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)
 }
