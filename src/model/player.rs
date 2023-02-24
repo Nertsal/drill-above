@@ -70,10 +70,14 @@ impl Player {
         }
     }
 
-    pub fn collider() -> Collider {
-        let height = Coord::new(0.9);
+    pub fn hurtbox(&self, head: vec2<Coord>) -> Collider {
+        let height = Coord::new(0.8);
         let width = Coord::new(0.9);
-        Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
+        Collider::new(
+            Aabb2::point(head)
+                .extend_symmetric(vec2::UNIT_X * width / Coord::new(2.0))
+                .extend_down(height),
+        )
     }
 }
 

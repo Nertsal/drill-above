@@ -52,7 +52,11 @@ impl World {
         let mut actors = Collection::new();
 
         let player_id = id_gen.gen();
-        let mut collider = Player::collider();
+        let mut collider = {
+            let height = Coord::new(0.9);
+            let width = Coord::new(0.9);
+            Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
+        };
         collider.teleport(level.spawn_point);
         let player_actor = Actor::new(player_id, collider);
 

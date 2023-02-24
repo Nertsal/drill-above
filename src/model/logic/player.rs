@@ -735,8 +735,9 @@ impl Logic<'_> {
         // Collect coins
         let mut collected = None;
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
+        let hurtbox = self.world.player.hurtbox(actor.collider.head());
         for coin in &mut self.world.level.coins {
-            if !coin.collected && actor.collider.check(&coin.collider) {
+            if !coin.collected && hurtbox.check(&coin.collider) {
                 self.world.coins_collected += 1;
                 coin.collected = true;
                 collected = Some(coin.collider.pos());
@@ -760,8 +761,9 @@ impl Logic<'_> {
     fn player_hazards(&mut self) {
         // Die from hazards
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
+        let hurtbox = self.world.player.hurtbox(actor.collider.head());
         for hazard in &self.world.level.hazards {
-            if actor.collider.check(&hazard.collider)
+            if hurtbox.check(&hazard.collider)
                 && hazard.direction.map_or(true, |dir| {
                     vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
                 })
