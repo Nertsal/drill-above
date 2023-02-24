@@ -21,8 +21,8 @@ impl WorldRender {
         normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
         self.draw_background(world, framebuffer);
-        self.draw_level(
-            &world.level,
+        self.draw_room(
+            &world.room,
             &world.cache.geometry.0,
             &world.cache.geometry.1,
             draw_hitboxes,
@@ -37,7 +37,7 @@ impl WorldRender {
     pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
         let texture = &self.assets.sprites.background;
         let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32) / vec2(1.0, 4.0);
-        let bounds = world.level.bounds().map(Coord::as_f32);
+        let bounds = world.room.bounds().map(Coord::as_f32);
         let camera_bounds = world.camera_bounds().map(Coord::as_f32);
 
         // Parallax background
@@ -139,9 +139,9 @@ impl WorldRender {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn draw_level(
+    pub fn draw_room(
         &self,
-        level: &Level,
+        room: &Room,
         tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
         masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         draw_hitboxes: bool,
@@ -149,13 +149,13 @@ impl WorldRender {
         framebuffer: &mut ugli::Framebuffer,
         normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        self.draw_props(&level.props, camera, framebuffer, normal_framebuffer);
+        self.draw_props(&room.props, camera, framebuffer, normal_framebuffer);
         self.draw_tiles(tiles_geometry, masked_geometry, camera, framebuffer);
-        self.draw_hazards(&level.hazards, draw_hitboxes, camera, framebuffer);
-        self.draw_coins(&level.coins, draw_hitboxes, camera, framebuffer);
+        self.draw_hazards(&room.hazards, draw_hitboxes, camera, framebuffer);
+        self.draw_coins(&room.coins, draw_hitboxes, camera, framebuffer);
 
         // Finish
-        let finish = level.finish().raw().map(Coord::as_f32);
+        let finish = room.finish().raw().map(Coord::as_f32);
         self.geng.draw_2d(
             framebuffer,
             camera,
@@ -176,9 +176,9 @@ impl WorldRender {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn draw_level_editor(
+    pub fn draw_room_editor(
         &self,
-        level: &Level,
+        room: &Room,
         tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
         masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
         draw_hitboxes: bool,
@@ -186,8 +186,8 @@ impl WorldRender {
         framebuffer: &mut ugli::Framebuffer,
         normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        self.draw_level(
-            level,
+        self.draw_room(
+            room,
             tiles_geometry,
             masked_geometry,
             draw_hitboxes,
@@ -201,7 +201,7 @@ impl WorldRender {
             framebuffer,
             camera,
             &draw_2d::Quad::new(
-                Aabb2::point(level.spawn_point.map(Coord::as_f32))
+                Aabb2::point(room.spawn_point.map(Coord::as_f32))
                     .extend_symmetric(vec2(0.5, 0.0))
                     .extend_up(1.0),
                 Rgba::new(0.0, 1.0, 0.0, 0.5),
@@ -209,7 +209,7 @@ impl WorldRender {
         );
 
         // Spotlights
-        for spotlight in &level.spotlights {
+        for spotlight in &room.spotlights {
             let pos = pixel_perfect_pos(spotlight.position);
             let size = vec2(1.0, 1.0);
             let aabb = Aabb2::point(pos).extend_symmetric(size / 2.0);

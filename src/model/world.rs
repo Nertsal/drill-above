@@ -8,8 +8,8 @@ pub struct World {
     pub screen_resolution: vec2<usize>,
     pub camera: Camera2d,
     pub cache: RenderCache,
-    pub level: Level,
-    pub level_transition: Option<String>,
+    pub room: Room,
+    pub room_transition: Option<String>,
     pub coins_collected: usize,
     pub drill_sound: Option<geng::SoundEffect>,
     pub time: Time,
@@ -41,13 +41,13 @@ pub struct Block {
 }
 
 impl World {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, mut level: Level) -> Self {
-        level.tiles.update_geometry(assets);
-        let cache = RenderCache::calculate(&level, geng, assets);
-        Self::with_cache(assets, rules, level, cache)
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, mut room: Room) -> Self {
+        room.tiles.update_geometry(assets);
+        let cache = RenderCache::calculate(&room, geng, assets);
+        Self::with_cache(assets, rules, room, cache)
     }
 
-    pub fn with_cache(assets: &Rc<Assets>, rules: Rules, level: Level, cache: RenderCache) -> Self {
+    pub fn with_cache(assets: &Rc<Assets>, rules: Rules, room: Room, cache: RenderCache) -> Self {
         let mut id_gen = IdGen::new();
         let mut actors = Collection::new();
 
@@ -57,7 +57,7 @@ impl World {
             let width = Coord::new(0.9);
             Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
         };
-        collider.teleport(level.spawn_point);
+        collider.teleport(room.spawn_point);
         let player_actor = Actor::new(player_id, collider);
 
         actors.insert(player_actor);
@@ -77,7 +77,7 @@ impl World {
                     fov,
                 }
             },
-            level_transition: None,
+            room_transition: None,
             coins_collected: 0,
             time: Time::ZERO,
             drill_sound: None,
@@ -89,7 +89,7 @@ impl World {
             id_gen,
             actors,
             rules,
-            level,
+            room,
         }
     }
 
@@ -112,13 +112,13 @@ impl World {
     }
 
     pub fn camera_bounds(&self) -> Aabb2<Coord> {
-        let mut level_bounds = self.level.bounds();
-        level_bounds.min.y += self.level.grid.cell_size.y * Coord::new(0.5);
+        let mut room_bounds = self.room.bounds();
+        room_bounds.min.y += self.room.grid.cell_size.y * Coord::new(0.5);
         let camera_view =
             (vec2(self.camera.fov * (16.0 / 9.0), self.camera.fov) / 2.0).map(Coord::new); // TODO: remove hardcode
         Aabb2::from_corners(
-            level_bounds.bottom_left() + camera_view,
-            level_bounds.top_right() - camera_view,
+            room_bounds.bottom_left() + camera_view,
+            room_bounds.top_right() - camera_view,
         )
     }
 }

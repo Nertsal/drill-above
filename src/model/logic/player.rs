@@ -118,7 +118,7 @@ impl Logic<'_> {
 
                 (match id {
                     ColliderId::Tile(pos) => {
-                        let tile = logic.world.level.tiles.get_tile_isize(pos).unwrap();
+                        let tile = logic.world.room.tiles.get_tile_isize(pos).unwrap();
                         logic.world.rules.tiles[tile].drill_bounciness
                     }
                     ColliderId::Entity(_) => todo!(),
@@ -143,8 +143,8 @@ impl Logic<'_> {
             return;
         }
 
-        // Level bounds
-        if self.level_bounds() {
+        // Room bounds
+        if self.room_bounds() {
             return;
         }
 
@@ -175,15 +175,15 @@ impl Logic<'_> {
                     // Respawn
                     self.world.player.state = PlayerState::Airborn;
                     self.world.player.velocity = vec2::ZERO;
-                    actor.collider.teleport(self.world.level.spawn_point);
+                    actor.collider.teleport(self.world.room.spawn_point);
                 }
                 true
             }
             PlayerState::Finished { time, next_heart } => {
                 *time -= self.delta_time;
                 if *time <= Time::ZERO {
-                    // Level transition
-                    self.next_level();
+                    // Room transition
+                    self.next_room();
                     return true;
                 }
                 *next_heart -= self.delta_time;
@@ -192,7 +192,7 @@ impl Logic<'_> {
                     self.world.particles.push(Particle {
                         initial_lifetime: Time::new(2.0),
                         lifetime: Time::new(2.0),
-                        position: self.world.level.finish
+                        position: self.world.room.finish
                             + vec2(Coord::ZERO, actor.collider.raw().height()),
                         velocity: vec2(0.0, 1.5)
                             .rotate(thread_rng().gen_range(-0.5..=0.5))
@@ -215,7 +215,7 @@ impl Logic<'_> {
             return;
         }
 
-        if !self.world.level.drill_allowed
+        if !self.world.room.drill_allowed
             || !self.player_control.drill
             || matches!(self.world.player.state, PlayerState::AirDrill { .. })
         {
@@ -268,7 +268,7 @@ impl Logic<'_> {
             });
         } else if !matches!(self.world.player.state, PlayerState::Drilling)
             && self.player_control.drill
-            && self.world.level.drill_allowed
+            && self.world.room.drill_allowed
         {
             let dirs = itertools::chain![
                 match &self.world.player.state {
@@ -548,7 +548,7 @@ impl Logic<'_> {
         if let Some((id, col)) = self.check_collision(&collider) {
             let player = &mut self.world.player;
             let tile = match id {
-                ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
+                ColliderId::Tile(pos) => self.world.room.tiles.get_tile_isize(pos).unwrap(),
                 ColliderId::Entity(id) => &self.world.blocks.get(&id).unwrap().tile,
             };
             let wall_normal = col.normal;
@@ -582,7 +582,7 @@ impl Logic<'_> {
             if let Some((id, _)) = self.check_collision(&collider) {
                 let player = &mut self.world.player;
                 let tile = match id {
-                    ColliderId::Tile(pos) => self.world.level.tiles.get_tile_isize(pos).unwrap(),
+                    ColliderId::Tile(pos) => self.world.room.tiles.get_tile_isize(pos).unwrap(),
                     ColliderId::Entity(id) => &self.world.blocks.get(&id).unwrap().tile,
                 };
                 player.state = PlayerState::Grounded(tile.to_owned());
@@ -608,12 +608,12 @@ impl Logic<'_> {
     fn check_tiles(&self) -> bool {
         let player = self.world.actors.get(&self.world.player.id).unwrap();
         self.world
-            .level
+            .room
             .grid
             .tile_collisions(&player.collider)
             .any(|pos| {
                 self.world
-                    .level
+                    .room
                     .tiles
                     .get_tile_isize(pos)
                     .filter(|&tile| {
@@ -623,8 +623,8 @@ impl Logic<'_> {
                     })
                     .filter(|_| {
                         let collider = Collider::new(
-                            Aabb2::point(self.world.level.grid.grid_to_world(pos))
-                                .extend_positive(self.world.level.grid.cell_size),
+                            Aabb2::point(self.world.room.grid.grid_to_world(pos))
+                                .extend_positive(self.world.room.grid.cell_size),
                         );
                         player.collider.check(&collider)
                     })
@@ -710,7 +710,7 @@ impl Logic<'_> {
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
         if self.world.player.state.is_drilling()
             || self.world.player.state.has_finished()
-            || !actor.collider.check(&self.world.level.finish())
+            || !actor.collider.check(&self.world.room.finish())
         {
             return false;
         }
@@ -736,14 +736,14 @@ impl Logic<'_> {
         let mut collected = None;
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
         let hurtbox = self.world.player.hurtbox(actor.collider.head());
-        for coin in &mut self.world.level.coins {
+        for coin in &mut self.world.room.coins {
             if !coin.collected && hurtbox.check(&coin.collider) {
                 self.world.coins_collected += 1;
                 coin.collected = true;
                 collected = Some(coin.collider.pos());
             }
         }
-        self.world.level.coins.retain(|coin| !coin.collected);
+        self.world.room.coins.retain(|coin| !coin.collected);
         if let Some(position) = collected {
             self.world.play_sound(&self.world.assets.sounds.coin);
             self.spawn_particles(ParticleSpawn {
@@ -762,7 +762,7 @@ impl Logic<'_> {
         // Die from hazards
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
         let hurtbox = self.world.player.hurtbox(actor.collider.head());
-        for hazard in &self.world.level.hazards {
+        for hazard in &self.world.room.hazards {
             if hurtbox.check(&hazard.collider)
                 && hazard.direction.map_or(true, |dir| {
                     vec2::dot(self.world.player.velocity, dir) <= Coord::ZERO
@@ -774,17 +774,17 @@ impl Logic<'_> {
         }
     }
 
-    fn level_bounds(&mut self) -> bool {
-        let level = &self.world.level;
-        let level_bounds = level.bounds();
+    fn room_bounds(&mut self) -> bool {
+        let room = &self.world.room;
+        let room_bounds = room.bounds();
         let player = &mut self.world.player;
         let actor = self.world.actors.get_mut(&player.id).unwrap();
 
         // Top
-        if actor.collider.head().y > level_bounds.max.y {
+        if actor.collider.head().y > room_bounds.max.y {
             actor.collider.translate(vec2(
                 Coord::ZERO,
-                level_bounds.max.y - actor.collider.head().y,
+                room_bounds.max.y - actor.collider.head().y,
             ));
             player.velocity.y = if player.state.is_drilling() {
                 -player.velocity.y
@@ -794,17 +794,17 @@ impl Logic<'_> {
         }
 
         // Horizontal
-        let offset = actor.collider.feet().x - level_bounds.center().x;
-        if offset.abs() > level_bounds.width() / Coord::new(2.0) {
+        let offset = actor.collider.feet().x - room_bounds.center().x;
+        if offset.abs() > room_bounds.width() / Coord::new(2.0) {
             actor.collider.translate(vec2(
-                offset.signum() * (level_bounds.width() / Coord::new(2.0) - offset.abs()),
+                offset.signum() * (room_bounds.width() / Coord::new(2.0) - offset.abs()),
                 Coord::ZERO,
             ));
             player.velocity.x = Coord::ZERO;
         }
 
         // Bottom
-        if actor.collider.feet().y < level_bounds.min.y {
+        if actor.collider.feet().y < room_bounds.min.y {
             self.world.kill_player();
             return true;
         }

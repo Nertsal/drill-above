@@ -13,7 +13,7 @@ impl Editor {
             // Render as in game
             self.world.camera = self.camera.clone();
             if let Some(actor) = self.world.actors.get_mut(&self.world.player.id) {
-                actor.collider.teleport(self.world.level.spawn_point);
+                actor.collider.teleport(self.world.room.spawn_point);
             }
             self.preview_render
                 .draw_world(&self.world, false, &mut pixel_framebuffer);
@@ -22,9 +22,9 @@ impl Editor {
             let (mut world_framebuffer, mut normal_framebuffer) =
                 self.render.lights.start_render(&mut pixel_framebuffer);
 
-            // Render level
-            self.render.world.draw_level_editor(
-                &self.world.level,
+            // Render the room
+            self.render.world.draw_room_editor(
+                &self.world.room,
                 &self.world.cache.geometry.0,
                 &self.world.cache.geometry.1,
                 true,
@@ -34,7 +34,7 @@ impl Editor {
             );
 
             self.render.lights.finish_render(
-                &self.world.level,
+                &self.world.room,
                 &self.world.cache,
                 &self.camera,
                 &mut pixel_framebuffer,
@@ -63,7 +63,7 @@ impl Editor {
             {
                 for block in blocks {
                     let collider = block
-                        .sprite(&self.world.level.grid)
+                        .sprite(&self.world.room.grid)
                         .translate(self.cursor_world_pos - *initial_pos);
                     let unit =
                         [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
@@ -140,10 +140,10 @@ impl Editor {
         // Draw hovered/selected
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selection] {
-            let Some(block) = self.world.level.get_block(block) else {
+            let Some(block) = self.world.room.get_block(block) else {
                 continue
             };
-            let collider = block.sprite(&self.world.level.grid);
+            let collider = block.sprite(&self.world.room.grid);
             let color = match block {
                 Placeable::Tile(_) => Rgba::new(0.7, 0.7, 0.7, 0.5),
                 Placeable::Hazard(_) => Rgba::new(1.0, 0.0, 0.0, 0.5),
@@ -166,8 +166,8 @@ impl Editor {
         if !self.preview {
             if self.draw_grid {
                 self.render.util.draw_grid(
-                    &self.world.level.grid,
-                    self.world.level.size,
+                    &self.world.room.grid,
+                    self.world.room.size,
                     &self.camera,
                     framebuffer,
                 );
