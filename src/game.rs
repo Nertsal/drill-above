@@ -8,7 +8,7 @@ pub struct Game {
     pixel_texture: ugli::Texture,
     is_paused: bool,
     pause_menu: menu::PauseMenu,
-    level_name: String,
+    room_name: String,
     world: World,
     draw_hitboxes: bool,
     controls: Controls,
@@ -44,8 +44,8 @@ impl Game {
     pub fn new(
         geng: &Geng,
         assets: &Rc<Assets>,
-        level_name: String,
-        level: Level,
+        room_name: String,
+        room: Room,
         coins: usize,
         time: Time,
         deaths: usize,
@@ -54,7 +54,7 @@ impl Game {
     ) -> Self {
         geng.window().set_cursor_type(geng::CursorType::None);
 
-        let mut world = World::new(geng, assets, assets.rules.clone(), level);
+        let mut world = World::new(geng, assets, assets.rules.clone(), room);
         world.coins_collected = coins;
         let mut music = music.unwrap_or_else(|| assets.music.play());
         music.set_volume((world.volume - 0.3).max(0.0));
@@ -82,7 +82,7 @@ impl Game {
             accumulated_time: time,
             music: Some(music),
             deaths,
-            level_name,
+            room_name,
             show_time,
             world,
         }
@@ -169,7 +169,7 @@ impl geng::State for Game {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
-        let is_credits = self.level_name == "credits.json";
+        let is_credits = self.room_name == "credits.json";
         if !is_credits {
             let show_time = self
                 .show_time
@@ -383,23 +383,23 @@ impl geng::State for Game {
             return Some(geng::Transition::Pop);
         }
 
-        if let Some(level) = self.world.level_transition.take() {
-            if level == self.level_name {
+        if let Some(room) = self.world.room_transition.take() {
+            if room == self.room_name {
                 let coins = self.world.coins_collected;
                 self.world = World::new(
                     &self.geng,
                     &self.assets,
                     self.assets.rules.clone(),
-                    self.world.level.clone(),
+                    self.world.room.clone(),
                 );
                 self.world.coins_collected = coins;
                 return None;
             }
 
-            return Some(geng::Transition::Switch(Box::new(game::level_change(
+            return Some(geng::Transition::Switch(Box::new(game::room_change(
                 &self.geng,
                 Some(&self.assets),
-                level,
+                room,
                 self.world.coins_collected,
                 self.accumulated_time + self.world.time,
                 self.deaths + self.world.deaths,
@@ -427,16 +427,16 @@ impl geng::State for Game {
 pub fn run(
     geng: &Geng,
     assets: Option<&Rc<Assets>>,
-    level: impl AsRef<std::path::Path>,
+    room: impl AsRef<std::path::Path>,
 ) -> impl geng::State {
-    level_change(geng, assets, level, 0, Time::ZERO, 0, false, None)
+    room_change(geng, assets, room, 0, Time::ZERO, 0, false, None)
 }
 
 #[allow(clippy::too_many_arguments)]
-fn level_change(
+fn room_change(
     geng: &Geng,
     assets: Option<&Rc<Assets>>,
-    level: impl AsRef<std::path::Path>,
+    room: impl AsRef<std::path::Path>,
     coins: usize,
     time: Time,
     deaths: usize,
@@ -446,7 +446,7 @@ fn level_change(
     let future = {
         let geng = geng.clone();
         let assets = assets.cloned();
-        let level = level.as_ref().to_owned();
+        let room = room.as_ref().to_owned();
         async move {
             let assets = match assets {
                 Some(assets) => assets,
@@ -454,13 +454,13 @@ fn level_change(
                     .await
                     .expect("Failed to load assets"),
             };
-            let level_name = level.to_string_lossy().to_string();
-            let level: Level =
-                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("levels").join(level))
+            let room_name = room.to_string_lossy().to_string();
+            let room: Room =
+                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("rooms").join(room))
                     .await
-                    .expect("Failed to load level");
+                    .expect("Failed to load room");
             Game::new(
-                &geng, &assets, level_name, level, coins, time, deaths, show_time, music,
+                &geng, &assets, room_name, room, coins, time, deaths, show_time, music,
             )
         }
     };

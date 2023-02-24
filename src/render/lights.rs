@@ -53,7 +53,7 @@ impl LightsRender {
 
     pub fn finish_render(
         &mut self,
-        level: &Level,
+        room: &Room,
         cache: &RenderCache,
         camera: &Camera2d,
         framebuffer: &mut ugli::Framebuffer,
@@ -62,7 +62,7 @@ impl LightsRender {
         self.render_normal_map(camera, &cache.normal_geometry, &cache.normal_uv);
 
         // Render lights
-        self.render_lights(level, camera, &cache.light_geometry);
+        self.render_lights(room, camera, &cache.light_geometry);
 
         // Draw the texture to the screen
         self.geng.draw_2d(
@@ -78,17 +78,17 @@ impl LightsRender {
     /// Renders the world for each light separately onto the postprocessing texture.
     pub fn render_lights(
         &mut self,
-        level: &Level,
+        room: &Room,
         camera: &Camera2d,
         geometry: &ugli::VertexBuffer<NormalVertex>,
     ) {
-        self.render_global_light(level);
-        self.render_spotlights(level, camera, geometry);
+        self.render_global_light(room);
+        self.render_spotlights(room, camera, geometry);
     }
 
     /// Renders the world for the global light onto the postprocessing texture.
     /// Should be called as the first light render as it clears the texture.
-    pub fn render_global_light(&mut self, level: &Level) {
+    pub fn render_global_light(&mut self, room: &Room) {
         let mut world_framebuffer =
             attach_texture(&mut self.buffers.postprocess_texture, &self.geng);
         let framebuffer_size = world_framebuffer.size();
@@ -103,8 +103,8 @@ impl LightsRender {
             ugli::uniforms! {
                 u_framebuffer_size: framebuffer_size,
                 u_source_texture: &self.buffers.world_texture,
-                u_light_color: level.global_light.color,
-                u_light_intensity: level.global_light.intensity,
+                u_light_color: room.global_light.color,
+                u_light_intensity: room.global_light.intensity,
             },
             ugli::DrawParameters {
                 blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
@@ -119,11 +119,11 @@ impl LightsRender {
 
     pub fn render_spotlights(
         &mut self,
-        level: &Level,
+        room: &Room,
         camera: &Camera2d,
         geometry: &ugli::VertexBuffer<NormalVertex>,
     ) {
-        for spotlight in &level.spotlights {
+        for spotlight in &room.spotlights {
             // Using `world_texture` here but it is not actually used by the shader
             let mut light_framebuffer = ugli::Framebuffer::new(
                 self.geng.ugli(),

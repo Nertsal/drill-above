@@ -45,7 +45,7 @@ impl GameRender {
         );
 
         self.lights
-            .finish_render(&world.level, &world.cache, &world.camera, framebuffer);
+            .finish_render(&world.room, &world.cache, &world.camera, framebuffer);
     }
 
     pub fn draw_ui(

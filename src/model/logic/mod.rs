@@ -36,11 +36,11 @@ impl Logic<'_> {
         self.process_camera();
     }
 
-    fn next_level(&mut self) {
-        if let Some(level) = self.world.level.next_level.clone() {
-            self.world.level_transition = Some(level);
+    fn next_room(&mut self) {
+        if let Some(room) = self.world.room.next_room.clone() {
+            self.world.room_transition = Some(room);
         } else {
-            self.world.level_transition = Some("credits.json".to_string());
+            self.world.room_transition = Some("credits.json".to_string());
         }
     }
 

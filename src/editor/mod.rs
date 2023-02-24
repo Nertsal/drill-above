@@ -42,9 +42,9 @@ pub struct Editor {
     /// Size of the downscaled version of the screen.
     screen_resolution: vec2<usize>,
 
-    /// The name of the currently loaded level.
-    level_name: String,
-    /// The world that contains the level.
+    /// The name of the currently loaded room.
+    room_name: String,
+    /// The world that contains the room.
     world: World,
     /// Whether we should transition into the playtest state.
     playtest: bool,
@@ -64,9 +64,9 @@ pub struct Editor {
     /// Currently hovered blocks.
     hovered: Vec<PlaceableId>,
     /// Stack of undo actions.
-    undo_stack: Vec<Level>,
+    undo_stack: Vec<Room>,
     /// Stack of redo actions.
-    redo_stack: Vec<Level>,
+    redo_stack: Vec<Room>,
 
     /// All available editor tabs.
     tabs: Vec<EditorTab>,
@@ -138,10 +138,10 @@ struct EditorTab {
 /// Mode of the editor tab.
 #[derive(Debug, Clone)]
 enum EditorMode {
-    /// Modify level information.
-    /// Also allows to select all blocks in the level,
+    /// Modify room information.
+    /// Also allows to select all blocks in the room,
     /// regardless of the `hoverable` field in the tab.
-    Level,
+    Room,
     /// Place blocks.
     Block {
         /// All placeable blocks in that mode.
@@ -149,7 +149,7 @@ enum EditorMode {
         /// Currently selected placeable block.
         selected: usize,
     },
-    /// Modify global light and other lights in the level.
+    /// Modify global light and other lights in the room.
     Lights { spotlight: SpotlightSource },
 }
 
@@ -157,15 +157,15 @@ impl Editor {
     pub fn new(
         geng: &Geng,
         assets: &Rc<Assets>,
-        level_name: Option<String>,
+        room_name: Option<String>,
         hot_reload: bool,
     ) -> Self {
-        // Load the level and update its geometry
-        let level_name = level_name.unwrap_or_else(|| "new_level.json".to_string());
-        let mut level =
-            util::report_err(Level::load(&level_name), "Failed to load level").unwrap_or_default();
+        // Load the room and update its geometry
+        let room_name = room_name.unwrap_or_else(|| "new_room.json".to_string());
+        let mut room =
+            util::report_err(Room::load(&room_name), "Failed to load room").unwrap_or_default();
         // Update geometry in case it was not specified in the json file.
-        level.tiles.update_geometry(assets);
+        room.tiles.update_geometry(assets);
 
         #[cfg(target_arch = "wasm32")]
         if hot_reload {
@@ -190,7 +190,7 @@ impl Editor {
                 fov: (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0,
             },
             framebuffer_size: vec2(1, 1),
-            world: World::new(geng, assets, assets.rules.clone(), level),
+            world: World::new(geng, assets, assets.rules.clone(), room),
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -198,9 +198,9 @@ impl Editor {
             selection: default(),
             tabs: vec![
                 EditorTab {
-                    name: "Level".into(),
+                    name: "Room".into(),
                     hoverable: vec![],
-                    mode: EditorMode::Level,
+                    mode: EditorMode::Room,
                 },
                 EditorTab::block(
                     "Tiles",
@@ -252,7 +252,7 @@ impl Editor {
             color_mode: None,
             playtest: false,
             preview: false,
-            level_name,
+            room_name,
 
             #[cfg(not(target_arch = "wasm32"))]
             hot_reload: hot_reload.then(|| {
@@ -341,7 +341,7 @@ impl Editor {
         self.tabs
             .get(self.active_tab)
             .and_then(|tab| match &tab.mode {
-                EditorMode::Level => None,
+                EditorMode::Room => None,
                 EditorMode::Block { blocks, selected } => blocks.get(*selected).cloned(),
                 EditorMode::Lights { spotlight } => Some(PlaceableType::Spotlight(*spotlight)),
             })
@@ -377,11 +377,11 @@ impl Editor {
     }
 
     /// Get all blocks inside the `aabb`. The blocks are filtered
-    /// by the currently active tab's hovered list (unless it's in `Level` mode).
+    /// by the currently active tab's hovered list (unless it's in `Room` mode).
     fn get_hovered(&self, aabb: Aabb2<Coord>) -> Vec<PlaceableId> {
-        let mut hovered = self.world.level.get_hovered(aabb);
+        let mut hovered = self.world.room.get_hovered(aabb);
         if let Some(tab) = &self.tabs.get(self.active_tab) {
-            if let EditorMode::Level = tab.mode {
+            if let EditorMode::Room = tab.mode {
             } else {
                 hovered.retain(|id| tab.hoverable.iter().any(|ty| id.fits_type(ty)))
             }
@@ -404,7 +404,7 @@ impl Editor {
         // Snap to grid if needed
         let snap_cursor = self.geng.window().is_key_pressed(geng::Key::LCtrl);
         if snap_cursor {
-            let snap_size = self.world.level.grid.cell_size / Coord::new(2.0);
+            let snap_size = self.world.room.grid.cell_size / Coord::new(2.0);
             self.cursor_world_pos =
                 (self.cursor_world_pos / snap_size).map(|x| x.round()) * snap_size;
         }
@@ -469,7 +469,7 @@ impl Editor {
                         };
 
                         self.keep_state();
-                        let blocks = self.world.level.remove_blocks(&ids, &self.assets);
+                        let blocks = self.world.room.remove_blocks(&ids, &self.assets);
                         Some(DragAction::MoveBlocks {
                             blocks,
                             initial_pos: self.cursor_world_pos,
@@ -519,8 +519,8 @@ impl Editor {
                         self.selection.clear();
                         let delta = self.cursor_world_pos - initial_pos;
                         for mut block in blocks {
-                            block.translate(delta, &self.world.level.grid);
-                            let id = self.world.level.place_block(block, &self.assets);
+                            block.translate(delta, &self.world.room.grid);
+                            let id = self.world.room.place_block(block, &self.assets);
                             self.selection.insert(id);
                         }
                         self.update_geometry();
@@ -583,7 +583,7 @@ impl Editor {
 
     /// Update cached geometry.
     fn update_geometry(&mut self) {
-        self.world.cache = RenderCache::calculate(&self.world.level, &self.geng, &self.assets);
+        self.world.cache = RenderCache::calculate(&self.world.room, &self.geng, &self.assets);
     }
 
     /// Duplicate all selected blocks.
@@ -592,14 +592,14 @@ impl Editor {
             .selection
             .iter()
             .next()
-            .and_then(|id| self.world.level.get_block(*id))
-            .map(|block| block.position(&self.world.level.grid))
+            .and_then(|id| self.world.room.get_block(*id))
+            .map(|block| block.position(&self.world.room.grid))
         {
             self.keep_state();
             let blocks: Vec<_> = self
                 .selection
                 .iter()
-                .flat_map(|&id| self.world.level.get_block(id))
+                .flat_map(|&id| self.world.room.get_block(id))
                 .collect();
             self.dragging = Some(Dragging {
                 initial_cursor_pos: self.cursor_pos,
@@ -615,7 +615,7 @@ impl Editor {
     /// Swithes the tab and selects the hovered block.
     fn goto_hovered(&mut self) {
         let Some(&hovered_id) = self.hovered.first() else { return };
-        let Some(hovered) = self.world.level.get_block(hovered_id) else {
+        let Some(hovered) = self.world.room.get_block(hovered_id) else {
             return
         };
         let hovered = hovered.get_type();
@@ -651,13 +651,12 @@ impl Editor {
         }
     }
 
-    /// Save the level to file.
-    fn save_level(&self) {
-        if let Ok(()) = util::report_err(
-            self.world.level.save(&self.level_name),
-            "Failed to save level",
-        ) {
-            info!("Saved the level");
+    /// Save the room to file.
+    fn save_room(&self) {
+        if let Ok(()) =
+            util::report_err(self.world.room.save(&self.room_name), "Failed to save room")
+        {
+            info!("Saved the room");
         }
     }
 }
@@ -728,7 +727,7 @@ impl geng::State for Editor {
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::Escape => self.cancel(),
-                geng::Key::S if ctrl => self.save_level(),
+                geng::Key::S if ctrl => self.save_room(),
                 geng::Key::Z if ctrl => {
                     if shift {
                         self.redo()
@@ -738,10 +737,10 @@ impl geng::State for Editor {
                 }
                 geng::Key::D if ctrl => self.duplicate_selected(),
                 geng::Key::R => {
-                    self.world.level.spawn_point = self.cursor_world_pos;
+                    self.world.room.spawn_point = self.cursor_world_pos;
                 }
                 geng::Key::F => {
-                    self.world.level.finish = self.cursor_world_pos;
+                    self.world.room.finish = self.cursor_world_pos;
                 }
                 geng::Key::Left => {
                     self.scroll_selected(-1);
@@ -761,8 +760,8 @@ impl geng::State for Editor {
             let state = game::Game::new(
                 &self.geng,
                 &self.assets,
-                self.level_name.clone(),
-                self.world.level.clone(),
+                self.room_name.clone(),
+                self.world.room.clone(),
                 0,
                 Time::ZERO,
                 0,
@@ -796,14 +795,14 @@ impl EditorTab {
 }
 
 /// Run the editor.
-pub fn run(geng: &Geng, level: Option<String>, hot_reload: bool) -> impl geng::State {
+pub fn run(geng: &Geng, room: Option<String>, hot_reload: bool) -> impl geng::State {
     let future = {
         let geng = geng.clone();
         async move {
             let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
                 .await
                 .expect("Failed to load assets");
-            Editor::new(&geng, &assets, level, hot_reload)
+            Editor::new(&geng, &assets, room, hot_reload)
         }
     };
     geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)

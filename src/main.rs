@@ -25,7 +25,7 @@ struct Opt {
     #[clap(long)]
     editor: bool,
     #[clap(long)]
-    level: Option<String>,
+    room: Option<String>,
     /// Hot reload assets on change detection.
     #[clap(long)]
     hot_reload: bool,
@@ -115,24 +115,23 @@ fn main() {
                     let future = {
                         let geng = geng.clone();
                         async move {
-                            let level_path = opt
-                                .level
+                            let room_path = opt
+                                .room
                                 .as_ref()
-                                .expect("change size requires a --level argument");
+                                .expect("change size requires a --room argument");
                             let size = parse_size(&config.size).expect("Failed to parse size");
-                            let mut level =
-                                Level::load(level_path).expect("Failed to load the level");
+                            let mut room = Room::load(room_path).expect("Failed to load the room");
 
                             let assets: Assets =
                                 geng::LoadAsset::load(&geng, &run_dir().join("assets"))
                                     .await
                                     .expect("Failed to load assets");
 
-                            level.change_size(size, &assets);
+                            room.change_size(size, &assets);
 
-                            let level_path = "new_level.json";
-                            level.save(level_path).expect("Failed to save the level");
-                            info!("Saved the changed level at {}", level_path);
+                            let room_path = "new_room.json";
+                            room.save(room_path).expect("Failed to save the room");
+                            info!("Saved the changed room at {}", room_path);
 
                             std::process::exit(0);
                             #[allow(unreachable_code)]
@@ -146,39 +145,39 @@ fn main() {
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::RenameTile(config) => {
-                let level_path = opt
-                    .level
+                let room_path = opt
+                    .room
                     .as_ref()
-                    .expect("format requires a --level argument");
-                let mut level = Level::load(level_path).expect("Failed to load the level");
+                    .expect("format requires a --room argument");
+                let mut room = Room::load(room_path).expect("Failed to load the room");
 
-                for tile in &mut level.tiles.tiles {
+                for tile in &mut room.tiles.tiles {
                     if *tile == config.from {
                         *tile = config.to.to_owned();
                     }
                 }
 
-                level.save(level_path).expect("Failed to save the level");
-                info!("Saved the changed level at {}", level_path);
+                room.save(room_path).expect("Failed to save the room");
+                info!("Saved the changed room at {}", room_path);
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::Format => {
-                let level_path = opt
-                    .level
+                let room_path = opt
+                    .room
                     .as_ref()
-                    .expect("format requires a --level argument");
-                let level = Level::load(level_path).expect("Failed to load the level");
-                level.save(level_path).expect("Failed to save the level");
-                info!("Saved the changed level at {}", level_path);
+                    .expect("format requires a --room argument");
+                let room = Room::load(room_path).expect("Failed to load the room");
+                room.save(room_path).expect("Failed to save the room");
+                info!("Saved the changed room at {}", room_path);
             }
         }
         return;
     }
 
     if opt.editor {
-        geng::run(&geng, editor::run(&geng, opt.level, opt.hot_reload))
-    } else if let Some(level) = &opt.level {
-        geng::run(&geng, game::run(&geng, None, level))
+        geng::run(&geng, editor::run(&geng, opt.room, opt.hot_reload))
+    } else if let Some(room) = &opt.room {
+        geng::run(&geng, game::run(&geng, None, room))
     } else {
         geng::run(&geng, intro::run(&geng))
     }

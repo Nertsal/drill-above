@@ -19,8 +19,8 @@ impl Logic<'_> {
         actor_collides(
             collider,
             vec2::ZERO,
-            &self.world.level.grid,
-            &self.world.level.tiles,
+            &self.world.room.grid,
+            &self.world.room.tiles,
             &self.world.blocks,
             false,
             &self.world.rules,
@@ -60,8 +60,8 @@ impl Logic<'_> {
                 if let Some((block, mut col)) = actor_collides(
                     &actor.collider,
                     velocity,
-                    &self.world.level.grid,
-                    &self.world.level.tiles,
+                    &self.world.room.grid,
+                    &self.world.room.tiles,
                     &self.world.blocks,
                     drill,
                     &self.world.rules,
@@ -94,8 +94,8 @@ impl Logic<'_> {
                 if let Some((block, mut col)) = actor_collides(
                     &actor.collider,
                     velocity,
-                    &self.world.level.grid,
-                    &self.world.level.tiles,
+                    &self.world.room.grid,
+                    &self.world.room.tiles,
                     &self.world.blocks,
                     drill,
                     &self.world.rules,

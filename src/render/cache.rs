@@ -11,11 +11,11 @@ pub struct RenderCache {
 }
 
 impl RenderCache {
-    pub fn calculate(level: &Level, geng: &Geng, assets: &Assets) -> Self {
-        let (normal_geometry, normal_uv) = level.calculate_normal_geometry(geng, assets);
+    pub fn calculate(room: &Room, geng: &Geng, assets: &Assets) -> Self {
+        let (normal_geometry, normal_uv) = room.calculate_normal_geometry(geng, assets);
         Self {
-            geometry: level.tiles.calculate_geometry(&level.grid, geng, assets),
-            light_geometry: level.calculate_light_geometry(geng, assets),
+            geometry: room.tiles.calculate_geometry(&room.grid, geng, assets),
+            light_geometry: room.calculate_light_geometry(geng, assets),
             normal_geometry,
             normal_uv,
         }
