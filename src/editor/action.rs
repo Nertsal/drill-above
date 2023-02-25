@@ -1,6 +1,6 @@
 use super::*;
 
-impl Editor {
+impl RoomEditor {
     /// Undoes the last action and puts its reverse in the redo stack.
     pub fn undo(&mut self) {
         if let Some(mut state) = self.undo_stack.pop() {

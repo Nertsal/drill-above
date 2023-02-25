@@ -4,6 +4,24 @@ impl Editor {
     pub fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         use geng::ui::*;
 
+        let mut stack = geng::ui::stack![];
+
+        if let Some(room) = self
+            .active_room
+            .as_ref()
+            .and_then(|room| self.rooms.get_mut(room))
+        {
+            stack.push(room.ui(cx));
+        }
+
+        stack.boxed()
+    }
+}
+
+impl RoomEditor {
+    pub fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
+        use geng::ui::*;
+
         let framebuffer_size = self.framebuffer_size.map(|x| x as f32);
 
         let text_size = framebuffer_size.y * 0.025;

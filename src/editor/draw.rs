@@ -2,6 +2,22 @@ use super::*;
 
 impl Editor {
     pub fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
+        self.framebuffer_size = framebuffer.size();
+
+        if let Some(room) = self
+            .active_room
+            .as_ref()
+            .and_then(|room| self.rooms.get_mut(room))
+        {
+            room.draw(framebuffer);
+        }
+    }
+}
+
+impl RoomEditor {
+    pub fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
+        self.framebuffer_size = framebuffer.size();
+
         // Render the game onto the texture
         let mut pixel_framebuffer = ugli::Framebuffer::new_color(
             self.geng.ugli(),

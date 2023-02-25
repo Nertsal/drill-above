@@ -29,6 +29,24 @@ impl Render {
 pub struct Editor {
     geng: Geng,
     assets: Rc<Assets>,
+
+    camera: Camera2d,
+    /// Size of the actual screen size of the application.
+    framebuffer_size: vec2<usize>,
+
+    /// Currently active room.
+    active_room: Option<String>,
+    /// All opened rooms.
+    rooms: HashMap<String, RoomEditor>,
+
+    #[cfg(not(target_arch = "wasm32"))]
+    /// State for hot reloading assets.
+    hot_reload: Option<HotReload>,
+}
+
+pub struct RoomEditor {
+    geng: Geng,
+    assets: Rc<Assets>,
     /// The downscaled texture used for pixel-perfect rendering of the world.
     pixel_texture: ugli::Texture,
     /// The renderer used by the editor.
@@ -48,10 +66,6 @@ pub struct Editor {
     world: World,
     /// Whether we should transition into the playtest state.
     playtest: bool,
-
-    #[cfg(not(target_arch = "wasm32"))]
-    /// State for hot reloading assets.
-    hot_reload: Option<HotReload>,
 
     /// Current position of the cursor in screen coordinates.
     cursor_pos: vec2<f64>,
@@ -154,23 +168,112 @@ enum EditorMode {
 }
 
 impl Editor {
-    pub fn new(
-        geng: &Geng,
-        assets: &Rc<Assets>,
-        room_name: Option<String>,
-        hot_reload: bool,
-    ) -> Self {
-        // Load the room and update its geometry
-        let room_name = room_name.unwrap_or_else(|| "new_room.json".to_string());
-        let mut room =
-            util::report_err(Room::load(&room_name), "Failed to load room").unwrap_or_default();
-        // Update geometry in case it was not specified in the json file.
-        room.tiles.update_geometry(assets);
-
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, room: Option<String>, hot_reload: bool) -> Self {
         #[cfg(target_arch = "wasm32")]
         if hot_reload {
             warn!("Hot reloading assets does nothing on the web");
         }
+
+        let mut rooms = HashMap::new();
+        let room_name = room.unwrap_or_else(|| "new_room.json".to_string());
+        rooms.insert(
+            room_name.clone(),
+            RoomEditor::new(geng, assets, room_name.clone()),
+        );
+
+        Self {
+            geng: geng.clone(),
+            assets: assets.clone(),
+
+            camera: Camera2d {
+                center: vec2::ZERO,
+                rotation: 0.0,
+                fov: 10.0,
+            },
+            framebuffer_size: vec2(1, 1),
+
+            active_room: Some(room_name),
+            rooms,
+
+            #[cfg(not(target_arch = "wasm32"))]
+            hot_reload: hot_reload.then(|| {
+                use notify::Watcher;
+
+                let (tx, rx) = std::sync::mpsc::channel();
+                let mut watcher: notify::RecommendedWatcher = notify::Watcher::new(
+                    tx,
+                    notify::Config::default().with_poll_interval(std::time::Duration::from_secs(1)),
+                )
+                .expect("Failed to initialize the watcher");
+
+                // Watch `assets` folder recursively
+                watcher
+                    .watch(&run_dir().join("assets"), notify::RecursiveMode::Recursive)
+                    .expect("Failed to start watching assets directory");
+
+                info!("Initialized the watcher for assets");
+
+                HotReload {
+                    receiver: rx,
+                    _watcher: watcher,
+                }
+            }),
+        }
+    }
+
+    /// Handles events from the hot reload watcher.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn handle_notify(&mut self, event: notify::Result<notify::Event>) {
+        debug!("Received event from hot reload: {event:?}");
+        let event = match event {
+            Ok(event) => event,
+            Err(err) => {
+                error!("Received error from hot reload channel: {err}");
+                return;
+            }
+        };
+
+        if let notify::EventKind::Modify(_) = event.kind {
+            self.reload_assets();
+        }
+    }
+
+    /// Reload all assets.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn reload_assets(&mut self) {
+        let assets = futures::executor::block_on({
+            let geng = self.geng.clone();
+            async move { <Assets as geng::LoadAsset>::load(&geng, &run_dir().join("assets")).await }
+        });
+
+        let assets = match assets {
+            Ok(assets) => assets,
+            Err(err) => {
+                error!("Failed to reload assets: {err}");
+                return;
+            }
+        };
+
+        let assets = Rc::new(assets);
+        for room in self.rooms.values_mut() {
+            room.world.assets = assets.clone();
+            room.render = Render::new(&self.geng, &self.assets);
+            room.preview_render = GameRender::new(&self.geng, &self.assets);
+            room.update_geometry();
+        }
+        self.assets = assets;
+
+        info!("Successfully reloaded assets");
+    }
+}
+
+impl RoomEditor {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, room_name: String) -> Self {
+        // Load the room and update its geometry
+        let mut room =
+            util::report_err(Room::load(&room_name), "Failed to load room").unwrap_or_default();
+        // Update geometry in case it was not specified in the json file.
+        room.tiles.update_geometry(assets);
 
         Self {
             geng: geng.clone(),
@@ -253,76 +356,7 @@ impl Editor {
             playtest: false,
             preview: false,
             room_name,
-
-            #[cfg(not(target_arch = "wasm32"))]
-            hot_reload: hot_reload.then(|| {
-                use notify::Watcher;
-
-                let (tx, rx) = std::sync::mpsc::channel();
-                let mut watcher: notify::RecommendedWatcher = notify::Watcher::new(
-                    tx,
-                    notify::Config::default().with_poll_interval(std::time::Duration::from_secs(1)),
-                )
-                .expect("Failed to initialize the watcher");
-
-                // Watch `assets` folder recursively
-                watcher
-                    .watch(&run_dir().join("assets"), notify::RecursiveMode::Recursive)
-                    .expect("Failed to start watching assets directory");
-
-                info!("Initialized the watcher for assets");
-
-                HotReload {
-                    receiver: rx,
-                    _watcher: watcher,
-                }
-            }),
         }
-    }
-
-    /// Handles events from the hot reload watcher.
-    #[cfg(not(target_arch = "wasm32"))]
-    fn handle_notify(&mut self, event: notify::Result<notify::Event>) {
-        debug!("Received event from hot reload: {event:?}");
-        let event = match event {
-            Ok(event) => event,
-            Err(err) => {
-                error!("Received error from hot reload channel: {err}");
-                return;
-            }
-        };
-
-        if let notify::EventKind::Modify(_) = event.kind {
-            self.reload_assets();
-        }
-    }
-
-    /// Reload all assets.
-    #[cfg(not(target_arch = "wasm32"))]
-    fn reload_assets(&mut self) {
-        let assets = futures::executor::block_on({
-            let geng = self.geng.clone();
-            async move { <Assets as geng::LoadAsset>::load(&geng, &run_dir().join("assets")).await }
-        });
-
-        let assets = match assets {
-            Ok(assets) => assets,
-            Err(err) => {
-                error!("Failed to reload assets: {err}");
-                return;
-            }
-        };
-
-        let assets = Rc::new(assets);
-        self.world.assets = assets.clone();
-        self.assets = assets;
-
-        self.render = Render::new(&self.geng, &self.assets);
-        self.preview_render = GameRender::new(&self.geng, &self.assets);
-
-        self.update_geometry();
-
-        info!("Successfully reloaded assets");
     }
 
     /// Change the currently selected placeable block in the currently active tab.
@@ -670,6 +704,52 @@ impl geng::State for Editor {
     }
 
     fn update(&mut self, delta_time: f64) {
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(hot) = &self.hot_reload {
+            // Check hot reload events
+            use std::sync::mpsc::TryRecvError;
+            match hot.receiver.try_recv() {
+                Ok(event) => self.handle_notify(event),
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => {
+                    error!("Disconnected from the hot reload channel");
+                }
+            }
+        }
+
+        if let Some(room) = self
+            .active_room
+            .as_ref()
+            .and_then(|room| self.rooms.get_mut(room))
+        {
+            room.update(delta_time);
+        }
+    }
+
+    fn handle_event(&mut self, event: geng::Event) {
+        if let Some(room) = self
+            .active_room
+            .as_ref()
+            .and_then(|room| self.rooms.get_mut(room))
+        {
+            room.handle_event(event);
+        }
+    }
+
+    fn transition(&mut self) -> Option<geng::Transition> {
+        self.active_room
+            .as_ref()
+            .and_then(|room| self.rooms.get_mut(room))
+            .and_then(|room| room.transition())
+    }
+
+    fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
+        self.ui(cx)
+    }
+}
+
+impl RoomEditor {
+    fn update(&mut self, delta_time: f64) {
         let delta_time = delta_time as f32;
         let window = self.geng.window();
 
@@ -693,19 +773,6 @@ impl geng::State for Editor {
         }
 
         self.update_selected_block();
-
-        #[cfg(not(target_arch = "wasm32"))]
-        if let Some(hot) = &self.hot_reload {
-            // Check hot reload events
-            use std::sync::mpsc::TryRecvError;
-            match hot.receiver.try_recv() {
-                Ok(event) => self.handle_notify(event),
-                Err(TryRecvError::Empty) => {}
-                Err(TryRecvError::Disconnected) => {
-                    error!("Disconnected from the hot reload channel");
-                }
-            }
-        }
     }
 
     fn handle_event(&mut self, event: geng::Event) {
@@ -773,10 +840,6 @@ impl geng::State for Editor {
             // so that when we exit the playtest, we return to the editor.
             geng::Transition::Push(Box::new(state))
         })
-    }
-
-    fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
-        self.ui(cx)
     }
 }
 
