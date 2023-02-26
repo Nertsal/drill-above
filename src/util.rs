@@ -19,3 +19,8 @@ pub fn report_warn<T, E: Display>(result: Result<T, E>, msg: impl AsRef<str>) ->
         Ok(value) => Ok(value),
     }
 }
+
+pub fn aabb_outline(aabb: Aabb2<f32>) -> Chain<f32> {
+    let [a, b, c, d] = aabb.corners();
+    Chain::new(vec![(a + b) / 2.0, a, d, c, b, (a + b) / 2.0])
+}

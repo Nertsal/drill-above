@@ -37,7 +37,7 @@ impl Logic<'_> {
     }
 
     fn next_room(&mut self) {
-        if let Some(room) = self.world.room.next_room.clone() {
+        if let Some(room) = self.world.room.next_level.clone() {
             self.world.room_transition = Some(room);
         } else {
             self.world.room_transition = Some("credits.json".to_string());

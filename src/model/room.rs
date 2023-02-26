@@ -21,7 +21,7 @@ pub struct Room {
     #[serde(default)]
     pub spotlights: Vec<SpotlightSource>,
     // TODO: proper room transitions
-    pub next_room: Option<String>,
+    pub next_level: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -94,7 +94,7 @@ impl Room {
             hazards: Vec::new(),
             coins: Vec::new(),
             props: Vec::new(),
-            next_room: None,
+            next_level: None,
             drill_allowed: true,
             global_light: default(),
             spotlights: Vec::new(),
@@ -461,16 +461,13 @@ impl Room {
 
     pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
         let path = run_dir().join("assets").join("rooms").join(path);
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let file = std::fs::File::open(path)?;
-            let reader = std::io::BufReader::new(file);
-            Ok(serde_json::from_reader(reader)?)
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            anyhow::bail!("unimplemented")
-        }
+        futures::executor::block_on(async move {
+            debug!("Loading room {path:?}");
+            let room = file::load_json(&path)
+                .await
+                .context(format!("Failed to load room {path:?}"))?;
+            Ok(room)
+        })
     }
 
     pub fn save(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
@@ -480,6 +477,7 @@ impl Room {
             let file = std::fs::File::create(path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, self)?;
+            info!("Saved the level");
             Ok(())
         }
         #[cfg(target_arch = "wasm32")]

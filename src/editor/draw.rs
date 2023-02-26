@@ -1,15 +1,50 @@
 use super::*;
 
-impl Editor {
+impl LevelEditor {
     pub fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.framebuffer_size = framebuffer.size();
 
-        if let Some(room) = self
-            .active_room
-            .as_ref()
-            .and_then(|room| self.rooms.get_mut(room))
-        {
+        if let Some(room) = active_room_mut!(self) {
+            // Room editor
             room.draw(framebuffer);
+        } else {
+            // Level editor
+            self.draw_level_editor(framebuffer);
+        }
+    }
+
+    fn draw_level_editor(&mut self, framebuffer: &mut ugli::Framebuffer) {
+        let font = self.geng.default_font();
+        for (name, room) in &self.rooms {
+            let aabb =
+                Aabb2::point(room.pos).extend_positive(room.editor.world.room.bounds().size());
+            let hovered = aabb.contains(self.cursor_world_pos);
+            let color = if hovered { Rgba::RED } else { Rgba::GRAY };
+            self.geng.draw_2d(
+                framebuffer,
+                &self.camera,
+                &draw_2d::Chain::new(util::aabb_outline(aabb.map(Coord::as_f32)), 0.5, color, 1),
+            );
+            if hovered {
+                let max_size = aabb.width().as_f32()
+                    / font
+                        .measure_bounding_box(
+                            name,
+                            vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT),
+                        )
+                        .unwrap()
+                        .width();
+                let size = max_size.min(5.0);
+                font.draw(
+                    framebuffer,
+                    &self.camera,
+                    name,
+                    aabb.bottom_left().map(Coord::as_f32),
+                    geng::TextAlign::LEFT,
+                    size,
+                    Rgba::WHITE,
+                );
+            }
         }
     }
 }
@@ -72,7 +107,7 @@ impl RoomEditor {
 
         // Draw moving
         if let Some(dragging) = &self.dragging {
-            if let Some(DragAction::MoveBlocks {
+            if let Some(RoomDragAction::MoveBlocks {
                 blocks,
                 initial_pos,
             }) = &dragging.action
@@ -190,7 +225,7 @@ impl RoomEditor {
             }
 
             if let Some(dragging) = &self.dragging {
-                if let Some(DragAction::RectSelection) = &dragging.action {
+                if let Some(RoomDragAction::RectSelection) = &dragging.action {
                     // Draw the rectangular selection
                     self.geng.draw_2d(
                         framebuffer,

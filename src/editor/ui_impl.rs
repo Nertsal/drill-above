@@ -1,16 +1,12 @@
 use super::*;
 
-impl Editor {
+impl LevelEditor {
     pub fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         use geng::ui::*;
 
-        let mut stack = geng::ui::stack![];
+        let mut stack = geng::ui::stack![geng::ui::Void];
 
-        if let Some(room) = self
-            .active_room
-            .as_ref()
-            .and_then(|room| self.rooms.get_mut(room))
-        {
+        if let Some(room) = active_room_mut!(self) {
             stack.push(room.ui(cx));
         }
 
@@ -83,7 +79,7 @@ impl RoomEditor {
 
         let mut update_geometry = false;
         if let Some(tab) = self.tabs.get(self.active_tab) {
-            if let EditorMode::Room = tab.mode {
+            if let RoomEditorMode::Room = tab.mode {
                 room_info.extend([
                     geng::ui::row![
                         text(format!("width: {}", self.world.room.size.x))
@@ -350,7 +346,7 @@ impl RoomEditor {
 
         if block_info.is_none() {
             if let Some(tab) = &mut self.tabs.get_mut(self.active_tab) {
-                if let EditorMode::Lights { .. } = &mut tab.mode {
+                if let RoomEditorMode::Lights { .. } = &mut tab.mode {
                     // Global light
                     let config = &mut self.world.room.global_light;
                     let color = ui::color_selector(
