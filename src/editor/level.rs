@@ -67,7 +67,13 @@ pub struct LevelDragging {
 /// The action of the drag (e.g. rectangular selection) in the level editor.
 #[derive(Debug)]
 pub enum LevelDragAction {
-    MoveCamera { initial_camera_pos: vec2<Coord> },
+    MoveRoom {
+        room: String,
+        initial_pos: vec2<Coord>,
+    },
+    MoveCamera {
+        initial_camera_pos: vec2<Coord>,
+    },
 }
 
 impl LevelEditor {
@@ -197,10 +203,9 @@ impl LevelEditor {
                         };
                         if laid {
                             let connected = rooms.get(&connected).unwrap();
-                            // TODO: proper connection
                             let pos = connected.pos;
                             let room = rooms.get_mut(room_name).unwrap();
-                            room.pos = pos - vec2::UNIT_X * room.editor.world.room.bounds().width();
+                            room.pos = pos + transition.offset;
                             break 'pos;
                         }
                     }
@@ -234,9 +239,8 @@ impl LevelEditor {
                     continue;
                 }
 
-                // TODO: proper connections
                 let room = rooms.get(room_name).unwrap();
-                let pos = room.pos + vec2::UNIT_X * room.editor.world.room.bounds().width();
+                let pos = room.pos - transition.offset;
                 layout_room(&connected, Some(pos), rooms, layout, blocked);
             }
         }
@@ -285,6 +289,11 @@ impl LevelEditor {
                         self.camera.center =
                             (initial_camera_pos + from - self.cursor_world_pos).map(Coord::as_f32);
                     }
+                    LevelDragAction::MoveRoom { room, initial_pos } => {
+                        let room = self.rooms.get_mut(room).expect("Dragging a deleted room");
+                        room.pos =
+                            *initial_pos + self.cursor_world_pos - dragging.initial_world_pos;
+                    }
                 }
             }
             self.dragging = Some(dragging);
@@ -300,7 +309,18 @@ impl LevelEditor {
 
         // Check what action should be performed
         let action = match button {
-            geng::MouseButton::Left => None,
+            geng::MouseButton::Left => self
+                .rooms
+                .iter()
+                .find(|(_, room)| {
+                    Aabb2::point(room.pos)
+                        .extend_positive(room.editor.world.room.bounds().size())
+                        .contains(self.cursor_world_pos)
+                })
+                .map(|(name, room)| LevelDragAction::MoveRoom {
+                    room: name.to_owned(),
+                    initial_pos: room.pos,
+                }),
             geng::MouseButton::Right => None,
             geng::MouseButton::Middle => Some(LevelDragAction::MoveCamera {
                 initial_camera_pos: self.camera.center.map(Coord::new),
@@ -355,7 +375,13 @@ impl LevelEditor {
 
     /// Cancels the current action.
     fn cancel(&mut self) {
-        if let Some(_dragging) = &mut self.dragging {}
+        if let Some(dragging) = &mut self.dragging {
+            if let Some(LevelDragAction::MoveRoom { room, initial_pos }) = &mut dragging.action {
+                let room = self.rooms.get_mut(room).expect("Dragging a deleted room");
+                room.pos = *initial_pos;
+                self.dragging = None;
+            }
+        }
     }
 
     /// Save the level to file.
