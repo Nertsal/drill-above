@@ -9,7 +9,7 @@ pub struct World {
     pub camera: Camera2d,
     pub cache: RenderCache,
     pub room: Room,
-    pub room_transition: Option<String>,
+    pub room_transition: Option<RoomTransition>,
     pub coins_collected: usize,
     pub drill_sound: Option<geng::SoundEffect>,
     pub time: Time,
@@ -41,13 +41,25 @@ pub struct Block {
 }
 
 impl World {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, rules: Rules, mut room: Room) -> Self {
+    pub fn new(
+        geng: &Geng,
+        assets: &Rc<Assets>,
+        rules: Rules,
+        mut room: Room,
+        player_pos: Option<vec2<Coord>>,
+    ) -> Self {
         room.tiles.update_geometry(assets);
         let cache = RenderCache::calculate(&room, geng, assets);
-        Self::with_cache(assets, rules, room, cache)
+        Self::with_cache(assets, rules, room, player_pos, cache)
     }
 
-    pub fn with_cache(assets: &Rc<Assets>, rules: Rules, room: Room, cache: RenderCache) -> Self {
+    pub fn with_cache(
+        assets: &Rc<Assets>,
+        rules: Rules,
+        room: Room,
+        player_pos: Option<vec2<Coord>>,
+        cache: RenderCache,
+    ) -> Self {
         let mut id_gen = IdGen::new();
         let mut actors = Collection::new();
 
@@ -57,7 +69,8 @@ impl World {
             let width = Coord::new(0.9);
             Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
         };
-        collider.teleport(room.spawn_point);
+        let pos = player_pos.unwrap_or(room.spawn_point);
+        collider.teleport(pos);
         let player_actor = Actor::new(player_id, collider);
 
         actors.insert(player_actor);

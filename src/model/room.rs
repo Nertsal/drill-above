@@ -26,7 +26,12 @@ pub struct Room {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoomTransition {
     pub collider: Collider,
+    /// Name of the room to which the transition moves.
     pub to_room: String,
+    /// Index of the corresponding transition in the `to_room`.
+    pub to_transition: usize,
+    /// Offset applied to entities to move them into the new room's coordinate system.
+    pub offset: vec2<Coord>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

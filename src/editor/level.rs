@@ -1,6 +1,6 @@
 use super::*;
 
-const LEVEL_CAMERA_MOVE_SPEED: f32 = 50.0;
+const LEVEL_CAMERA_MOVE_SPEED: f32 = 100.0;
 const LEVEL_FOV_MIN: f32 = 50.0;
 const LEVEL_FOV_MAX: f32 = 300.0;
 

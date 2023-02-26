@@ -673,7 +673,7 @@ impl Logic<'_> {
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
         for transition in &self.world.room.transitions {
             if actor.collider.check(&transition.collider) {
-                self.world.room_transition = Some(transition.to_room.clone());
+                self.world.room_transition = Some(transition.clone());
                 break;
             }
         }

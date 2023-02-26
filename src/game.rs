@@ -46,6 +46,7 @@ impl Game {
         assets: &Rc<Assets>,
         room_name: String,
         room: Room,
+        player_pos: Option<vec2<Coord>>,
         coins: usize,
         time: Time,
         deaths: usize,
@@ -54,7 +55,7 @@ impl Game {
     ) -> Self {
         geng.window().set_cursor_type(geng::CursorType::None);
 
-        let mut world = World::new(geng, assets, assets.rules.clone(), room);
+        let mut world = World::new(geng, assets, assets.rules.clone(), room, player_pos);
         world.coins_collected = coins;
         let mut music = music.unwrap_or_else(|| assets.music.play());
         music.set_volume((world.volume - 0.3).max(0.0));
@@ -383,23 +384,20 @@ impl geng::State for Game {
             return Some(geng::Transition::Pop);
         }
 
-        if let Some(room) = self.world.room_transition.take() {
-            if room == self.room_name {
-                let coins = self.world.coins_collected;
-                self.world = World::new(
-                    &self.geng,
-                    &self.assets,
-                    self.assets.rules.clone(),
-                    self.world.room.clone(),
-                );
-                self.world.coins_collected = coins;
-                return None;
-            }
-
+        if let Some(transition) = self.world.room_transition.take() {
+            let player_pos = self
+                .world
+                .actors
+                .get(&self.world.player.id)
+                .unwrap()
+                .collider
+                .feet()
+                + transition.offset;
             return Some(geng::Transition::Switch(Box::new(game::room_change(
                 &self.geng,
                 Some(&self.assets),
-                room,
+                transition.to_room,
+                Some(player_pos),
                 self.world.coins_collected,
                 self.accumulated_time + self.world.time,
                 self.deaths + self.world.deaths,
@@ -429,7 +427,7 @@ pub fn run(
     assets: Option<&Rc<Assets>>,
     room: impl AsRef<std::path::Path>,
 ) -> impl geng::State {
-    room_change(geng, assets, room, 0, Time::ZERO, 0, false, None)
+    room_change(geng, assets, room, None, 0, Time::ZERO, 0, false, None)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -437,6 +435,7 @@ fn room_change(
     geng: &Geng,
     assets: Option<&Rc<Assets>>,
     room: impl AsRef<std::path::Path>,
+    player_pos: Option<vec2<Coord>>,
     coins: usize,
     time: Time,
     deaths: usize,
@@ -460,7 +459,7 @@ fn room_change(
                     .await
                     .expect("Failed to load room");
             Game::new(
-                &geng, &assets, room_name, room, coins, time, deaths, show_time, music,
+                &geng, &assets, room_name, room, player_pos, coins, time, deaths, show_time, music,
             )
         }
     };
