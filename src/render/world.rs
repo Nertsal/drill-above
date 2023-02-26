@@ -153,25 +153,8 @@ impl WorldRender {
         self.draw_tiles(tiles_geometry, masked_geometry, camera, framebuffer);
         self.draw_hazards(&room.hazards, draw_hitboxes, camera, framebuffer);
         self.draw_coins(&room.coins, draw_hitboxes, camera, framebuffer);
-
-        // Finish
-        let finish = room.finish().raw().map(Coord::as_f32);
-        self.geng.draw_2d(
-            framebuffer,
-            camera,
-            &draw_2d::TexturedQuad::new(
-                Aabb2::ZERO
-                    .extend_symmetric(finish.size() / 2.0 * vec2(-1.0, 1.0))
-                    .translate(finish.center()),
-                &self.assets.sprites.partner,
-            ),
-        );
         if draw_hitboxes {
-            self.geng.draw_2d(
-                framebuffer,
-                camera,
-                &draw_2d::Quad::new(finish, Rgba::new(0.0, 0.0, 1.0, 0.9)),
-            );
+            self.draw_transitions(&room.transitions, camera, framebuffer);
         }
     }
 
@@ -452,9 +435,8 @@ impl WorldRender {
         framebuffer: &mut ugli::Framebuffer,
     ) {
         for particle in particles {
-            let texture = match particle.particle_type {
-                ParticleType::Heart4 => &self.assets.sprites.heart4,
-                ParticleType::Heart8 => &self.assets.sprites.heart8,
+            // let texture =
+            match particle.particle_type {
                 ParticleType::Circle { radius, color } => {
                     let t =
                         particle.lifetime.min(Time::ONE) / particle.initial_lifetime.min(Time::ONE);
@@ -471,14 +453,40 @@ impl WorldRender {
                     continue;
                 }
             };
-            let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32);
+            // let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32);
+            // self.geng.draw_2d(
+            //     framebuffer,
+            //     camera,
+            //     &draw_2d::TexturedQuad::new(
+            //         Aabb2::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
+            //         texture,
+            //     ),
+            // );
+        }
+    }
+
+    fn draw_transitions(
+        &self,
+        transitions: &[RoomTransition],
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for transition in transitions {
+            let collider = transition.collider.raw().map(Coord::as_f32);
             self.geng.draw_2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(
-                    Aabb2::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
-                    texture,
-                ),
+                &draw_2d::Quad::new(collider, Rgba::new(0.0, 0.0, 1.0, 0.5)),
+            );
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::Text::unit(
+                    &**self.geng.default_font(),
+                    &transition.to_room,
+                    Rgba::WHITE,
+                )
+                .fit_into(collider),
             );
         }
     }

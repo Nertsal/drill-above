@@ -149,7 +149,14 @@ impl LevelEditor {
             };
 
             // Queue adjacent rooms to load
-            to_load.extend(room.editor.world.room.next_level.iter().cloned());
+            to_load.extend(
+                room.editor
+                    .world
+                    .room
+                    .transitions
+                    .iter()
+                    .map(|trans| trans.to_room.clone()),
+            );
 
             // Insert
             rooms.insert(room_name, room);
@@ -176,7 +183,8 @@ impl LevelEditor {
                 if pos.is_none() {
                     // Check if some connected room is laid out already
                     let room = rooms.get(room_name).unwrap();
-                    for connected in room.editor.world.room.next_level.clone() {
+                    for transition in room.editor.world.room.transitions.clone() {
+                        let connected = transition.to_room;
                         let laid = if layout.contains(&connected) {
                             true
                         } else if !blocked.contains(&connected) {
@@ -220,7 +228,8 @@ impl LevelEditor {
 
             // Layout connected rooms
             let room = rooms.get(room_name).unwrap();
-            for connected in room.editor.world.room.next_level.clone() {
+            for transition in room.editor.world.room.transitions.clone() {
+                let connected = transition.to_room;
                 if layout.contains(&connected) {
                     continue;
                 }
@@ -328,7 +337,7 @@ impl LevelEditor {
     }
 
     fn edit_room_hovered(&mut self) {
-        let hovered = self.rooms.iter().find(|(name, room)| {
+        let hovered = self.rooms.iter().find(|(_, room)| {
             Aabb2::point(room.pos)
                 .extend_positive(room.editor.world.room.bounds().size())
                 .contains(self.cursor_world_pos)

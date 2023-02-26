@@ -33,7 +33,6 @@ pub struct Sounds {
     #[asset(postprocess = "loop_sound")]
     pub drill: geng::Sound,
     pub drill_jump: geng::Sound,
-    pub charm: geng::Sound,
     #[asset(path = "cutscene.mp3")]
     pub cutscene: geng::Sound,
 }
@@ -50,10 +49,6 @@ pub struct Sprites {
     pub room: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub coin: ugli::Texture,
-    #[asset(postprocess = "pixel")]
-    pub heart4: ugli::Texture,
-    #[asset(postprocess = "pixel")]
-    pub heart8: ugli::Texture,
     #[asset(postprocess = "pixel")]
     pub background: ugli::Texture,
     #[asset(postprocess = "pixel")]

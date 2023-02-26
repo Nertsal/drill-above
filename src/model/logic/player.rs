@@ -148,22 +148,10 @@ impl Logic<'_> {
             return;
         }
 
-        // Stay in finish state
-        if let Some(state) = self.world.player.state.finished_state() {
-            self.world.player.state = state;
-            return;
-        }
-
         self.update_state();
-
         self.player_coins();
-
-        // Finish
-        if self.check_finish() {
-            return;
-        }
-
         self.player_hazards();
+        self.room_transition();
     }
 
     fn pause_state(&mut self) -> bool {
@@ -177,31 +165,6 @@ impl Logic<'_> {
                     self.world.player.velocity = vec2::ZERO;
                     actor.collider.teleport(self.world.room.spawn_point);
                 }
-                true
-            }
-            PlayerState::Finished { time, next_heart } => {
-                *time -= self.delta_time;
-                if *time <= Time::ZERO {
-                    // Room transition
-                    self.next_room();
-                    return true;
-                }
-                *next_heart -= self.delta_time;
-                if *next_heart <= Time::ZERO {
-                    *next_heart += Time::new(0.5);
-                    self.world.particles.push(Particle {
-                        initial_lifetime: Time::new(2.0),
-                        lifetime: Time::new(2.0),
-                        position: self.world.room.finish
-                            + vec2(Coord::ZERO, actor.collider.raw().height()),
-                        velocity: vec2(0.0, 1.5)
-                            .rotate(thread_rng().gen_range(-0.5..=0.5))
-                            .map(Coord::new),
-                        particle_type: ParticleType::Heart4,
-                    });
-                }
-                self.world.player.velocity += self.world.rules.gravity * self.delta_time;
-                self.world.player.velocity.x = Coord::ZERO;
                 true
             }
             _ => false,
@@ -706,29 +669,14 @@ impl Logic<'_> {
         }
     }
 
-    fn check_finish(&mut self) -> bool {
+    fn room_transition(&mut self) {
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
-        if self.world.player.state.is_drilling()
-            || self.world.player.state.has_finished()
-            || !actor.collider.check(&self.world.room.finish())
-        {
-            return false;
+        for transition in &self.world.room.transitions {
+            if actor.collider.check(&transition.collider) {
+                self.world.room_transition = Some(transition.to_room.clone());
+                break;
+            }
         }
-
-        self.world.player.state = PlayerState::Finished {
-            time: Time::new(2.0),
-            next_heart: Time::new(0.5),
-        };
-        self.world.particles.push(Particle {
-            initial_lifetime: Time::new(2.0),
-            lifetime: Time::new(2.0),
-            position: actor.collider.head() + vec2(Coord::ZERO, actor.collider.raw().height()),
-            velocity: vec2(0.0, 1.5).map(Coord::new),
-            particle_type: ParticleType::Heart8,
-        });
-        self.world.play_sound(&self.world.assets.sounds.charm);
-
-        true
     }
 
     fn player_coins(&mut self) {

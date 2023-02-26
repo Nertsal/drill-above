@@ -26,22 +26,10 @@ impl World {
 
 impl Logic<'_> {
     fn process(&mut self) {
-        if !matches!(self.world.player.state, PlayerState::Finished { .. }) {
-            self.world.time += self.delta_time;
-        }
-
         self.process_player();
         self.movement();
         self.process_particles();
         self.process_camera();
-    }
-
-    fn next_room(&mut self) {
-        if let Some(room) = self.world.room.next_level.clone() {
-            self.world.room_transition = Some(room);
-        } else {
-            self.world.room_transition = Some("credits.json".to_string());
-        }
     }
 
     fn movement(&mut self) {

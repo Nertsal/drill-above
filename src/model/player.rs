@@ -39,10 +39,6 @@ pub enum PlayerState {
         dash: Option<Time>,
     },
     Drilling,
-    Finished {
-        time: Time,
-        next_heart: Time,
-    },
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -104,14 +100,6 @@ impl PlayerState {
 
     pub fn using_drill(&self) -> bool {
         self.is_drilling() || self.is_air_drilling()
-    }
-
-    pub fn finished_state(&self) -> Option<Self> {
-        self.has_finished().then(|| self.clone())
-    }
-
-    pub fn has_finished(&self) -> bool {
-        matches!(self, Self::Finished { .. })
     }
 }
 

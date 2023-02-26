@@ -8,7 +8,6 @@ pub struct Room {
     pub grid: Grid,
     pub size: vec2<usize>,
     pub spawn_point: vec2<Coord>,
-    pub finish: vec2<Coord>,
     pub tiles: TileMap,
     #[serde(default)]
     pub hazards: Vec<Hazard>,
@@ -20,8 +19,14 @@ pub struct Room {
     pub global_light: GlobalLightSource,
     #[serde(default)]
     pub spotlights: Vec<SpotlightSource>,
-    // TODO: proper room transitions
-    pub next_level: Option<String>,
+    #[serde(default)]
+    pub transitions: Vec<RoomTransition>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoomTransition {
+    pub collider: Collider,
+    pub to_room: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -89,22 +94,17 @@ impl Room {
         grid.offset = size.map(|x| Coord::new(x as f32 / 2.0)) * grid.cell_size;
         Self {
             spawn_point: grid.grid_to_world(size.map(|x| x as isize / 2)),
-            finish: grid.grid_to_world(size.map(|x| x as isize / 2)),
             tiles: TileMap::new(size),
             hazards: Vec::new(),
             coins: Vec::new(),
             props: Vec::new(),
-            next_level: None,
+            transitions: Vec::new(),
             drill_allowed: true,
             global_light: default(),
             spotlights: Vec::new(),
             grid,
             size,
         }
-    }
-
-    pub fn finish(&self) -> Collider {
-        Collider::new(Aabb2::point(self.finish).extend_positive(self.grid.cell_size))
     }
 
     pub fn bounds(&self) -> Aabb2<Coord> {
@@ -325,7 +325,6 @@ impl Room {
 
         let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
         self.spawn_point += delta;
-        self.finish += delta;
         for coin in &mut self.coins {
             coin.translate(delta);
         }

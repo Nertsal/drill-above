@@ -621,9 +621,6 @@ impl RoomEditor {
                 geng::Key::R => {
                     self.world.room.spawn_point = self.cursor_world_pos;
                 }
-                geng::Key::F => {
-                    self.world.room.finish = self.cursor_world_pos;
-                }
                 geng::Key::Left => {
                     self.scroll_selected(-1);
                 }
