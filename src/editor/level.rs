@@ -4,6 +4,8 @@ const LEVEL_CAMERA_MOVE_SPEED: f32 = 100.0;
 const LEVEL_FOV_MIN: f32 = 50.0;
 const LEVEL_FOV_MAX: f32 = 300.0;
 
+const SNAP_DISTANCE: f32 = 2.0;
+
 #[macro_export]
 macro_rules! active_room_mut {
     ($editor:ident) => {{
@@ -26,6 +28,8 @@ pub struct LevelEditor {
     pub active_room: Option<String>,
     /// All opened rooms.
     pub rooms: HashMap<String, RoomState>,
+    /// Snap grid.
+    pub grid: Grid,
 
     /// Current position of the cursor in screen coordinates.
     pub cursor_pos: vec2<f64>,
@@ -40,7 +44,7 @@ pub struct LevelEditor {
 }
 
 pub struct RoomState {
-    pub pos: vec2<Coord>,
+    pub pos: vec2<isize>,
     pub editor: RoomEditor,
 }
 
@@ -69,7 +73,7 @@ pub struct LevelDragging {
 pub enum LevelDragAction {
     MoveRoom {
         room: String,
-        initial_pos: vec2<Coord>,
+        initial_pos: vec2<isize>,
     },
     MoveCamera {
         initial_camera_pos: vec2<Coord>,
@@ -102,6 +106,7 @@ impl LevelEditor {
 
             active_room: None,
             rooms,
+            grid: Grid::new(vec2(Coord::ONE, Coord::ONE)),
 
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -171,7 +176,7 @@ impl LevelEditor {
         // Layout
         fn layout_room(
             room_name: &str,
-            pos: Option<vec2<Coord>>,
+            pos: Option<vec2<isize>>,
             rooms: &mut HashMap<String, RoomState>,
             layout: &mut HashSet<String>,
             blocked: &mut HashSet<String>,
@@ -213,8 +218,7 @@ impl LevelEditor {
                     // Calculate occupied space
                     let mut occupied = Aabb2::ZERO;
                     let mut extend_to = |room: &RoomState| {
-                        let bounds = Aabb2::point(room.pos)
-                            .extend_positive(room.editor.world.room.bounds().size());
+                        let bounds = room.aabb_i();
                         occupied = Aabb2 {
                             min: occupied.min.min(**bounds.min).into(),
                             max: occupied.max.max(**bounds.max).into(),
@@ -225,7 +229,7 @@ impl LevelEditor {
                     }
 
                     // Pick some empty space
-                    let pos = occupied.bottom_right() + vec2::UNIT_X * Coord::new(5.0);
+                    let pos = occupied.bottom_right() + vec2::UNIT_X * 5;
                     let room = rooms.get_mut(room_name).unwrap();
                     room.pos = pos;
                 }
@@ -262,6 +266,69 @@ impl LevelEditor {
         rooms
     }
 
+    fn snap_room_pos(&self, room: &str, pos: vec2<Coord>) -> vec2<isize> {
+        let room_size = self
+            .rooms
+            .get(room)
+            .expect("Snapping an unknown room")
+            .aabb_i()
+            .size();
+        // Snap each coordinate separately
+        let mut snap = vec2(None, None);
+
+        let snap_target = |pos: Coord, target: isize, snap: &mut Option<(isize, f32)>| {
+            let dist = (pos.as_f32() - target as f32).abs();
+            if dist > SNAP_DISTANCE {
+                return;
+            }
+            let v = (target, dist);
+            match snap {
+                Some(best) => {
+                    if best.1 < v.1 {
+                        *best = v;
+                    }
+                }
+                None => *snap = Some(v),
+            }
+        };
+
+        for target in self
+            .rooms
+            .iter()
+            .filter(|(name, _)| *name != room)
+            .map(|(_, room)| room.aabb_i())
+            .flat_map(|room| {
+                [
+                    // Right edge
+                    room.bottom_right(),
+                    room.top_right() - vec2::UNIT_Y * room_size.y,
+                    // Top edge
+                    room.top_left(),
+                    room.top_right() - vec2::UNIT_X * room_size.x,
+                    // Left edge
+                    room.bottom_left() - vec2::UNIT_X * room_size.x,
+                    room.top_left() - room_size,
+                    // Bottom edge
+                    room.bottom_left() - vec2::UNIT_Y * room_size.y,
+                    room.bottom_right() - room_size,
+                ]
+            })
+        {
+            snap_target(pos.x, target.x, &mut snap.x);
+            snap_target(pos.y, target.y, &mut snap.y);
+        }
+
+        let resolve = |snap: Option<_>, pos| snap.map_or(pos, |(target, _)| target);
+        let pos = self.grid.world_to_grid(pos).0;
+        vec2(resolve(snap.x, pos.x), resolve(snap.y, pos.y))
+    }
+
+    fn move_room(&mut self, room: String, pos: vec2<isize>) {
+        // Set position
+        let room = self.rooms.get_mut(&room).expect("Dragging a deleted room");
+        room.pos = pos;
+    }
+
     /// Update the cursor position.
     fn update_cursor(&mut self, cursor_pos: vec2<f64>) {
         self.cursor_pos = cursor_pos;
@@ -290,9 +357,10 @@ impl LevelEditor {
                             (initial_camera_pos + from - self.cursor_world_pos).map(Coord::as_f32);
                     }
                     LevelDragAction::MoveRoom { room, initial_pos } => {
-                        let room = self.rooms.get_mut(room).expect("Dragging a deleted room");
-                        room.pos =
-                            *initial_pos + self.cursor_world_pos - dragging.initial_world_pos;
+                        let pos = self.grid.grid_to_world(*initial_pos) + self.cursor_world_pos
+                            - dragging.initial_world_pos;
+                        let pos = self.snap_room_pos(room, pos);
+                        self.move_room(room.to_owned(), pos);
                     }
                 }
             }
@@ -312,11 +380,7 @@ impl LevelEditor {
             geng::MouseButton::Left => self
                 .rooms
                 .iter()
-                .find(|(_, room)| {
-                    Aabb2::point(room.pos)
-                        .extend_positive(room.editor.world.room.bounds().size())
-                        .contains(self.cursor_world_pos)
-                })
+                .find(|(_, room)| room.aabb().contains(self.cursor_world_pos))
                 .map(|(name, room)| LevelDragAction::MoveRoom {
                     room: name.to_owned(),
                     initial_pos: room.pos,
@@ -357,11 +421,10 @@ impl LevelEditor {
     }
 
     fn edit_room_hovered(&mut self) {
-        let hovered = self.rooms.iter().find(|(_, room)| {
-            Aabb2::point(room.pos)
-                .extend_positive(room.editor.world.room.bounds().size())
-                .contains(self.cursor_world_pos)
-        });
+        let hovered = self
+            .rooms
+            .iter()
+            .find(|(_, room)| room.aabb().contains(self.cursor_world_pos));
         if let Some((room, _)) = hovered {
             self.active_room = Some(room.to_owned());
         }
@@ -522,5 +585,15 @@ impl geng::State for LevelEditor {
 
     fn ui<'a>(&'a mut self, cx: &'a geng::ui::Controller) -> Box<dyn geng::ui::Widget + 'a> {
         self.ui(cx)
+    }
+}
+
+impl RoomState {
+    pub fn aabb(&self) -> Aabb2<Coord> {
+        self.aabb_i().map(|x| Coord::new(x as f32))
+    }
+
+    pub fn aabb_i(&self) -> Aabb2<isize> {
+        Aabb2::point(self.pos).extend_positive(self.editor.world.room.size.map(|x| x as isize))
     }
 }

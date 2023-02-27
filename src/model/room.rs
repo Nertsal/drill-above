@@ -31,7 +31,7 @@ pub struct RoomTransition {
     /// Index of the corresponding transition in the `to_room`.
     pub to_transition: usize,
     /// Offset applied to entities to move them into the new room's coordinate system.
-    pub offset: vec2<Coord>,
+    pub offset: vec2<isize>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

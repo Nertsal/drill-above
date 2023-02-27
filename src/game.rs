@@ -392,7 +392,7 @@ impl geng::State for Game {
                 .unwrap()
                 .collider
                 .feet()
-                + transition.offset;
+                + transition.offset.map(|x| Coord::new(x as f32));
             return Some(geng::Transition::Switch(Box::new(game::room_change(
                 &self.geng,
                 Some(&self.assets),

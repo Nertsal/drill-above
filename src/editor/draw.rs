@@ -16,8 +16,7 @@ impl LevelEditor {
     fn draw_level_editor(&mut self, framebuffer: &mut ugli::Framebuffer) {
         let font = self.geng.default_font();
         for (name, room) in &self.rooms {
-            let aabb =
-                Aabb2::point(room.pos).extend_positive(room.editor.world.room.bounds().size());
+            let aabb = room.aabb();
             let hovered = aabb.contains(self.cursor_world_pos);
             let color = if hovered { Rgba::RED } else { Rgba::GRAY };
             self.geng.draw_2d(
