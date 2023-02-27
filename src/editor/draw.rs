@@ -45,6 +45,23 @@ impl LevelEditor {
                 );
             }
         }
+
+        if let Some(dragging) = &self.dragging {
+            if let Some(LevelDragAction::CreateRoom { initial_pos }) = &dragging.action {
+                let pos = self.grid.world_to_grid(self.cursor_world_pos).0;
+                let aabb = Aabb2::from_corners(*initial_pos, pos);
+                self.geng.draw_2d(
+                    framebuffer,
+                    &self.camera,
+                    &draw_2d::Chain::new(
+                        util::aabb_outline(aabb.map(|x| x as f32)),
+                        0.5,
+                        Rgba::GREEN,
+                        1,
+                    ),
+                );
+            }
+        }
     }
 }
 

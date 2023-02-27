@@ -456,10 +456,18 @@ impl LevelEditor {
     /// Cancels the current action.
     fn cancel(&mut self) {
         if let Some(dragging) = &mut self.dragging {
-            if let Some(LevelDragAction::MoveRoom { room, initial_pos }) = &mut dragging.action {
-                let room = self.rooms.get_mut(room).expect("Dragging a deleted room");
-                room.pos = *initial_pos;
-                self.dragging = None;
+            if let Some(action) = &mut dragging.action {
+                match action {
+                    LevelDragAction::CreateRoom { .. } => {
+                        self.dragging = None;
+                    }
+                    LevelDragAction::MoveRoom { room, initial_pos } => {
+                        let room = self.rooms.get_mut(room).expect("Dragging a deleted room");
+                        room.pos = *initial_pos;
+                        self.dragging = None;
+                    }
+                    _ => (),
+                }
             }
         }
     }
@@ -568,8 +576,17 @@ impl geng::State for LevelEditor {
 
     fn handle_event(&mut self, event: geng::Event) {
         let ctrl = self.geng.window().is_key_pressed(geng::Key::LCtrl);
-        // let shift = self.geng.window().is_key_pressed(geng::Key::LShift);
+        let shift = self.geng.window().is_key_pressed(geng::Key::LShift);
         if let Some(room) = active_room_mut!(self) {
+            match event {
+                geng::Event::KeyDown {
+                    key: geng::Key::Escape,
+                } if shift => {
+                    self.active_room = None;
+                    return;
+                }
+                _ => {}
+            }
             room.handle_event(event);
         } else {
             match event {
