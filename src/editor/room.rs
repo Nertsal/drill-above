@@ -137,9 +137,13 @@ pub enum RoomDragAction {
 
 impl RoomEditor {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, room_name: String) -> Self {
-        // Load the room and update its geometry
-        let mut room =
+        // Load the room
+        let room =
             util::report_err(Room::load(&room_name), "Failed to load room").unwrap_or_default();
+        Self::new_room(geng, assets, room_name, room)
+    }
+
+    pub fn new_room(geng: &Geng, assets: &Rc<Assets>, room_name: String, mut room: Room) -> Self {
         // Update geometry in case it was not specified in the json file.
         room.tiles.update_geometry(assets);
 

@@ -4,7 +4,7 @@ const LEVEL_CAMERA_MOVE_SPEED: f32 = 100.0;
 const LEVEL_FOV_MIN: f32 = 50.0;
 const LEVEL_FOV_MAX: f32 = 300.0;
 
-const SNAP_DISTANCE: f32 = 2.0;
+const SNAP_DISTANCE: f32 = 1.0;
 
 #[macro_export]
 macro_rules! active_room_mut {
@@ -71,6 +71,9 @@ pub struct LevelDragging {
 /// The action of the drag (e.g. rectangular selection) in the level editor.
 #[derive(Debug)]
 pub enum LevelDragAction {
+    CreateRoom {
+        initial_pos: vec2<isize>,
+    },
     MoveRoom {
         room: String,
         initial_pos: vec2<isize>,
@@ -345,6 +348,12 @@ impl LevelEditor {
         if let Some(mut dragging) = self.dragging.take() {
             if let Some(action) = &mut dragging.action {
                 match action {
+                    LevelDragAction::MoveRoom { room, initial_pos } => {
+                        let pos = self.grid.grid_to_world(*initial_pos) + self.cursor_world_pos
+                            - dragging.initial_world_pos;
+                        let pos = self.snap_room_pos(room, pos);
+                        self.move_room(room.to_owned(), pos);
+                    }
                     &mut LevelDragAction::MoveCamera { initial_camera_pos } => {
                         let from = self
                             .camera
@@ -356,12 +365,7 @@ impl LevelEditor {
                         self.camera.center =
                             (initial_camera_pos + from - self.cursor_world_pos).map(Coord::as_f32);
                     }
-                    LevelDragAction::MoveRoom { room, initial_pos } => {
-                        let pos = self.grid.grid_to_world(*initial_pos) + self.cursor_world_pos
-                            - dragging.initial_world_pos;
-                        let pos = self.snap_room_pos(room, pos);
-                        self.move_room(room.to_owned(), pos);
-                    }
+                    _ => {}
                 }
             }
             self.dragging = Some(dragging);
@@ -384,6 +388,11 @@ impl LevelEditor {
                 .map(|(name, room)| LevelDragAction::MoveRoom {
                     room: name.to_owned(),
                     initial_pos: room.pos,
+                })
+                .or_else(|| {
+                    Some(LevelDragAction::CreateRoom {
+                        initial_pos: self.grid.world_to_grid(self.cursor_world_pos).0,
+                    })
                 }),
             geng::MouseButton::Right => None,
             geng::MouseButton::Middle => Some(LevelDragAction::MoveCamera {
@@ -405,11 +414,19 @@ impl LevelEditor {
     /// Handle release event.
     fn release(&mut self, button: geng::MouseButton) {
         if let Some(dragging) = self.dragging.take() {
-            // if let Some(action) = dragging.action {
-            //     match action {
-            //         _ => {}
-            //     }
-            // }
+            if let Some(LevelDragAction::CreateRoom { initial_pos }) = dragging.action {
+                let pos = self.grid.world_to_grid(self.cursor_world_pos).0;
+                let aabb = Aabb2::from_corners(initial_pos, pos);
+                let room = Room::new(aabb.size().map(|x| x as usize));
+                let mut rng = thread_rng();
+                let mut name: String = (0..5).map(|_| rng.gen_range('A'..='Z')).collect();
+                name += ".json";
+                let room = RoomState {
+                    pos: aabb.bottom_left(),
+                    editor: RoomEditor::new_room(&self.geng, &self.assets, name.clone(), room),
+                };
+                self.rooms.insert(name, room);
+            }
 
             if dragging.initial_cursor_pos == self.cursor_pos {
                 // Click
