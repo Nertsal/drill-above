@@ -202,3 +202,7 @@ fn time_ms(mut time: Time) -> (u32, u32, Time) {
         (time - seconds) * Time::new(1e3),
     )
 }
+
+fn room_path(name: impl AsRef<std::path::Path>) -> std::path::PathBuf {
+    run_dir().join("assets").join("rooms").join(name)
+}

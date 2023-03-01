@@ -454,10 +454,9 @@ fn room_change(
                     .expect("Failed to load assets"),
             };
             let room_name = room.to_string_lossy().to_string();
-            let room: Room =
-                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("rooms").join(room))
-                    .await
-                    .expect("Failed to load room");
+            let room: Room = geng::LoadAsset::load(&geng, &room_path(room))
+                .await
+                .expect("Failed to load room");
             Game::new(
                 &geng, &assets, room_name, room, player_pos, coins, time, deaths, show_time, music,
             )

@@ -472,11 +472,50 @@ impl LevelEditor {
         }
     }
 
-    /// Save the level to file.
-    fn save_level(&self) {
-        for room in self.rooms.values() {
-            room.editor.save_room();
+    fn update_room_name(&mut self, old_name: String, new_name: String) {
+        if old_name == new_name {
+            return;
         }
+
+        // Check if renaming is valid, i.e. that
+        // no other room has the same `new_name`
+        // TODO: check outside the loaded scope, there might be unloaded maps with that name
+        if self.rooms.iter().any(|(name, _)| *name == new_name) {
+            error!("Cannot rename the room to {new_name:?} as there already exists a room with that name");
+            return;
+        }
+
+        // Update room name
+        let room = self.rooms.remove(&old_name).unwrap();
+        self.rooms.insert(new_name.clone(), room);
+
+        // Update references to the old room
+        for room in self.rooms.values_mut() {
+            for trans in &mut room.editor.world.room.transitions {
+                if trans.to_room == old_name {
+                    trans.to_room = new_name.clone();
+                }
+            }
+        }
+
+        if let Ok(()) = self.save_level() {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                // Remove the old room
+                let _ = util::report_err(
+                    std::fs::remove_file(room_path(&old_name)),
+                    "Failed to remove old room file",
+                );
+            }
+            info!("Successfully renamed the room {old_name:?} to {new_name:?}");
+        }
+    }
+
+    /// Save the level to file.
+    fn save_level(&self) -> anyhow::Result<()> {
+        self.rooms
+            .values()
+            .try_for_each(|room| room.editor.save_room())
     }
 
     /// Handles events from the hot reload watcher.
@@ -549,6 +588,12 @@ impl geng::State for LevelEditor {
 
         if let Some(room) = active_room_mut!(self) {
             room.update(delta_time);
+            let old_name = self.active_room.as_ref().unwrap();
+            if room.room_name != *old_name && room.input_events.is_none() {
+                let new_name = room.room_name.clone();
+                self.update_room_name(old_name.to_owned(), new_name.clone());
+                self.active_room = Some(new_name);
+            }
         } else {
             let delta_time = delta_time as f32;
             let window = self.geng.window();
@@ -605,7 +650,9 @@ impl geng::State for LevelEditor {
                 }
                 geng::Event::KeyDown { key } => match key {
                     geng::Key::Escape => self.cancel(),
-                    geng::Key::S if ctrl => self.save_level(),
+                    geng::Key::S if ctrl => {
+                        let _ = util::report_err(self.save_level(), "Failed to save the level");
+                    }
                     _ => {}
                 },
                 _ => {}
