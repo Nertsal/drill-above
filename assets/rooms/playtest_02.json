@@ -2244,5 +2244,23 @@
     "intensity": 1.0
   },
   "spotlights": [],
-  "transitions": []
+  "transitions": [
+    {
+      "collider": {
+        "min": [
+          27.0,
+          -11.5
+        ],
+        "max": [
+          29.0,
+          11.5
+        ]
+      },
+      "to_room": "playtest_03.json",
+      "offset": [
+        -48,
+        0
+      ]
+    }
+  ]
 }

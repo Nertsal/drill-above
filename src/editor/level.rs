@@ -585,7 +585,7 @@ impl LevelEditor {
                     ] {
                         let aabb = Aabb2::point(vec2(x, y_min))
                             .extend_up(y_max - y_min)
-                            .extend_symmetric(vec2(1, 0));
+                            .extend_right(1);
                         let transition = room_transition(room, aabb);
                         let transition = RoomTransition {
                             collider: Collider::new(transition),
@@ -619,7 +619,7 @@ impl LevelEditor {
                     ] {
                         let aabb = Aabb2::point(vec2(x_min, y))
                             .extend_right(x_max - x_min)
-                            .extend_symmetric(vec2(0, 1));
+                            .extend_up(1);
                         let transition = room_transition(room, aabb);
                         let transition = RoomTransition {
                             collider: Collider::new(transition),

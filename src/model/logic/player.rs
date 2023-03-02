@@ -671,12 +671,23 @@ impl Logic<'_> {
 
     fn room_transition(&mut self) {
         let actor = self.world.actors.get(&self.world.player.id).unwrap();
+        let mut outside_transition = true;
         for transition in &self.world.room.transitions {
-            if actor.collider.check(&transition.collider) {
+            let check = actor.collider.check(&transition.collider);
+            if self.world.player.inside_transition {
+                if check {
+                    outside_transition = false;
+                    break;
+                }
+                continue;
+            }
+            if check {
                 self.world.room_transition = Some(transition.clone());
                 break;
             }
         }
+
+        self.world.player.inside_transition = !outside_transition;
     }
 
     fn player_coins(&mut self) {
