@@ -18,10 +18,6 @@
     -14.512857,
     -2.3984208
   ],
-  "finish": [
-    18.27511,
-    -5.4535093
-  ],
   "tiles": {
     "size": [
       40,
@@ -1880,5 +1876,23 @@
     "intensity": 1.0
   },
   "spotlights": [],
-  "next_level": "playtest_02.json"
+  "transitions": [
+    {
+      "collider": {
+        "min": [
+          20.0,
+          -11.5
+        ],
+        "max": [
+          21.0,
+          11.5
+        ]
+      },
+      "to_room": "playtest_02.json",
+      "offset": [
+        -40,
+        0
+      ]
+    }
+  ]
 }

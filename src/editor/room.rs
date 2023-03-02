@@ -72,6 +72,8 @@ pub struct RoomEditor {
     pub light_float_scale: bool,
     /// The color mode that is used in color selection: RGB, HSV, or HSL.
     pub color_mode: Option<ColorMode>,
+    /// If the text input widget is active, the inputs are saved and forwarded to the widget.
+    pub input_events: Option<Vec<geng::Event>>,
 }
 
 /// An editor tab.
@@ -137,9 +139,13 @@ pub enum RoomDragAction {
 
 impl RoomEditor {
     pub fn new(geng: &Geng, assets: &Rc<Assets>, room_name: String) -> Self {
-        // Load the room and update its geometry
-        let mut room =
+        // Load the room
+        let room =
             util::report_err(Room::load(&room_name), "Failed to load room").unwrap_or_default();
+        Self::new_room(geng, assets, room_name, room)
+    }
+
+    pub fn new_room(geng: &Geng, assets: &Rc<Assets>, room_name: String, mut room: Room) -> Self {
         // Update geometry in case it was not specified in the json file.
         room.tiles.update_geometry(assets);
 
@@ -161,7 +167,7 @@ impl RoomEditor {
                 fov: (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0,
             },
             framebuffer_size: vec2(1, 1),
-            world: World::new(geng, assets, assets.rules.clone(), room),
+            world: World::new(geng, assets, assets.rules.clone(), room, None),
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -224,6 +230,7 @@ impl RoomEditor {
             playtest: false,
             preview: false,
             room_name,
+            input_events: None,
         }
     }
 
@@ -554,12 +561,8 @@ impl RoomEditor {
     }
 
     /// Save the room to file.
-    pub fn save_room(&self) {
-        if let Ok(()) =
-            util::report_err(self.world.room.save(&self.room_name), "Failed to save room")
-        {
-            info!("Saved the room");
-        }
+    pub fn save_room(&self) -> anyhow::Result<()> {
+        self.world.room.save(&self.room_name)
     }
 }
 
@@ -569,7 +572,7 @@ impl RoomEditor {
         let window = self.geng.window();
 
         let ctrl = window.is_key_pressed(geng::Key::LCtrl);
-        if !ctrl {
+        if self.input_events.is_none() && !ctrl {
             // Move camera
             let mut dir = vec2::ZERO;
             if window.is_key_pressed(geng::Key::A) {
@@ -591,6 +594,11 @@ impl RoomEditor {
     }
 
     pub fn handle_event(&mut self, event: geng::Event) {
+        if let Some(events) = &mut self.input_events {
+            events.push(event);
+            return;
+        }
+
         let ctrl = self.geng.window().is_key_pressed(geng::Key::LCtrl);
         let shift = self.geng.window().is_key_pressed(geng::Key::LShift);
         match event {
@@ -609,7 +617,9 @@ impl RoomEditor {
             }
             geng::Event::KeyDown { key } => match key {
                 geng::Key::Escape => self.cancel(),
-                geng::Key::S if ctrl => self.save_room(),
+                geng::Key::S if ctrl => {
+                    let _ = util::report_err(self.save_room(), "Failed to save the room");
+                }
                 geng::Key::Z if ctrl => {
                     if shift {
                         self.redo()
@@ -641,6 +651,7 @@ impl RoomEditor {
                 &self.assets,
                 self.room_name.clone(),
                 self.world.room.clone(),
+                None,
                 0,
                 Time::ZERO,
                 0,

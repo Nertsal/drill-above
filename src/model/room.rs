@@ -26,7 +26,10 @@ pub struct Room {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoomTransition {
     pub collider: Collider,
+    /// Name of the room to which the transition moves.
     pub to_room: String,
+    /// Offset applied to entities to move them into the new room's coordinate system.
+    pub offset: vec2<isize>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -346,7 +349,7 @@ impl Room {
     ) -> ugli::VertexBuffer<NormalVertex> {
         let vertices = self
             .tiles
-            .tiles()
+            .tiles
             .iter()
             .enumerate()
             .filter_map(|(i, tile)| {
@@ -408,7 +411,7 @@ impl Room {
     ) {
         let mut static_geom = Vec::new();
         let mut shaded_geom = HashMap::<Tile, Vec<Vertex>>::new();
-        for (i, tile) in self.tiles.tiles().iter().enumerate() {
+        for (i, tile) in self.tiles.tiles.iter().enumerate() {
             if tile == "air" {
                 continue;
             }
@@ -458,25 +461,23 @@ impl Room {
         )
     }
 
-    pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
-        let path = run_dir().join("assets").join("rooms").join(path);
+    pub fn load(name: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
+        let path = room_path(name);
         futures::executor::block_on(async move {
             debug!("Loading room {path:?}");
-            let room = file::load_json(&path)
-                .await
-                .context(format!("Failed to load room {path:?}"))?;
+            let room = file::load_json(&path).await?;
             Ok(room)
         })
     }
 
-    pub fn save(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
-        let path = run_dir().join("assets").join("rooms").join(path);
+    pub fn save(&self, name: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let path = room_path(name);
         #[cfg(not(target_arch = "wasm32"))]
         {
             let file = std::fs::File::create(path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, self)?;
-            info!("Saved the level");
+            info!("Saved the room");
             Ok(())
         }
         #[cfg(target_arch = "wasm32")]

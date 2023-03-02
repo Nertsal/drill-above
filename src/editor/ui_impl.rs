@@ -40,12 +40,34 @@ impl RoomEditor {
         //     Rgba::WHITE,
         // );
 
+        let mut input = ui::TextInput::new(
+            cx,
+            &self.geng,
+            self.room_name.clone(),
+            self.geng.default_font().clone(),
+            text_size,
+            Rgba::WHITE,
+        );
+        if let Some(events) = self.input_events.take() {
+            // Forward events to the widget
+            for event in &events {
+                input.handle_input(event);
+            }
+        }
+        if input.is_focused() {
+            self.input_events = Some(Vec::new());
+        }
+        if self.room_name != *input.get_text() {
+            // Update room name
+            self.room_name = input.get_text().to_owned();
+        }
+
         let mut room_info = geng::ui::column![
-            text(self.room_name.clone()),
+            input,
             {
                 let button = Button::new(cx, "Save");
                 if button.was_clicked() {
-                    self.save_room();
+                    let _ = util::report_err(self.save_room(), "Failed to save the room");
                 }
                 button
             },
