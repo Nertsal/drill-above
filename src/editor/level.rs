@@ -414,18 +414,31 @@ impl LevelEditor {
     /// Handle release event.
     fn release(&mut self, button: geng::MouseButton) {
         if let Some(dragging) = self.dragging.take() {
-            if let Some(LevelDragAction::CreateRoom { initial_pos }) = dragging.action {
-                let pos = self.grid.world_to_grid(self.cursor_world_pos).0;
-                let aabb = Aabb2::from_corners(initial_pos, pos);
-                let room = Room::new(aabb.size().map(|x| x as usize));
-                let mut rng = thread_rng();
-                let mut name: String = (0..5).map(|_| rng.gen_range('A'..='Z')).collect();
-                name += ".json";
-                let room = RoomState {
-                    pos: aabb.bottom_left(),
-                    editor: RoomEditor::new_room(&self.geng, &self.assets, name.clone(), room),
-                };
-                self.rooms.insert(name, room);
+            if let Some(action) = dragging.action {
+                match action {
+                    LevelDragAction::CreateRoom { initial_pos } => {
+                        let pos = self.grid.world_to_grid(self.cursor_world_pos).0;
+                        let aabb = Aabb2::from_corners(initial_pos, pos);
+                        let room = Room::new(aabb.size().map(|x| x as usize));
+                        let mut rng = thread_rng();
+                        let mut name: String = (0..5).map(|_| rng.gen_range('A'..='Z')).collect();
+                        name += ".json";
+                        let room = RoomState {
+                            pos: aabb.bottom_left(),
+                            editor: RoomEditor::new_room(
+                                &self.geng,
+                                &self.assets,
+                                name.clone(),
+                                room,
+                            ),
+                        };
+                        self.rooms.insert(name, room);
+                    }
+                    LevelDragAction::MoveRoom { room, .. } => {
+                        self.update_room_transitions(room);
+                    }
+                    _ => {}
+                }
             }
 
             if dragging.initial_cursor_pos == self.cursor_pos {
@@ -508,6 +521,130 @@ impl LevelEditor {
                 );
             }
             info!("Successfully renamed the room {old_name:?} to {new_name:?}");
+        }
+    }
+
+    fn update_room_transitions(&mut self, room_name: String) {
+        // Remove old transitions to/from the room
+        for room in self.rooms.values_mut() {
+            room.editor
+                .world
+                .room
+                .transitions
+                .retain(|trans| trans.to_room != room_name);
+        }
+        self.rooms
+            .get_mut(&room_name)
+            .expect("No such room found")
+            .editor
+            .world
+            .room
+            .transitions
+            .clear();
+
+        // Calculate new transitions
+        let mut new_transitions = HashMap::<String, Vec<RoomTransition>>::new();
+        let room = self.rooms.get(&room_name).unwrap();
+        let room_aabb = room.aabb_i();
+        for (other_name, other) in &self.rooms {
+            if *other_name == room_name {
+                continue;
+            }
+
+            let other_aabb = other.aabb_i();
+            if room_aabb.intersects(&other_aabb) {
+                error!("The rooms {room_name:?} and {other_name:?} intersect each other");
+                continue;
+            }
+
+            let room_transition = |room: &RoomState, pos: Aabb2<isize>| -> Aabb2<Coord> {
+                let pos = pos.translate(-room.pos);
+                let grid = &room.editor.world.room.grid;
+                Aabb2 {
+                    min: grid.grid_to_world(pos.min),
+                    max: grid.grid_to_world(pos.max),
+                }
+            };
+
+            // Horizontal transition (goes to the side)
+            let x = if room_aabb.max.x == other_aabb.min.x {
+                Some((other_aabb.min.x, room_aabb.max.x - 1))
+            } else if other_aabb.max.x == room_aabb.min.x {
+                Some((other_aabb.max.x - 1, room_aabb.min.x))
+            } else {
+                None
+            };
+            if let Some((room_x, other_x)) = x {
+                let y_min = room_aabb.min.y.max(other_aabb.min.y);
+                let y_max = room_aabb.max.y.min(other_aabb.max.y);
+                if y_max >= y_min {
+                    // Rooms actually have a common vertical edge
+                    for (x, room, room_name, other, other_name) in [
+                        (room_x, room, &room_name, other, other_name),
+                        (other_x, other, other_name, room, &room_name),
+                    ] {
+                        let aabb = Aabb2::point(vec2(x, y_min))
+                            .extend_up(y_max - y_min)
+                            .extend_symmetric(vec2(1, 0));
+                        let transition = room_transition(room, aabb);
+                        let transition = RoomTransition {
+                            collider: Collider::new(transition),
+                            to_room: other_name.to_owned(),
+                            offset: room.pos - other.pos,
+                        };
+                        new_transitions
+                            .entry(room_name.to_owned())
+                            .or_default()
+                            .push(transition);
+                    }
+                }
+            }
+
+            // Vertical transition (goes up or down)
+            let y = if room_aabb.max.y == other_aabb.min.y {
+                Some((other_aabb.min.y, room_aabb.max.y - 1))
+            } else if other_aabb.max.y == room_aabb.min.y {
+                Some((other_aabb.max.y - 1, room_aabb.min.y))
+            } else {
+                None
+            };
+            if let Some((room_y, other_y)) = y {
+                let x_min = room_aabb.min.x.max(other_aabb.min.x);
+                let x_max = room_aabb.max.x.min(other_aabb.max.x);
+                if x_max >= x_min {
+                    // Rooms actually have a common horizontal edge
+                    for (y, room, room_name, other, other_name) in [
+                        (room_y, room, &room_name, other, other_name),
+                        (other_y, other, other_name, room, &room_name),
+                    ] {
+                        let aabb = Aabb2::point(vec2(x_min, y))
+                            .extend_right(x_max - x_min)
+                            .extend_symmetric(vec2(0, 1));
+                        let transition = room_transition(room, aabb);
+                        let transition = RoomTransition {
+                            collider: Collider::new(transition),
+                            to_room: other_name.to_owned(),
+                            offset: room.pos - other.pos,
+                        };
+                        new_transitions
+                            .entry(room_name.to_owned())
+                            .or_default()
+                            .push(transition);
+                    }
+                }
+            }
+        }
+
+        // Add new transitions
+        for (room_name, transitions) in new_transitions {
+            self.rooms
+                .get_mut(&room_name)
+                .unwrap()
+                .editor
+                .world
+                .room
+                .transitions
+                .extend(transitions);
         }
     }
 
