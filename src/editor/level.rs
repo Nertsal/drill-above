@@ -344,7 +344,11 @@ impl LevelEditor {
 
         // Update the dragging state
         if let Some(mut dragging) = self.dragging.take() {
-            if let Some(action) = &mut dragging.action {
+            if let Some(action) = dragging
+                .action
+                .as_mut()
+                .filter(|_| dragging.initial_cursor_pos != cursor_pos)
+            {
                 match action {
                     LevelDragAction::MoveRoom { room, initial_pos } => {
                         let pos = self.grid.grid_to_world(*initial_pos) + self.cursor_world_pos
@@ -428,7 +432,8 @@ impl LevelEditor {
                             name.clone(),
                             Some(room),
                         );
-                        self.rooms.insert(name, room);
+                        self.rooms.insert(name.clone(), room);
+                        self.update_room_transitions(name);
                     }
                     LevelDragAction::MoveRoom { room, .. } => {
                         self.update_room_transitions(room);
@@ -439,8 +444,14 @@ impl LevelEditor {
 
             if dragging.initial_cursor_pos == self.cursor_pos {
                 // Click
-                if let geng::MouseButton::Left = button {
-                    self.edit_room_hovered();
+                match button {
+                    geng::MouseButton::Left => {
+                        self.edit_room_hovered();
+                    }
+                    geng::MouseButton::Right => {
+                        self.remove_room_hovered();
+                    }
+                    _ => (),
                 }
             }
         }
@@ -453,6 +464,21 @@ impl LevelEditor {
             .find(|(_, room)| room.aabb().contains(self.cursor_world_pos));
         if let Some((room, _)) = hovered {
             self.active_room = Some(room.to_owned());
+        }
+    }
+
+    fn remove_room_hovered(&mut self) {
+        let hovered = self
+            .rooms
+            .iter()
+            .find(|(_, room)| room.aabb().contains(self.cursor_world_pos));
+        if let Some((name, _)) = hovered {
+            let name = name.to_owned();
+            let _ = self.rooms.remove(&name).unwrap();
+            if Some(name.clone()) == self.active_room {
+                self.active_room = None;
+            }
+            self.update_room_transitions(name);
         }
     }
 
