@@ -265,6 +265,9 @@ impl RoomEditor {
 
     pub fn create_preview(&self) -> ugli::Texture {
         let size = self.world.room.size;
+        if size.x == 0 || size.y == 0 {
+            return ugli::Texture::new_with(self.geng.ugli(), vec2(1, 1), |_| Rgba::BLACK);
+        }
         let mut texture = ugli::Texture::new_with(self.geng.ugli(), size, |pos| {
             let tile = &self
                 .world
