@@ -46,6 +46,7 @@ pub struct LevelEditor {
 pub struct RoomState {
     pub pos: vec2<isize>,
     pub editor: RoomEditor,
+    pub preview_texture: ugli::Texture,
 }
 
 /// The hot reload state.
@@ -157,10 +158,7 @@ impl LevelEditor {
             }
 
             // Load
-            let room = RoomState {
-                pos: vec2::ZERO,
-                editor: RoomEditor::new(geng, assets, room_name.clone()),
-            };
+            let room = RoomState::new(geng, assets, vec2::ZERO, room_name.clone(), None);
 
             // Queue adjacent rooms to load
             to_load.extend(
@@ -423,15 +421,13 @@ impl LevelEditor {
                         let mut rng = thread_rng();
                         let mut name: String = (0..5).map(|_| rng.gen_range('A'..='Z')).collect();
                         name += ".json";
-                        let room = RoomState {
-                            pos: aabb.bottom_left(),
-                            editor: RoomEditor::new_room(
-                                &self.geng,
-                                &self.assets,
-                                name.clone(),
-                                room,
-                            ),
-                        };
+                        let room = RoomState::new(
+                            &self.geng,
+                            &self.assets,
+                            aabb.bottom_left(),
+                            name.clone(),
+                            Some(room),
+                        );
                         self.rooms.insert(name, room);
                     }
                     LevelDragAction::MoveRoom { room, .. } => {
@@ -764,6 +760,10 @@ impl geng::State for LevelEditor {
                 geng::Event::KeyDown {
                     key: geng::Key::Escape,
                 } if shift => {
+                    self.rooms
+                        .get_mut(self.active_room.as_ref().unwrap())
+                        .unwrap()
+                        .update_preview();
                     self.active_room = None;
                     return;
                 }
@@ -807,11 +807,34 @@ impl geng::State for LevelEditor {
 }
 
 impl RoomState {
+    pub fn new(
+        geng: &Geng,
+        assets: &Rc<Assets>,
+        pos: vec2<isize>,
+        room_name: String,
+        room: Option<Room>,
+    ) -> Self {
+        let editor = if let Some(room) = room {
+            RoomEditor::new_room(geng, assets, room_name, room)
+        } else {
+            RoomEditor::new(geng, assets, room_name)
+        };
+        Self {
+            pos,
+            preview_texture: editor.create_preview(),
+            editor,
+        }
+    }
+
     pub fn aabb(&self) -> Aabb2<Coord> {
         self.aabb_i().map(|x| Coord::new(x as f32))
     }
 
     pub fn aabb_i(&self) -> Aabb2<isize> {
         Aabb2::point(self.pos).extend_positive(self.editor.world.room.size.map(|x| x as isize))
+    }
+
+    pub fn update_preview(&mut self) {
+        self.preview_texture = self.editor.create_preview();
     }
 }

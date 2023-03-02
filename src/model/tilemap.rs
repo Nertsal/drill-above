@@ -18,10 +18,6 @@ impl TileMap {
         }
     }
 
-    pub fn tiles(&self) -> &Vec<Tile> {
-        &self.tiles
-    }
-
     pub fn get_tile_index(&self, tile: usize) -> usize {
         *self
             .geometry

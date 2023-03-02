@@ -349,7 +349,7 @@ impl Room {
     ) -> ugli::VertexBuffer<NormalVertex> {
         let vertices = self
             .tiles
-            .tiles()
+            .tiles
             .iter()
             .enumerate()
             .filter_map(|(i, tile)| {
@@ -411,7 +411,7 @@ impl Room {
     ) {
         let mut static_geom = Vec::new();
         let mut shaded_geom = HashMap::<Tile, Vec<Vertex>>::new();
-        for (i, tile) in self.tiles.tiles().iter().enumerate() {
+        for (i, tile) in self.tiles.tiles.iter().enumerate() {
             if tile == "air" {
                 continue;
             }

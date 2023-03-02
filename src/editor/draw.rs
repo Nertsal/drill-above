@@ -18,14 +18,20 @@ impl LevelEditor {
         for (name, room) in &self.rooms {
             let aabb = room.aabb();
             let hovered = aabb.contains(self.cursor_world_pos);
+            let aabb = aabb.map(Coord::as_f32);
+            self.geng.draw_2d(
+                framebuffer,
+                &self.camera,
+                &draw_2d::TexturedQuad::new(aabb, &room.preview_texture),
+            );
             let color = if hovered { Rgba::RED } else { Rgba::GRAY };
             self.geng.draw_2d(
                 framebuffer,
                 &self.camera,
-                &draw_2d::Chain::new(util::aabb_outline(aabb.map(Coord::as_f32)), 0.5, color, 1),
+                &draw_2d::Chain::new(util::aabb_outline(aabb), 0.5, color, 1),
             );
             if hovered {
-                let max_size = aabb.width().as_f32()
+                let max_size = aabb.width()
                     / font
                         .measure_bounding_box(
                             name,
@@ -38,7 +44,7 @@ impl LevelEditor {
                     framebuffer,
                     &self.camera,
                     name,
-                    aabb.bottom_left().map(Coord::as_f32),
+                    aabb.bottom_left(),
                     geng::TextAlign::LEFT,
                     size,
                     Rgba::WHITE,
@@ -255,5 +261,23 @@ impl RoomEditor {
                 }
             }
         }
+    }
+
+    pub fn create_preview(&self) -> ugli::Texture {
+        let size = self.world.room.size;
+        let mut texture = ugli::Texture::new_with(self.geng.ugli(), size, |pos| {
+            let tile = &self
+                .world
+                .room
+                .tiles
+                .get_tile_isize(pos.map(|x| x as isize))
+                .unwrap();
+            match tile.as_str() {
+                "air" => Rgba::TRANSPARENT_WHITE,
+                _ => Rgba::GRAY,
+            }
+        });
+        texture.set_filter(ugli::Filter::Nearest);
+        texture
     }
 }
