@@ -322,24 +322,39 @@ impl Room {
         self.size = size;
     }
 
-    pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
-        self.tiles.translate(delta, assets);
-        self.tiles.update_geometry(assets);
-
-        let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
-        self.spawn_point += delta;
+    fn move_entities(&mut self, move_fn: impl Fn(vec2<Coord>) -> vec2<Coord>) {
+        self.spawn_point = move_fn(self.spawn_point);
         for coin in &mut self.coins {
-            coin.translate(delta);
+            coin.teleport(move_fn(coin.collider.pos()));
         }
         for hazard in &mut self.hazards {
-            hazard.translate(delta);
+            hazard.teleport(move_fn(hazard.collider.pos()));
         }
         for prop in &mut self.props {
-            prop.translate(delta);
+            prop.teleport(move_fn(prop.sprite.center()));
         }
         for light in &mut self.spotlights {
-            light.position += delta;
+            light.position = move_fn(light.position);
         }
+    }
+
+    pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
+        self.tiles.translate(delta, assets);
+
+        let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
+        self.move_entities(|pos| pos + delta);
+    }
+
+    pub fn flip_h(&mut self, assets: &Assets) {
+        self.tiles.flip_h(assets);
+        let bounds = self.bounds();
+        self.move_entities(|pos| vec2(bounds.min.x + bounds.max.x - pos.x, pos.y));
+    }
+
+    pub fn flip_v(&mut self, assets: &Assets) {
+        self.tiles.flip_v(assets);
+        let bounds = self.bounds();
+        self.move_entities(|pos| vec2(pos.x, bounds.min.y + bounds.max.y - pos.y));
     }
 
     pub fn calculate_light_geometry(
@@ -542,17 +557,29 @@ impl Hazard {
         self.sprite = self.sprite.translate(delta);
         self.collider.translate(delta);
     }
+
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.translate(pos - self.collider.pos())
+    }
 }
 
 impl Coin {
     pub fn translate(&mut self, delta: vec2<Coord>) {
         self.collider.translate(delta);
     }
+
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.translate(pos - self.collider.pos())
+    }
 }
 
 impl Prop {
     pub fn translate(&mut self, delta: vec2<Coord>) {
         self.sprite = self.sprite.translate(delta);
+    }
+
+    pub fn teleport(&mut self, pos: vec2<Coord>) {
+        self.translate(pos - self.sprite.center())
     }
 }
 

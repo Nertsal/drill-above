@@ -155,6 +155,30 @@ impl TileMap {
         self.update_geometry(assets);
     }
 
+    pub fn flip_h(&mut self, assets: &Assets) {
+        self.tiles = (0..self.size.x * self.size.y)
+            .map(|i| {
+                let pos = index_to_pos(i, self.size.x);
+                let pos = vec2(self.size.x - 1 - pos.x, pos.y);
+                let i = pos_to_index(pos, self.size.x).unwrap();
+                self.tiles[i].clone()
+            })
+            .collect();
+        self.update_geometry(assets);
+    }
+
+    pub fn flip_v(&mut self, assets: &Assets) {
+        self.tiles = (0..self.size.x * self.size.y)
+            .map(|i| {
+                let pos = index_to_pos(i, self.size.x);
+                let pos = vec2(pos.x, self.size.y - 1 - pos.y);
+                let i = pos_to_index(pos, self.size.x).unwrap();
+                self.tiles[i].clone()
+            })
+            .collect();
+        self.update_geometry(assets);
+    }
+
     pub fn update_geometry(&mut self, assets: &Assets) {
         let mut geometry = vec![0; self.tiles.len()];
         let mut rng = thread_rng();

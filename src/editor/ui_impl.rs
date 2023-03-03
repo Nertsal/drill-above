@@ -203,6 +203,26 @@ impl RoomEditor {
                         },
                     ]
                     .boxed(),
+                    {
+                        let flip_h = Button::new(cx, "Flip horizontal");
+                        if flip_h.was_clicked() {
+                            self.keep_state();
+                            self.world.room.flip_h(&self.assets);
+                            update_geometry = true;
+                        }
+                        flip_h
+                    }
+                    .boxed(),
+                    {
+                        let flip_v = Button::new(cx, "Flip vertical");
+                        if flip_v.was_clicked() {
+                            self.keep_state();
+                            self.world.room.flip_v(&self.assets);
+                            update_geometry = true;
+                        }
+                        flip_v
+                    }
+                    .boxed(),
                 ]);
             }
         }
