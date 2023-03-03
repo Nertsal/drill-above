@@ -99,6 +99,7 @@ impl RoomEditor {
             self.render.world.draw_room_editor(
                 &self.world.room,
                 &self.world.cache,
+                self.active_layer,
                 true,
                 &self.camera,
                 &mut world_framebuffer,
@@ -194,6 +195,7 @@ impl RoomEditor {
                             ugli::uniforms! {
                                 u_model_matrix: matrix,
                                 u_texture: texture,
+                                u_color: Rgba::WHITE,
                             },
                             geng::camera2d_uniforms(
                                 &self.camera,

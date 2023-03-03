@@ -96,6 +96,7 @@ impl WorldRender {
                     ugli::uniforms! {
                         u_model_matrix: matrix,
                         u_texture: texture,
+                        u_color: Rgba::WHITE,
                     },
                     geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
                 ),
@@ -127,6 +128,7 @@ impl WorldRender {
                 ugli::uniforms! {
                     u_model_matrix: matrix,
                     u_texture: texture,
+                    u_color: Rgba::WHITE,
                 },
                 geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
             ),
@@ -147,37 +149,57 @@ impl WorldRender {
         framebuffer: &mut ugli::Framebuffer,
         mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        // Background layer
-        self.draw_props(
-            &room.background_layer.props,
-            camera,
-            framebuffer,
-            normal_framebuffer.as_deref_mut(),
-        );
-        self.draw_tiles(&cache.background_geometry, camera, framebuffer);
+        for layer in [
+            ActiveLayer::Background,
+            ActiveLayer::Main,
+            ActiveLayer::Foreground,
+        ] {
+            self.draw_room_layer(
+                room,
+                cache,
+                layer,
+                1.0,
+                draw_hitboxes,
+                camera,
+                framebuffer,
+                normal_framebuffer.as_deref_mut(),
+            );
+        }
 
-        // Main layer
-        self.draw_props(
-            &room.main_layer.props,
-            camera,
-            framebuffer,
-            normal_framebuffer.as_deref_mut(),
-        );
-        self.draw_tiles(&cache.main_geometry, camera, framebuffer);
-        self.draw_hazards(&room.hazards, draw_hitboxes, camera, framebuffer);
-        self.draw_coins(&room.coins, draw_hitboxes, camera, framebuffer);
+        if draw_hitboxes {
+            self.draw_transitions(&room.transitions, camera, framebuffer);
+        }
+    }
 
-        // Foreground layer
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_room_layer(
+        &self,
+        room: &Room,
+        cache: &RenderCache,
+        layer: ActiveLayer,
+        alpha: f32,
+        draw_hitboxes: bool,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+        normal_framebuffer: Option<&mut ugli::Framebuffer>,
+    ) {
+        let (room_layer, tile_geometry) = match layer {
+            ActiveLayer::Background => (&room.background_layer, &cache.background_geometry),
+            ActiveLayer::Main => (&room.main_layer, &cache.main_geometry),
+            ActiveLayer::Foreground => (&room.foreground_layer, &cache.foreground_geometry),
+        };
         self.draw_props(
-            &room.foreground_layer.props,
+            &room_layer.props,
+            alpha,
             camera,
             framebuffer,
             normal_framebuffer,
         );
-        self.draw_tiles(&cache.foreground_geometry, camera, framebuffer);
+        self.draw_tiles(tile_geometry, alpha, camera, framebuffer);
 
-        if draw_hitboxes {
-            self.draw_transitions(&room.transitions, camera, framebuffer);
+        if let ActiveLayer::Main = layer {
+            self.draw_hazards(&room.hazards, alpha, draw_hitboxes, camera, framebuffer);
+            self.draw_coins(&room.coins, alpha, draw_hitboxes, camera, framebuffer);
         }
     }
 
@@ -186,19 +208,29 @@ impl WorldRender {
         &self,
         room: &Room,
         cache: &RenderCache,
+        active_layer: ActiveLayer,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
-        normal_framebuffer: Option<&mut ugli::Framebuffer>,
+        mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        self.draw_room(
-            room,
-            cache,
-            draw_hitboxes,
-            camera,
-            framebuffer,
-            normal_framebuffer,
-        );
+        for layer in [
+            ActiveLayer::Background,
+            ActiveLayer::Main,
+            ActiveLayer::Foreground,
+        ] {
+            let alpha = if layer == active_layer { 1.0 } else { 0.2 };
+            self.draw_room_layer(
+                room,
+                cache,
+                layer,
+                alpha,
+                draw_hitboxes,
+                camera,
+                framebuffer,
+                normal_framebuffer.as_deref_mut(),
+            );
+        }
 
         // Spawnpoint
         self.geng.draw_2d(
@@ -228,6 +260,7 @@ impl WorldRender {
     pub fn draw_tiles(
         &self,
         (tiles_geometry, masked_geometry): &TilesGeometry,
+        alpha: f32,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
@@ -245,6 +278,7 @@ impl WorldRender {
                         u_model_matrix: mat3::identity(),
                         u_texture: texture,
                         u_mask: mask,
+                        u_color: Rgba::new(1.0, 1.0, 1.0, alpha),
                     },
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
                 ),
@@ -266,6 +300,7 @@ impl WorldRender {
                     ugli::uniforms! {
                         u_model_matrix: mat3::identity(),
                         u_texture: texture,
+                        u_color: Rgba::new(1.0, 1.0, 1.0, alpha),
                     },
                     geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
                 ),
@@ -280,6 +315,7 @@ impl WorldRender {
     pub fn draw_props(
         &self,
         props: &[Prop],
+        alpha: f32,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
         mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
@@ -289,11 +325,16 @@ impl WorldRender {
             self.geng.draw_2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(prop.sprite.map(Coord::as_f32), texture.texture()),
+                &draw_2d::TexturedQuad::colored(
+                    prop.sprite.map(Coord::as_f32),
+                    texture.texture(),
+                    Rgba::new(1.0, 1.0, 1.0, alpha),
+                ),
             );
 
             if let Some(framebuffer) = &mut normal_framebuffer {
                 if let Some(texture) = texture.normal() {
+                    // TODO: manage transparency
                     self.geng.draw_2d(
                         framebuffer,
                         camera,
@@ -307,6 +348,7 @@ impl WorldRender {
     pub fn draw_hazards(
         &self,
         hazards: &[Hazard],
+        alpha: f32,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
@@ -323,9 +365,10 @@ impl WorldRender {
             self.geng.draw_2d_transformed(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(
+                &draw_2d::TexturedQuad::colored(
                     Aabb2::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
                     texture.texture(),
+                    Rgba::new(1.0, 1.0, 1.0, alpha),
                 ),
                 transform,
             );
@@ -335,7 +378,7 @@ impl WorldRender {
                     camera,
                     &draw_2d::Quad::new(
                         hazard.collider.raw().map(Coord::as_f32),
-                        Rgba::new(1.0, 0.0, 0.0, 0.5),
+                        Rgba::new(1.0, 0.0, 0.0, 0.5 * alpha),
                     ),
                 );
             }
@@ -345,6 +388,7 @@ impl WorldRender {
     pub fn draw_coins(
         &self,
         coins: &[Coin],
+        alpha: f32,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
@@ -354,7 +398,11 @@ impl WorldRender {
             self.geng.draw_2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(coin.collider.raw().map(Coord::as_f32), texture),
+                &draw_2d::TexturedQuad::colored(
+                    coin.collider.raw().map(Coord::as_f32),
+                    texture,
+                    Rgba::new(1.0, 1.0, 1.0, alpha),
+                ),
             );
             if draw_hitboxes {
                 self.geng.draw_2d(
@@ -362,7 +410,7 @@ impl WorldRender {
                     camera,
                     &draw_2d::Quad::new(
                         coin.collider.raw().map(Coord::as_f32),
-                        Rgba::new(1.0, 1.0, 0.0, 0.5),
+                        Rgba::new(1.0, 1.0, 0.0, 0.5 * alpha),
                     ),
                 );
             }
