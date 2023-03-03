@@ -1876,12 +1876,6 @@
         23
       ],
       "tiles": [
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
         "stone",
         "stone",
         "stone",
@@ -1893,11 +1887,12 @@
         "stone",
         "stone",
         "stone",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
         "air",
         "air",
         "air",
@@ -1972,11 +1967,11 @@
         "stone",
         "stone",
         "stone",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
         "air",
         "air",
         "air",
@@ -2051,11 +2046,11 @@
         "stone",
         "stone",
         "stone",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
         "air",
         "air",
         "air",
@@ -2121,6 +2116,11 @@
         "air",
         "air",
         "air",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
         "stone",
         "stone",
         "stone",
@@ -2196,11 +2196,10 @@
         "stone",
         "stone",
         "stone",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
         "stone",
         "stone",
         "stone",
@@ -2210,6 +2209,7 @@
         "stone",
         "stone",
         "stone",
+        "stone",
         "air",
         "air",
         "air",
@@ -2276,10 +2276,9 @@
         "stone",
         "stone",
         "stone",
-        "air",
-        "air",
-        "air",
-        "air",
+        "stone",
+        "stone",
+        "stone",
         "stone",
         "stone",
         "stone",
@@ -2290,6 +2289,7 @@
         "stone",
         "stone",
         "stone",
+        "stone",
         "air",
         "air",
         "air",
@@ -2356,10 +2356,10 @@
         "stone",
         "stone",
         "stone",
-        "air",
-        "air",
-        "air",
-        "air",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
         "stone",
         "grass",
         "grass",
@@ -2438,8 +2438,6 @@
         "stone",
         "air",
         "air",
-        "air",
-        "air",
         "grass",
         "grass",
         "grass",
@@ -2450,6 +2448,8 @@
         "grass",
         "grass",
         "grass",
+        "grass",
+        "grass",
         "air",
         "air",
         "air",
@@ -2519,7 +2519,7 @@
         "air",
         "air",
         "air",
-        "air",
+        "grass",
         "grass",
         "grass",
         "grass",
@@ -5728,5 +5728,40 @@
     "intensity": 1.0
   },
   "spotlights": [],
-  "transitions": []
+  "transitions": [
+    {
+      "collider": {
+        "min": [
+          60.0,
+          -11.5
+        ],
+        "max": [
+          61.0,
+          11.5
+        ]
+      },
+      "to_room": "drill_04.json",
+      "offset": [
+        -80,
+        0
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          -21.0,
+          -11.5
+        ],
+        "max": [
+          -20.0,
+          11.5
+        ]
+      },
+      "to_room": "drill_027.json",
+      "offset": [
+        80,
+        0
+      ]
+    }
+  ]
 }
