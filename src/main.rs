@@ -29,9 +29,6 @@ struct Opt {
     /// Hot reload assets on change detection.
     #[clap(long)]
     hot_reload: bool,
-    #[clap(long)]
-    #[cfg(not(target_arch = "wasm32"))]
-    format: bool,
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -84,10 +81,6 @@ fn main() {
                 let state = {
                     let future = {
                         async move {
-                            // let texture: ugli::Texture =
-                            //     geng::LoadAsset::load(&geng, &run_dir().join(opt.tileset))
-                            //         .await
-                            //         .expect("Failed to load texture");
                             let path = run_dir().join(opt.tileset);
                             let image = image::open(&path)
                                 .unwrap_or_else(|_| panic!("Failed to load {path:?}"));
@@ -168,9 +161,35 @@ fn main() {
                     .room
                     .as_ref()
                     .expect("format requires a --room argument");
-                let room = Room::load(room_path).expect("Failed to load the room");
-                room.save(room_path).expect("Failed to save the room");
-                info!("Saved the changed room at {}", room_path);
+
+                fn format_room(room_path: impl AsRef<std::path::Path>) {
+                    let room_path = room_path.as_ref();
+                    info!("Formatting {room_path:?}");
+                    let Ok(room) = util::report_err(Room::load(room_path), "Failed to load the room") else {
+                        return;
+                    };
+                    room.save(room_path).expect("Failed to save the room");
+                }
+
+                if room_path == "*" {
+                    fn format_dir(path: impl AsRef<std::path::Path>) {
+                        let dir =
+                            std::fs::read_dir(path).expect("Failed to open assets/rooms directory");
+                        for file in dir {
+                            let file = file.expect("Failed to access a directory entry");
+                            let meta = file.metadata().expect("Failed to access metadata");
+                            if meta.is_dir() {
+                                format_dir(file.path());
+                            } else {
+                                format_room(file.path());
+                            }
+                        }
+                    }
+
+                    format_dir(run_dir().join("assets").join("rooms"))
+                } else {
+                    format_room(room_path)
+                }
             }
         }
         return;
