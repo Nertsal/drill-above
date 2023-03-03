@@ -4,6 +4,7 @@ use super::*;
 pub struct TileMap {
     pub size: vec2<usize>,
     pub tiles: Vec<Tile>,
+    #[serde(skip)]
     geometry: Option<Vec<usize>>,
 }
 

@@ -300,7 +300,7 @@ impl RoomEditor {
             self.selection
                 .iter()
                 .next()
-                .and_then(|&id| self.world.room.get_block_mut(id))
+                .and_then(|&id| self.world.room.get_block_mut(id, self.active_layer))
                 .map(|block| match block {
                     PlaceableMut::Tile((name, _)) => {
                         let config = &self.assets.rules.tiles[&name];

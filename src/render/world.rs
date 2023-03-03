@@ -23,8 +23,7 @@ impl WorldRender {
         self.draw_background(world, framebuffer);
         self.draw_room(
             &world.room,
-            &world.cache.geometry.0,
-            &world.cache.geometry.1,
+            &world.cache,
             draw_hitboxes,
             &world.camera,
             framebuffer,
@@ -142,17 +141,41 @@ impl WorldRender {
     pub fn draw_room(
         &self,
         room: &Room,
-        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
-        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+        cache: &RenderCache,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
-        normal_framebuffer: Option<&mut ugli::Framebuffer>,
+        mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
-        self.draw_props(&room.props, camera, framebuffer, normal_framebuffer);
-        self.draw_tiles(tiles_geometry, masked_geometry, camera, framebuffer);
+        // Background layer
+        self.draw_props(
+            &room.background_layer.props,
+            camera,
+            framebuffer,
+            normal_framebuffer.as_deref_mut(),
+        );
+        self.draw_tiles(&cache.background_geometry, camera, framebuffer);
+
+        // Main layer
+        self.draw_props(
+            &room.main_layer.props,
+            camera,
+            framebuffer,
+            normal_framebuffer.as_deref_mut(),
+        );
+        self.draw_tiles(&cache.main_geometry, camera, framebuffer);
         self.draw_hazards(&room.hazards, draw_hitboxes, camera, framebuffer);
         self.draw_coins(&room.coins, draw_hitboxes, camera, framebuffer);
+
+        // Foreground layer
+        self.draw_props(
+            &room.foreground_layer.props,
+            camera,
+            framebuffer,
+            normal_framebuffer,
+        );
+        self.draw_tiles(&cache.foreground_geometry, camera, framebuffer);
+
         if draw_hitboxes {
             self.draw_transitions(&room.transitions, camera, framebuffer);
         }
@@ -162,8 +185,7 @@ impl WorldRender {
     pub fn draw_room_editor(
         &self,
         room: &Room,
-        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
-        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+        cache: &RenderCache,
         draw_hitboxes: bool,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
@@ -171,8 +193,7 @@ impl WorldRender {
     ) {
         self.draw_room(
             room,
-            tiles_geometry,
-            masked_geometry,
+            cache,
             draw_hitboxes,
             camera,
             framebuffer,
@@ -206,8 +227,7 @@ impl WorldRender {
 
     pub fn draw_tiles(
         &self,
-        tiles_geometry: &HashMap<Tile, ugli::VertexBuffer<Vertex>>,
-        masked_geometry: &HashMap<Tile, ugli::VertexBuffer<MaskedVertex>>,
+        (tiles_geometry, masked_geometry): &TilesGeometry,
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {

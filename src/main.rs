@@ -151,9 +151,11 @@ fn main() {
                     .expect("format requires a --room argument");
                 let mut room = Room::load(room_path).expect("Failed to load the room");
 
-                for tile in &mut room.tiles.tiles {
-                    if *tile == config.from {
-                        *tile = config.to.to_owned();
+                for layer in all_layers_mut!(room) {
+                    for tile in &mut layer.tiles.tiles {
+                        if *tile == config.from {
+                            *tile = config.to.to_owned();
+                        }
                     }
                 }
 

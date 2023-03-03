@@ -1,5 +1,36 @@
 use super::*;
 
+macro_rules! active_layer {
+    ($room:ident, $layer:ident) => {{
+        match $layer {
+            ActiveLayer::Background => &$room.background_layer,
+            ActiveLayer::Main => &$room.main_layer,
+            ActiveLayer::Foreground => &$room.foreground_layer,
+        }
+    }};
+}
+
+macro_rules! active_layer_mut {
+    ($room:ident, $layer:ident) => {{
+        match $layer {
+            ActiveLayer::Background => &mut $room.background_layer,
+            ActiveLayer::Main => &mut $room.main_layer,
+            ActiveLayer::Foreground => &mut $room.foreground_layer,
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! all_layers_mut {
+    ($room:ident) => {{
+        [
+            &mut $room.background_layer,
+            &mut $room.main_layer,
+            &mut $room.foreground_layer,
+        ]
+    }};
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
 #[asset(json)]
 pub struct Room {
@@ -8,19 +39,33 @@ pub struct Room {
     pub grid: Grid,
     pub size: vec2<usize>,
     pub spawn_point: vec2<Coord>,
-    pub tiles: TileMap,
+    pub background_layer: RoomLayer,
+    pub main_layer: RoomLayer,
+    pub foreground_layer: RoomLayer,
     #[serde(default)]
     pub hazards: Vec<Hazard>,
     #[serde(default)]
     pub coins: Vec<Coin>,
-    #[serde(default)]
-    pub props: Vec<Prop>,
     #[serde(default)]
     pub global_light: GlobalLightSource,
     #[serde(default)]
     pub spotlights: Vec<SpotlightSource>,
     #[serde(default)]
     pub transitions: Vec<RoomTransition>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoomLayer {
+    pub tiles: TileMap,
+    #[serde(default)]
+    pub props: Vec<Prop>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ActiveLayer {
+    Background,
+    Main,
+    Foreground,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,10 +142,11 @@ impl Room {
         grid.offset = size.map(|x| Coord::new(x as f32 / 2.0)) * grid.cell_size;
         Self {
             spawn_point: grid.grid_to_world(size.map(|x| x as isize / 2)),
-            tiles: TileMap::new(size),
             hazards: Vec::new(),
             coins: Vec::new(),
-            props: Vec::new(),
+            background_layer: RoomLayer::new(size),
+            main_layer: RoomLayer::new(size),
+            foreground_layer: RoomLayer::new(size),
             transitions: Vec::new(),
             drill_allowed: true,
             global_light: default(),
@@ -117,10 +163,17 @@ impl Room {
         )
     }
 
-    pub fn place_block(&mut self, block: Placeable, assets: &Assets) -> PlaceableId {
+    pub fn place_block(
+        &mut self,
+        block: Placeable,
+        layer: ActiveLayer,
+        assets: &Assets,
+    ) -> PlaceableId {
         match block {
             Placeable::Tile((tile, pos)) => {
-                self.tiles.set_tile_isize(pos, tile, assets);
+                active_layer_mut!(self, layer)
+                    .tiles
+                    .set_tile_isize(pos, tile, assets);
                 PlaceableId::Tile(pos)
             }
             Placeable::Hazard(hazard) => {
@@ -128,8 +181,9 @@ impl Room {
                 PlaceableId::Hazard(self.hazards.len() - 1)
             }
             Placeable::Prop(prop) => {
-                self.props.push(prop);
-                PlaceableId::Prop(self.props.len() - 1)
+                let layer = active_layer_mut!(self, layer);
+                layer.props.push(prop);
+                PlaceableId::Prop(layer.props.len() - 1)
             }
             Placeable::Coin(coin) => {
                 self.coins.push(coin);
@@ -142,10 +196,23 @@ impl Room {
         }
     }
 
+    pub fn place_tile(
+        &mut self,
+        pos: vec2<isize>,
+        tile: Tile,
+        layer: ActiveLayer,
+        assets: &Assets,
+    ) {
+        active_layer_mut!(self, layer)
+            .tiles
+            .set_tile_isize(pos, tile, assets);
+    }
+
     pub fn place_hazard(&mut self, pos: vec2<Coord>, hazard: HazardType) {
         let (pos, offset) = self.grid.world_to_grid(pos);
         let connect = |pos| {
-            self.tiles
+            self.main_layer
+                .tiles
                 .get_tile_isize(pos)
                 .map(|tile| tile != "air")
                 .unwrap_or(false)
@@ -183,10 +250,16 @@ impl Room {
         });
     }
 
-    pub fn place_prop(&mut self, pos: vec2<isize>, size: vec2<Coord>, prop: PropType) {
+    pub fn place_prop(
+        &mut self,
+        pos: vec2<isize>,
+        size: vec2<Coord>,
+        prop: PropType,
+        layer: ActiveLayer,
+    ) {
         let pos = self.grid.grid_to_world(pos);
         let sprite = Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0));
-        self.props.push(Prop {
+        active_layer_mut!(self, layer).props.push(Prop {
             sprite,
             prop_type: prop,
         });
@@ -202,49 +275,67 @@ impl Room {
         });
     }
 
-    pub fn get_hovered(&self, aabb: Aabb2<Coord>) -> Vec<PlaceableId> {
+    pub fn get_hovered(&self, aabb: Aabb2<Coord>, layer: ActiveLayer) -> Vec<PlaceableId> {
         let grid_aabb = Collider::new(aabb).grid_aabb(&self.grid);
-        itertools::chain![
-            self.spotlights
-                .iter()
-                .enumerate()
-                .filter(|(_, spotlight)| aabb
-                    .intersects(&Aabb2::point(spotlight.position).extend_uniform(Coord::new(0.5))))
-                .map(|(i, _)| PlaceableId::Spotlight(i)),
-            self.props
+        let main_layer = matches!(layer, ActiveLayer::Main);
+        let layer = active_layer!(self, layer);
+
+        let mut res: Vec<PlaceableId> = itertools::chain![
+            layer
+                .props
                 .iter()
                 .enumerate()
                 .filter(|(_, prop)| prop.sprite.intersects(&aabb))
                 .map(|(i, _)| PlaceableId::Prop(i)),
-            self.hazards
-                .iter()
-                .enumerate()
-                .filter(|(_, hazard)| hazard.collider.raw().intersects(&aabb))
-                .map(|(i, _)| PlaceableId::Hazard(i)),
-            self.coins
-                .iter()
-                .enumerate()
-                .filter(|(_, coin)| coin.collider.raw().intersects(&aabb))
-                .map(|(i, _)| PlaceableId::Coin(i)),
             (grid_aabb.min.x..=grid_aabb.max.x)
                 .flat_map(move |x| (grid_aabb.min.y..=grid_aabb.max.y).map(move |y| vec2(x, y)))
-                .filter_map(|pos| self
+                .filter_map(|pos| layer
                     .tiles
                     .get_tile_isize(pos)
                     .filter(|tile| *tile != "air")
                     .map(|_| PlaceableId::Tile(pos))),
         ]
-        .collect()
+        .collect();
+
+        if main_layer {
+            res.extend(itertools::chain![
+                self.spotlights
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, spotlight)| {
+                        aabb.intersects(
+                            &Aabb2::point(spotlight.position).extend_uniform(Coord::new(0.5)),
+                        )
+                    })
+                    .map(|(i, _)| PlaceableId::Spotlight(i)),
+                self.hazards
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, hazard)| hazard.collider.raw().intersects(&aabb))
+                    .map(|(i, _)| PlaceableId::Hazard(i)),
+                self.coins
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, coin)| coin.collider.raw().intersects(&aabb))
+                    .map(|(i, _)| PlaceableId::Coin(i)),
+            ]);
+        }
+
+        res
     }
 
-    pub fn get_block(&self, id: PlaceableId) -> Option<Placeable> {
+    pub fn get_block(&self, id: PlaceableId, layer: ActiveLayer) -> Option<Placeable> {
         match id {
-            PlaceableId::Tile(pos) => self
+            PlaceableId::Tile(pos) => active_layer!(self, layer)
                 .tiles
                 .get_tile_isize(pos)
                 .map(|tile| Placeable::Tile((tile.to_owned(), pos))),
             PlaceableId::Hazard(id) => self.hazards.get(id).cloned().map(Placeable::Hazard),
-            PlaceableId::Prop(id) => self.props.get(id).cloned().map(Placeable::Prop),
+            PlaceableId::Prop(id) => active_layer!(self, layer)
+                .props
+                .get(id)
+                .cloned()
+                .map(Placeable::Prop),
             PlaceableId::Coin(id) => self.coins.get(id).cloned().map(Placeable::Coin),
             PlaceableId::Spotlight(id) => {
                 self.spotlights.get(id).cloned().map(Placeable::Spotlight)
@@ -252,14 +343,17 @@ impl Room {
         }
     }
 
-    pub fn get_block_mut(&mut self, id: PlaceableId) -> Option<PlaceableMut> {
+    pub fn get_block_mut(&mut self, id: PlaceableId, layer: ActiveLayer) -> Option<PlaceableMut> {
         match id {
-            PlaceableId::Tile(pos) => self
+            PlaceableId::Tile(pos) => active_layer_mut!(self, layer)
                 .tiles
                 .get_tile_isize(pos)
                 .map(|tile| PlaceableMut::Tile((tile.to_owned(), pos))),
             PlaceableId::Hazard(id) => self.hazards.get_mut(id).map(PlaceableMut::Hazard),
-            PlaceableId::Prop(id) => self.props.get_mut(id).map(PlaceableMut::Prop),
+            PlaceableId::Prop(id) => active_layer_mut!(self, layer)
+                .props
+                .get_mut(id)
+                .map(PlaceableMut::Prop),
             PlaceableId::Coin(id) => self.coins.get_mut(id).map(PlaceableMut::Coin),
             PlaceableId::Spotlight(id) => self.spotlights.get_mut(id).map(PlaceableMut::Spotlight),
         }
@@ -268,6 +362,7 @@ impl Room {
     pub fn remove_blocks<'a>(
         &mut self,
         blocks: impl IntoIterator<Item = &'a PlaceableId>,
+        layer: ActiveLayer,
         assets: &Assets,
     ) -> Vec<Placeable> {
         let mut spotlights = Vec::new();
@@ -290,13 +385,15 @@ impl Room {
         hazards.sort_unstable();
         coins.sort_unstable();
 
+        let layer = active_layer_mut!(self, layer);
+
         let mut removed = Vec::new();
         for id in spotlights.into_iter().rev() {
             let light = self.spotlights.swap_remove(id);
             removed.push(Placeable::Spotlight(light));
         }
         for id in props.into_iter().rev() {
-            let prop = self.props.swap_remove(id);
+            let prop = layer.props.swap_remove(id);
             removed.push(Placeable::Prop(prop));
         }
         for id in hazards.into_iter().rev() {
@@ -308,17 +405,19 @@ impl Room {
             removed.push(Placeable::Coin(coin));
         }
         for pos in tiles {
-            if let Some(tile) = self.tiles.get_tile_isize(pos) {
+            if let Some(tile) = layer.tiles.get_tile_isize(pos) {
                 removed.push(Placeable::Tile((tile.to_owned(), pos)));
             }
-            self.tiles.set_tile_isize(pos, "air".to_string(), assets);
+            layer.tiles.set_tile_isize(pos, "air".to_string(), assets);
         }
 
         removed
     }
 
     pub fn change_size(&mut self, size: vec2<usize>, assets: &Assets) {
-        self.tiles.change_size(size, assets);
+        for layer in all_layers_mut!(self) {
+            layer.tiles.change_size(size, assets);
+        }
         self.size = size;
     }
 
@@ -330,35 +429,79 @@ impl Room {
         for hazard in &mut self.hazards {
             hazard.teleport(move_fn(hazard.collider.pos()));
         }
-        for prop in &mut self.props {
-            prop.teleport(move_fn(prop.sprite.center()));
-        }
         for light in &mut self.spotlights {
             light.position = move_fn(light.position);
+        }
+
+        for layer in all_layers_mut!(self) {
+            for prop in &mut layer.props {
+                prop.teleport(move_fn(prop.sprite.center()));
+            }
         }
     }
 
     pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
-        self.tiles.translate(delta, assets);
+        for layer in all_layers_mut!(self) {
+            layer.tiles.translate(delta, assets);
+        }
 
         let delta = self.grid.grid_to_world(delta) - self.grid.grid_to_world(vec2::ZERO);
         self.move_entities(|pos| pos + delta);
     }
 
     pub fn flip_h(&mut self, assets: &Assets) {
-        self.tiles.flip_h(assets);
+        for layer in all_layers_mut!(self) {
+            layer.tiles.flip_h(assets);
+        }
         let bounds = self.bounds();
         self.move_entities(|pos| vec2(bounds.min.x + bounds.max.x - pos.x, pos.y));
     }
 
     pub fn flip_v(&mut self, assets: &Assets) {
-        self.tiles.flip_v(assets);
+        for layer in all_layers_mut!(self) {
+            layer.tiles.flip_v(assets);
+        }
         let bounds = self.bounds();
         self.move_entities(|pos| vec2(pos.x, bounds.min.y + bounds.max.y - pos.y));
     }
 
+    pub fn load(name: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
+        let path = room_path(name);
+        futures::executor::block_on(async move {
+            debug!("Loading room {path:?}");
+            let room = file::load_json(&path).await?;
+            Ok(room)
+        })
+    }
+
+    pub fn save(&self, name: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let path = room_path(name);
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let file = std::fs::File::create(path)?;
+            let writer = std::io::BufWriter::new(file);
+            serde_json::to_writer_pretty(writer, self)?;
+            info!("Saved the room");
+            Ok(())
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            anyhow::bail!("unimplemented")
+        }
+    }
+}
+
+impl RoomLayer {
+    pub fn new(size: vec2<usize>) -> Self {
+        Self {
+            tiles: TileMap::new(size),
+            props: Vec::new(),
+        }
+    }
+
     pub fn calculate_light_geometry(
         &self,
+        grid: &Grid,
         geng: &Geng,
         assets: &Assets,
     ) -> ugli::VertexBuffer<NormalVertex> {
@@ -369,10 +512,10 @@ impl Room {
             .enumerate()
             .filter_map(|(i, tile)| {
                 (tile != "air").then(|| {
-                    let grid_pos = index_to_pos(i, self.size.x).map(|x| x as isize);
-                    let pos = self.grid.grid_to_world(grid_pos);
+                    let grid_pos = index_to_pos(i, self.tiles.size.x).map(|x| x as isize);
+                    let pos = grid.grid_to_world(grid_pos);
                     let aabb = Aabb2::point(pos)
-                        .extend_positive(self.grid.cell_size)
+                        .extend_positive(grid.cell_size)
                         .map(Coord::as_f32);
                     let matrix = mat3::translate(aabb.bottom_left()) * mat3::scale(aabb.size());
 
@@ -418,6 +561,7 @@ impl Room {
 
     pub fn calculate_normal_geometry(
         &self,
+        grid: &Grid,
         geng: &Geng,
         assets: &Assets,
     ) -> (
@@ -431,10 +575,10 @@ impl Room {
                 continue;
             }
 
-            let pos = index_to_pos(i, self.size.x);
-            let pos = self.grid.grid_to_world(pos.map(|x| x as isize));
+            let pos = index_to_pos(i, self.tiles.size.x);
+            let pos = grid.grid_to_world(pos.map(|x| x as isize));
             let pos = Aabb2::point(pos)
-                .extend_positive(self.grid.cell_size)
+                .extend_positive(grid.cell_size)
                 .map(Coord::as_f32);
             let matrix = mat3::translate(pos.bottom_left()) * mat3::scale(pos.size());
             let vertices = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
@@ -474,31 +618,6 @@ impl Room {
             ugli::VertexBuffer::new_dynamic(geng.ugli(), static_geom),
             shaded_geom,
         )
-    }
-
-    pub fn load(name: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
-        let path = room_path(name);
-        futures::executor::block_on(async move {
-            debug!("Loading room {path:?}");
-            let room = file::load_json(&path).await?;
-            Ok(room)
-        })
-    }
-
-    pub fn save(&self, name: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
-        let path = room_path(name);
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let file = std::fs::File::create(path)?;
-            let writer = std::io::BufWriter::new(file);
-            serde_json::to_writer_pretty(writer, self)?;
-            info!("Saved the room");
-            Ok(())
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            anyhow::bail!("unimplemented")
-        }
     }
 }
 

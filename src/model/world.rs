@@ -48,7 +48,9 @@ impl World {
         mut room: Room,
         player_pos: Option<vec2<Coord>>,
     ) -> Self {
-        room.tiles.update_geometry(assets);
+        for layer in all_layers_mut!(room) {
+            layer.tiles.update_geometry(assets);
+        }
         let cache = RenderCache::calculate(&room, geng, assets);
         Self::with_cache(assets, rules, room, player_pos, cache)
     }

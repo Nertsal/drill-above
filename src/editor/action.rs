@@ -31,8 +31,7 @@ impl RoomEditor {
             PlaceableType::Tile(tile) => {
                 self.world
                     .room
-                    .tiles
-                    .set_tile_isize(grid_pos, tile, &self.assets);
+                    .place_tile(grid_pos, tile, self.active_layer, &self.assets);
             }
             PlaceableType::Hazard(hazard) => {
                 self.world.room.place_hazard(position, hazard);
@@ -49,7 +48,9 @@ impl RoomEditor {
                     .size()
                     .map(|x| x as f32 / PIXELS_PER_UNIT as f32)
                     .map(Coord::new);
-                self.world.room.place_prop(grid_pos, size, prop);
+                self.world
+                    .room
+                    .place_prop(grid_pos, size, prop, self.active_layer);
             }
             PlaceableType::Spotlight(light) => {
                 self.world
@@ -62,7 +63,9 @@ impl RoomEditor {
     }
 
     pub fn action_remove<'a>(&mut self, ids: impl IntoIterator<Item = &'a PlaceableId>) {
-        self.world.room.remove_blocks(ids, &self.assets);
+        self.world
+            .room
+            .remove_blocks(ids, self.active_layer, &self.assets);
         self.hovered.clear();
         self.update_geometry();
     }

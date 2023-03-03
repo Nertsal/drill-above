@@ -118,7 +118,13 @@ impl Logic<'_> {
 
                 (match id {
                     ColliderId::Tile(pos) => {
-                        let tile = logic.world.room.tiles.get_tile_isize(pos).unwrap();
+                        let tile = logic
+                            .world
+                            .room
+                            .main_layer
+                            .tiles
+                            .get_tile_isize(pos)
+                            .unwrap();
                         logic.world.rules.tiles[tile].drill_bounciness
                     }
                     ColliderId::Entity(_) => todo!(),
@@ -511,7 +517,13 @@ impl Logic<'_> {
         if let Some((id, col)) = self.check_collision(&collider) {
             let player = &mut self.world.player;
             let tile = match id {
-                ColliderId::Tile(pos) => self.world.room.tiles.get_tile_isize(pos).unwrap(),
+                ColliderId::Tile(pos) => self
+                    .world
+                    .room
+                    .main_layer
+                    .tiles
+                    .get_tile_isize(pos)
+                    .unwrap(),
                 ColliderId::Entity(id) => &self.world.blocks.get(&id).unwrap().tile,
             };
             let wall_normal = col.normal;
@@ -545,7 +557,13 @@ impl Logic<'_> {
             if let Some((id, _)) = self.check_collision(&collider) {
                 let player = &mut self.world.player;
                 let tile = match id {
-                    ColliderId::Tile(pos) => self.world.room.tiles.get_tile_isize(pos).unwrap(),
+                    ColliderId::Tile(pos) => self
+                        .world
+                        .room
+                        .main_layer
+                        .tiles
+                        .get_tile_isize(pos)
+                        .unwrap(),
                     ColliderId::Entity(id) => &self.world.blocks.get(&id).unwrap().tile,
                 };
                 player.state = PlayerState::Grounded(tile.to_owned());
@@ -577,6 +595,7 @@ impl Logic<'_> {
             .any(|pos| {
                 self.world
                     .room
+                    .main_layer
                     .tiles
                     .get_tile_isize(pos)
                     .filter(|&tile| {

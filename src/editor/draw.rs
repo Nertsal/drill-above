@@ -98,8 +98,7 @@ impl RoomEditor {
             // Render the room
             self.render.world.draw_room_editor(
                 &self.world.room,
-                &self.world.cache.geometry.0,
-                &self.world.cache.geometry.1,
+                &self.world.cache,
                 true,
                 &self.camera,
                 &mut world_framebuffer,
@@ -213,7 +212,7 @@ impl RoomEditor {
         // Draw hovered/selected
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selection] {
-            let Some(block) = self.world.room.get_block(block) else {
+            let Some(block) = self.world.room.get_block(block, self.active_layer) else {
                 continue
             };
             let collider = block.sprite(&self.world.room.grid);
@@ -272,6 +271,7 @@ impl RoomEditor {
             let tile = &self
                 .world
                 .room
+                .main_layer
                 .tiles
                 .get_tile_isize(pos.map(|x| x as isize))
                 .unwrap();

@@ -41,6 +41,8 @@ pub struct RoomEditor {
     pub room_name: String,
     /// The world that contains the room.
     pub world: World,
+    /// Currently active layer of the room.
+    pub active_layer: ActiveLayer,
     /// Whether we should transition into the playtest state.
     pub playtest: bool,
 
@@ -147,8 +149,9 @@ impl RoomEditor {
 
     pub fn new_room(geng: &Geng, assets: &Rc<Assets>, room_name: String, mut room: Room) -> Self {
         // Update geometry in case it was not specified in the json file.
-        room.tiles.update_geometry(assets);
-
+        for layer in all_layers_mut!(room) {
+            layer.tiles.update_geometry(assets);
+        }
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -168,6 +171,7 @@ impl RoomEditor {
             },
             framebuffer_size: vec2(1, 1),
             world: World::new(geng, assets, assets.rules.clone(), room, None),
+            active_layer: ActiveLayer::Main,
             draw_grid: true,
             cursor_pos: vec2::ZERO,
             cursor_world_pos: vec2::ZERO,
@@ -288,7 +292,7 @@ impl RoomEditor {
     /// Get all blocks inside the `aabb`. The blocks are filtered
     /// by the currently active tab's hovered list (unless it's in `Room` mode).
     pub fn get_hovered(&self, aabb: Aabb2<Coord>) -> Vec<PlaceableId> {
-        let mut hovered = self.world.room.get_hovered(aabb);
+        let mut hovered = self.world.room.get_hovered(aabb, self.active_layer);
         if let Some(tab) = &self.tabs.get(self.active_tab) {
             if let RoomEditorMode::Room = tab.mode {
             } else {
@@ -378,7 +382,10 @@ impl RoomEditor {
                         };
 
                         self.keep_state();
-                        let blocks = self.world.room.remove_blocks(&ids, &self.assets);
+                        let blocks =
+                            self.world
+                                .room
+                                .remove_blocks(&ids, self.active_layer, &self.assets);
                         Some(RoomDragAction::MoveBlocks {
                             blocks,
                             initial_pos: self.cursor_world_pos,
@@ -429,7 +436,10 @@ impl RoomEditor {
                         let delta = self.cursor_world_pos - initial_pos;
                         for mut block in blocks {
                             block.translate(delta, &self.world.room.grid);
-                            let id = self.world.room.place_block(block, &self.assets);
+                            let id =
+                                self.world
+                                    .room
+                                    .place_block(block, self.active_layer, &self.assets);
                             self.selection.insert(id);
                         }
                         self.update_geometry();
@@ -501,14 +511,14 @@ impl RoomEditor {
             .selection
             .iter()
             .next()
-            .and_then(|id| self.world.room.get_block(*id))
+            .and_then(|id| self.world.room.get_block(*id, self.active_layer))
             .map(|block| block.position(&self.world.room.grid))
         {
             self.keep_state();
             let blocks: Vec<_> = self
                 .selection
                 .iter()
-                .flat_map(|&id| self.world.room.get_block(id))
+                .flat_map(|&id| self.world.room.get_block(id, self.active_layer))
                 .collect();
             self.dragging = Some(RoomDragging {
                 initial_cursor_pos: self.cursor_pos,
@@ -524,7 +534,7 @@ impl RoomEditor {
     /// Swithes the tab and selects the hovered block.
     fn goto_hovered(&mut self) {
         let Some(&hovered_id) = self.hovered.first() else { return };
-        let Some(hovered) = self.world.room.get_block(hovered_id) else {
+        let Some(hovered) = self.world.room.get_block(hovered_id, self.active_layer) else {
             return
         };
         let hovered = hovered.get_type();
