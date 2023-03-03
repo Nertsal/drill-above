@@ -249,6 +249,15 @@ impl RoomEditor {
         }
     }
 
+    pub fn change_layer(&mut self, layer: ActiveLayer) {
+        if layer == self.active_layer {
+            return;
+        }
+
+        self.clear_selection();
+        self.active_layer = layer;
+    }
+
     /// Get the currently selected placeable block (if any).
     pub fn selected_block(&self) -> Option<PlaceableType> {
         self.tabs

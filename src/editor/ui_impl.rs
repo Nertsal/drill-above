@@ -21,13 +21,29 @@ impl RoomEditor {
         let framebuffer_size = self.framebuffer_size.map(|x| x as f32);
 
         let text_size = framebuffer_size.y * 0.025;
-        // let font = &self.assets.font;
         let font = self.geng.default_font().clone();
-        let slider = move |name, range, value: &mut f32| {
-            ui::slider(cx, name, value, range, font.clone(), text_size)
-        };
-        let font = self.geng.default_font().clone();
-        let text = move |text| geng::ui::Text::new(text, font.clone(), text_size, Rgba::WHITE);
+
+        macro_rules! slider {
+            ($name:expr, $range:expr, $value:expr) => {{
+                ui::slider(cx, $name, $value, $range, font.clone(), text_size)
+            }};
+        }
+
+        macro_rules! text {
+            ($text:expr) => {{
+                geng::ui::Text::new($text, font.clone(), text_size, Rgba::WHITE)
+            }};
+        }
+
+        macro_rules! button {
+            ($name:expr => $body:tt) => {{
+                let button = geng::ui::Button::new(cx, $name);
+                if button.was_clicked() {
+                    $body
+                }
+                button
+            }};
+        }
 
         // let (cell_pos, cell_offset) = self.world.room.grid.world_to_grid(self.cursor_world_pos);
         // let cell_pos = Text::new(
@@ -99,138 +115,143 @@ impl RoomEditor {
             },
         ];
 
-        let mut update_geometry = false;
-        if let Some(tab) = self.tabs.get(self.active_tab) {
-            if let RoomEditorMode::Room = tab.mode {
-                room_info.extend([
-                    geng::ui::row![
-                        text(format!("width: {}", self.world.room.size.x))
-                            .padding_right(text_size.into()),
+        if self.selection.is_empty() {
+            let mut update_geometry = false;
+            if let Some(tab) = self.tabs.get(self.active_tab) {
+                if let RoomEditorMode::Room = tab.mode {
+                    room_info.extend([
+                        geng::ui::row![
+                            text!(format!("width: {}", self.world.room.size.x))
+                                .padding_right(text_size.into()),
+                            {
+                                let inc = Button::new(cx, "+");
+                                if inc.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.change_size(
+                                        self.world.room.size + vec2(1, 0),
+                                        &self.assets,
+                                    );
+                                    update_geometry = true;
+                                }
+                                inc.padding_right(text_size.into())
+                            },
+                            {
+                                let dec = Button::new(cx, "-");
+                                if dec.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.change_size(
+                                        self.world.room.size - vec2(1, 0),
+                                        &self.assets,
+                                    );
+                                    update_geometry = true;
+                                }
+                                dec.padding_right(text_size.into())
+                            },
+                        ]
+                        .padding_top(text_size.into())
+                        .boxed(),
+                        geng::ui::row![
+                            text!(format!("height: {}", self.world.room.size.y))
+                                .padding_right(text_size.into()),
+                            {
+                                let inc = Button::new(cx, "+");
+                                if inc.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.change_size(
+                                        self.world.room.size + vec2(0, 1),
+                                        &self.assets,
+                                    );
+                                    update_geometry = true;
+                                }
+                                inc.padding_right(text_size.into())
+                            },
+                            {
+                                let dec = Button::new(cx, "-");
+                                if dec.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.change_size(
+                                        self.world.room.size - vec2(0, 1),
+                                        &self.assets,
+                                    );
+                                    update_geometry = true;
+                                }
+                                dec.padding_right(text_size.into())
+                            },
+                        ]
+                        .boxed(),
+                        text!("Translate".to_string()).boxed(),
+                        geng::ui::row![
+                            text!("Horizontal".to_string()).padding_right(text_size.into()),
+                            {
+                                let left = Button::new(cx, "left");
+                                if left.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.translate(vec2(-1, 0), &self.assets);
+                                    update_geometry = true;
+                                }
+                                left.padding_right(text_size.into())
+                            },
+                            {
+                                let right = Button::new(cx, "right");
+                                if right.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.translate(vec2(1, 0), &self.assets);
+                                    update_geometry = true;
+                                }
+                                right.padding_right(text_size.into())
+                            },
+                        ]
+                        .boxed(),
+                        geng::ui::row![
+                            text!("Vertical".to_string()).padding_right(text_size.into()),
+                            {
+                                let down = Button::new(cx, "down");
+                                if down.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.translate(vec2(0, -1), &self.assets);
+                                    update_geometry = true;
+                                }
+                                down.padding_right(text_size.into())
+                            },
+                            {
+                                let up = Button::new(cx, "up");
+                                if up.was_clicked() {
+                                    self.keep_state();
+                                    self.world.room.translate(vec2(0, 1), &self.assets);
+                                    update_geometry = true;
+                                }
+                                up.padding_right(text_size.into())
+                            },
+                        ]
+                        .boxed(),
                         {
-                            let inc = Button::new(cx, "+");
-                            if inc.was_clicked() {
+                            let flip_h = Button::new(cx, "Flip horizontal");
+                            if flip_h.was_clicked() {
                                 self.keep_state();
-                                self.world
-                                    .room
-                                    .change_size(self.world.room.size + vec2(1, 0), &self.assets);
+                                self.world.room.flip_h(&self.assets);
                                 update_geometry = true;
                             }
-                            inc.padding_right(text_size.into())
-                        },
-                        {
-                            let dec = Button::new(cx, "-");
-                            if dec.was_clicked() {
-                                self.keep_state();
-                                self.world
-                                    .room
-                                    .change_size(self.world.room.size - vec2(1, 0), &self.assets);
-                                update_geometry = true;
-                            }
-                            dec.padding_right(text_size.into())
-                        },
-                    ]
-                    .padding_top(text_size.into())
-                    .boxed(),
-                    geng::ui::row![
-                        text(format!("height: {}", self.world.room.size.y))
-                            .padding_right(text_size.into()),
-                        {
-                            let inc = Button::new(cx, "+");
-                            if inc.was_clicked() {
-                                self.keep_state();
-                                self.world
-                                    .room
-                                    .change_size(self.world.room.size + vec2(0, 1), &self.assets);
-                                update_geometry = true;
-                            }
-                            inc.padding_right(text_size.into())
-                        },
-                        {
-                            let dec = Button::new(cx, "-");
-                            if dec.was_clicked() {
-                                self.keep_state();
-                                self.world
-                                    .room
-                                    .change_size(self.world.room.size - vec2(0, 1), &self.assets);
-                                update_geometry = true;
-                            }
-                            dec.padding_right(text_size.into())
-                        },
-                    ]
-                    .boxed(),
-                    text("Translate".to_string()).boxed(),
-                    geng::ui::row![
-                        text("Horizontal".to_string()).padding_right(text_size.into()),
-                        {
-                            let left = Button::new(cx, "left");
-                            if left.was_clicked() {
-                                self.keep_state();
-                                self.world.room.translate(vec2(-1, 0), &self.assets);
-                                update_geometry = true;
-                            }
-                            left.padding_right(text_size.into())
-                        },
-                        {
-                            let right = Button::new(cx, "right");
-                            if right.was_clicked() {
-                                self.keep_state();
-                                self.world.room.translate(vec2(1, 0), &self.assets);
-                                update_geometry = true;
-                            }
-                            right.padding_right(text_size.into())
-                        },
-                    ]
-                    .boxed(),
-                    geng::ui::row![
-                        text("Vertical".to_string()).padding_right(text_size.into()),
-                        {
-                            let down = Button::new(cx, "down");
-                            if down.was_clicked() {
-                                self.keep_state();
-                                self.world.room.translate(vec2(0, -1), &self.assets);
-                                update_geometry = true;
-                            }
-                            down.padding_right(text_size.into())
-                        },
-                        {
-                            let up = Button::new(cx, "up");
-                            if up.was_clicked() {
-                                self.keep_state();
-                                self.world.room.translate(vec2(0, 1), &self.assets);
-                                update_geometry = true;
-                            }
-                            up.padding_right(text_size.into())
-                        },
-                    ]
-                    .boxed(),
-                    {
-                        let flip_h = Button::new(cx, "Flip horizontal");
-                        if flip_h.was_clicked() {
-                            self.keep_state();
-                            self.world.room.flip_h(&self.assets);
-                            update_geometry = true;
+                            flip_h
                         }
-                        flip_h
-                    }
-                    .boxed(),
-                    {
-                        let flip_v = Button::new(cx, "Flip vertical");
-                        if flip_v.was_clicked() {
-                            self.keep_state();
-                            self.world.room.flip_v(&self.assets);
-                            update_geometry = true;
+                        .boxed(),
+                        {
+                            let flip_v = Button::new(cx, "Flip vertical");
+                            if flip_v.was_clicked() {
+                                self.keep_state();
+                                self.world.room.flip_v(&self.assets);
+                                update_geometry = true;
+                            }
+                            flip_v
                         }
-                        flip_v
-                    }
-                    .boxed(),
-                ]);
+                        .boxed(),
+                    ]);
+                }
+            }
+
+            if update_geometry {
+                self.update_geometry();
             }
         }
-
-        if update_geometry {
-            self.update_geometry();
-        }
-        let font = self.geng.default_font();
 
         let tabs = self
             .tabs
@@ -261,6 +282,19 @@ impl RoomEditor {
                 ) as Box<dyn geng::ui::Widget>
             })
             .collect();
+
+        let layers = geng::ui::column![
+            text!("Layers"),
+            button!("Background" => {
+                self.change_layer(ActiveLayer::Background);
+            }),
+            button!("Main" => {
+                self.change_layer(ActiveLayer::Main);
+            }),
+            button!("Foreground" => {
+                self.change_layer(ActiveLayer::Foreground);
+            }),
+        ];
 
         let mut duplicate = false;
         let mut remove = false;
@@ -305,11 +339,11 @@ impl RoomEditor {
                     PlaceableMut::Tile((name, _)) => {
                         let config = &self.assets.rules.tiles[&name];
                         let tile = geng::ui::column![
-                            text(format!("Layer: {}", config.layer)),
-                            text(format!("Drillable: {}", config.drillable)),
-                            text(format!("Acceleration: {:.2}", config.acceleration)),
-                            text(format!("Deceleration: {:.2}", config.deceleration)),
-                            text(format!("Drill bounciness: {:.2}", config.drill_bounciness)),
+                            text!(format!("Layer: {}", config.layer)),
+                            text!(format!("Drillable: {}", config.drillable)),
+                            text!(format!("Acceleration: {:.2}", config.acceleration)),
+                            text!(format!("Deceleration: {:.2}", config.deceleration)),
+                            text!(format!("Drill bounciness: {:.2}", config.drill_bounciness)),
                         ];
                         block_info_ui(format!("Tile {name}"), false, tile.boxed())
                     }
@@ -324,9 +358,9 @@ impl RoomEditor {
                     }
                     PlaceableMut::Spotlight(config) => {
                         // Spotlight
-                        let angle = slider("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
+                        let angle = slider!("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
                         let angle_range =
-                            slider("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
+                            slider!("Angle", 0.0..=f64::PI * 2.0, &mut config.angle_range);
                         let color = ui::color_selector(
                             cx,
                             &mut config.color,
@@ -335,20 +369,20 @@ impl RoomEditor {
                             font.clone(),
                             text_size,
                         );
-                        let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
+                        let intensity = slider!("Intensity", 0.0..=1.0, &mut config.intensity);
                         let max_distance = {
                             let mut d = config.max_distance.as_f32();
-                            let slider = slider("Distance", 0.0..=50.0, &mut d);
+                            let slider = slider!("Distance", 0.0..=50.0, &mut d);
                             config.max_distance = Coord::new(d);
                             slider
                         };
-                        let volume = slider("Volume", 0.0..=1.0, &mut config.volume);
+                        let volume = slider!("Volume", 0.0..=1.0, &mut config.volume);
                         let angle_gradient =
-                            slider("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
-                        let distance_gradient = slider(
+                            slider!("Angle Gradient", 0.5..=5.0, &mut config.angle_gradient);
+                        let distance_gradient = slider!(
                             "Distance Gradient",
                             0.5..=5.0,
-                            &mut config.distance_gradient,
+                            &mut config.distance_gradient
                         );
 
                         let light = geng::ui::column![
@@ -399,7 +433,7 @@ impl RoomEditor {
                         font.clone(),
                         text_size,
                     );
-                    let intensity = slider("Intensity", 0.0..=1.0, &mut config.intensity);
+                    let intensity = slider!("Intensity", 0.0..=1.0, &mut config.intensity);
                     let light = geng::ui::column![color, intensity];
                     block_info = Some(block_info_ui(
                         "Global light".to_string(),
@@ -465,6 +499,10 @@ impl RoomEditor {
                 .fixed_size(framebuffer_size.map(|x| x as f64) * vec2(0.2, 0.2))
                 .align(vec2(1.0, 1.0)),
             geng::ui::row(tabs)
+                .align(vec2(0.0, 1.0))
+                .padding_left(framebuffer_size.x as f64 * 0.02),
+            layers
+                .padding_top(text_size as f64 * 2.0)
                 .align(vec2(0.0, 1.0))
                 .padding_left(framebuffer_size.x as f64 * 0.02),
             selected_block

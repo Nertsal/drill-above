@@ -61,7 +61,7 @@ pub struct RoomLayer {
     pub props: Vec<Prop>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActiveLayer {
     Background,
     Main,
