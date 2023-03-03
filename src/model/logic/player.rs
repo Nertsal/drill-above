@@ -759,7 +759,7 @@ impl Logic<'_> {
         let actor = self.world.actors.get_mut(&player.id).unwrap();
 
         // Top
-        if actor.collider.head().y > room_bounds.max.y {
+        if actor.collider.head().y > room_bounds.max.y + Coord::new(0.5) {
             actor.collider.translate(vec2(
                 Coord::ZERO,
                 room_bounds.max.y - actor.collider.head().y,
@@ -782,7 +782,7 @@ impl Logic<'_> {
         }
 
         // Bottom
-        if actor.collider.feet().y < room_bounds.min.y {
+        if actor.collider.feet().y < room_bounds.min.y - Coord::new(0.5) {
             self.world.kill_player();
             return true;
         }
