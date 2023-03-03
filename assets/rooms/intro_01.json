@@ -2832,5 +2832,23 @@
     "intensity": 1.0
   },
   "spotlights": [],
-  "transitions": []
+  "transitions": [
+    {
+      "collider": {
+        "min": [
+          20.0,
+          -11.5
+        ],
+        "max": [
+          21.0,
+          10.5
+        ]
+      },
+      "to_room": "intro_02.json",
+      "offset": [
+        -40,
+        1
+      ]
+    }
+  ]
 }
