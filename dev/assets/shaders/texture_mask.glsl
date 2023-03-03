@@ -21,11 +21,12 @@ void main() {
 #ifdef FRAGMENT_SHADER
 uniform sampler2D u_texture;
 uniform sampler2D u_mask;
+uniform vec4 u_color;
 
 void main() {
     vec4 texture_color = texture2D(u_texture, v_uv);
     vec4 mask_color = texture2D(u_mask, v_mask_uv);
-    vec4 color = texture_color * mask_color;
+    vec4 color = u_color * texture_color * mask_color;
     gl_FragColor = color;
 }
 #endif
