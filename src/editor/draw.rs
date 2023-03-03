@@ -277,7 +277,21 @@ impl RoomEditor {
                 .unwrap();
             match tile.as_str() {
                 "air" => Rgba::TRANSPARENT_WHITE,
-                _ => Rgba::GRAY,
+                _ => {
+                    if self
+                        .assets
+                        .rules
+                        .tiles
+                        .get(*tile)
+                        .map(|tile| tile.drillable)
+                        .unwrap_or(false)
+                    {
+                        // Drillable tile
+                        Rgba::opaque(0.5, 0.7, 0.5)
+                    } else {
+                        Rgba::GRAY
+                    }
+                }
             }
         });
         texture.set_filter(ugli::Filter::Nearest);
