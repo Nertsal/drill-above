@@ -4,7 +4,7 @@ const LEVEL_CAMERA_MOVE_SPEED: f32 = 100.0;
 const LEVEL_FOV_MIN: f32 = 50.0;
 const LEVEL_FOV_MAX: f32 = 300.0;
 
-const SNAP_DISTANCE: f32 = 1.0;
+const SNAP_DISTANCE: f32 = 0.5;
 
 #[macro_export]
 macro_rules! active_room_mut {
