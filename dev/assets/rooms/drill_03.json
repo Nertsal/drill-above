@@ -5574,14 +5574,18 @@
   "hazards": [
     {
       "sprite": {
-        "min": [
-          34.0,
-          9.5
-        ],
-        "max": [
-          35.0,
-          10.5
-        ]
+        "pos": {
+          "min": [
+            34.0,
+            9.5
+          ],
+          "max": [
+            35.0,
+            10.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -5601,14 +5605,18 @@
     },
     {
       "sprite": {
-        "min": [
-          34.0,
-          8.5
-        ],
-        "max": [
-          35.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            34.0,
+            8.5
+          ],
+          "max": [
+            35.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -5628,14 +5636,18 @@
     },
     {
       "sprite": {
-        "min": [
-          34.0,
-          7.5
-        ],
-        "max": [
-          35.0,
-          8.5
-        ]
+        "pos": {
+          "min": [
+            34.0,
+            7.5
+          ],
+          "max": [
+            35.0,
+            8.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -5655,14 +5667,18 @@
     },
     {
       "sprite": {
-        "min": [
-          34.0,
-          6.5
-        ],
-        "max": [
-          35.0,
-          7.5
-        ]
+        "pos": {
+          "min": [
+            34.0,
+            6.5
+          ],
+          "max": [
+            35.0,
+            7.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -5682,14 +5698,18 @@
     },
     {
       "sprite": {
-        "min": [
-          34.0,
-          6.5
-        ],
-        "max": [
-          35.0,
-          7.5
-        ]
+        "pos": {
+          "min": [
+            34.0,
+            6.5
+          ],
+          "max": [
+            35.0,
+            7.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,

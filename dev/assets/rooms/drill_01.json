@@ -1881,27 +1881,35 @@
     "props": [
       {
         "sprite": {
-          "min": [
-            5.125,
-            6.0
-          ],
-          "max": [
-            12.875,
-            9.0
-          ]
+          "pos": {
+            "min": [
+              5.125,
+              6.0
+            ],
+            "max": [
+              12.875,
+              9.0
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
         },
         "prop_type": "tutorial_drill_use"
       },
       {
         "sprite": {
-          "min": [
-            5.125,
-            6.0
-          ],
-          "max": [
-            12.875,
-            9.0
-          ]
+          "pos": {
+            "min": [
+              5.125,
+              6.0
+            ],
+            "max": [
+              12.875,
+              9.0
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
         },
         "prop_type": "tutorial_drill_use"
       }
@@ -2841,14 +2849,18 @@
   "hazards": [
     {
       "sprite": {
-        "min": [
-          5.0,
-          -2.5
-        ],
-        "max": [
-          6.0,
-          -1.5
-        ]
+        "pos": {
+          "min": [
+            5.0,
+            -2.5
+          ],
+          "max": [
+            6.0,
+            -1.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -2868,14 +2880,18 @@
     },
     {
       "sprite": {
-        "min": [
-          5.0,
-          -1.5
-        ],
-        "max": [
-          6.0,
-          -0.5
-        ]
+        "pos": {
+          "min": [
+            5.0,
+            -1.5
+          ],
+          "max": [
+            6.0,
+            -0.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -2895,14 +2911,18 @@
     },
     {
       "sprite": {
-        "min": [
-          5.0,
-          -0.5
-        ],
-        "max": [
-          6.0,
-          0.5
-        ]
+        "pos": {
+          "min": [
+            5.0,
+            -0.5
+          ],
+          "max": [
+            6.0,
+            0.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -2922,14 +2942,18 @@
     },
     {
       "sprite": {
-        "min": [
-          5.0,
-          0.5
-        ],
-        "max": [
-          6.0,
-          1.5
-        ]
+        "pos": {
+          "min": [
+            5.0,
+            0.5
+          ],
+          "max": [
+            6.0,
+            1.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -2949,14 +2973,18 @@
     },
     {
       "sprite": {
-        "min": [
-          5.0,
-          1.5
-        ],
-        "max": [
-          6.0,
-          2.5
-        ]
+        "pos": {
+          "min": [
+            5.0,
+            1.5
+          ],
+          "max": [
+            6.0,
+            2.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,
@@ -2976,14 +3004,18 @@
     },
     {
       "sprite": {
-        "min": [
-          5.0,
-          2.5
-        ],
-        "max": [
-          6.0,
-          3.5
-        ]
+        "pos": {
+          "min": [
+            5.0,
+            2.5
+          ],
+          "max": [
+            6.0,
+            3.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         1.0,

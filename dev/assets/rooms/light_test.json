@@ -1881,27 +1881,35 @@
     "props": [
       {
         "sprite": {
-          "min": [
-            1.0625,
-            -0.125
-          ],
-          "max": [
-            2.9375,
-            3.125
-          ]
+          "pos": {
+            "min": [
+              1.0625,
+              -0.125
+            ],
+            "max": [
+              2.9375,
+              3.125
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
         },
         "prop_type": "tree2"
       },
       {
         "sprite": {
-          "min": [
-            -4.9375,
-            -1.125
-          ],
-          "max": [
-            -3.0625,
-            2.125
-          ]
+          "pos": {
+            "min": [
+              -4.9375,
+              -1.125
+            ],
+            "max": [
+              -3.0625,
+              2.125
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
         },
         "prop_type": "tree2"
       }
