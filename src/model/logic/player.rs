@@ -764,11 +764,13 @@ impl Logic<'_> {
                 Coord::ZERO,
                 room_bounds.max.y - actor.collider.head().y,
             ));
-            player.velocity.y = if player.state.is_drilling() {
-                -player.velocity.y
-            } else {
-                Coord::ZERO
-            };
+            if player.velocity.y > Coord::ZERO {
+                player.velocity.y = if player.state.is_drilling() {
+                    -player.velocity.y
+                } else {
+                    Coord::ZERO
+                };
+            }
         }
 
         // Horizontal
@@ -778,11 +780,15 @@ impl Logic<'_> {
                 offset.signum() * (room_bounds.width() / Coord::new(2.0) - offset.abs()),
                 Coord::ZERO,
             ));
-            player.velocity.x = Coord::ZERO;
+            if player.velocity.x.signum() == offset.signum() {
+                player.velocity.x = Coord::ZERO;
+            }
         }
 
         // Bottom
-        if actor.collider.feet().y < room_bounds.min.y - Coord::new(0.5) {
+        if !player.inside_transition
+            && actor.collider.feet().y < room_bounds.min.y - Coord::new(0.5)
+        {
             self.world.kill_player();
             return true;
         }

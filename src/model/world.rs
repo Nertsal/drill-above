@@ -46,34 +46,45 @@ impl World {
         assets: &Rc<Assets>,
         rules: Rules,
         mut room: Room,
-        player_pos: Option<vec2<Coord>>,
+        player: Option<(Player, Actor)>,
     ) -> Self {
         for layer in all_layers_mut!(room) {
             layer.tiles.update_geometry(assets);
         }
         let cache = RenderCache::calculate(&room, geng, assets);
-        Self::with_cache(assets, rules, room, player_pos, cache)
+        Self::with_cache(assets, rules, room, player, cache)
     }
 
     pub fn with_cache(
         assets: &Rc<Assets>,
         rules: Rules,
         room: Room,
-        player_pos: Option<vec2<Coord>>,
+        player: Option<(Player, Actor)>,
         cache: RenderCache,
     ) -> Self {
         let mut id_gen = IdGen::new();
         let mut actors = Collection::new();
 
         let player_id = id_gen.gen();
-        let mut collider = {
-            let height = Coord::new(0.9);
-            let width = Coord::new(0.9);
-            Collider::new(Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)))
+        let (player, player_actor) = match player {
+            Some((mut player, mut actor)) => {
+                player.id = player_id;
+                actor.id = player_id;
+                player.inside_transition = true;
+                (player, actor)
+            }
+            None => {
+                let mut collider = {
+                    let height = Coord::new(0.9);
+                    let width = Coord::new(0.9);
+                    Collider::new(
+                        Aabb2::ZERO.extend_symmetric(vec2(width, height) / Coord::new(2.0)),
+                    )
+                };
+                collider.teleport(room.spawn_point);
+                (Player::new(player_id), Actor::new(player_id, collider))
+            }
         };
-        let pos = player_pos.unwrap_or(room.spawn_point);
-        collider.teleport(pos);
-        let player_actor = Actor::new(player_id, collider);
 
         actors.insert(player_actor);
 
@@ -97,7 +108,7 @@ impl World {
             time: Time::ZERO,
             drill_sound: None,
             deaths: 0,
-            player: Player::new(player_id),
+            player,
             blocks: default(),
             particles: default(),
             cache,

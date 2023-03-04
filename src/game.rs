@@ -46,7 +46,7 @@ impl Game {
         assets: &Rc<Assets>,
         room_name: String,
         room: Room,
-        player_pos: Option<vec2<Coord>>,
+        player: Option<(Player, Actor)>,
         coins: usize,
         time: Time,
         deaths: usize,
@@ -55,7 +55,7 @@ impl Game {
     ) -> Self {
         geng.window().set_cursor_type(geng::CursorType::None);
 
-        let mut world = World::new(geng, assets, assets.rules.clone(), room, player_pos);
+        let mut world = World::new(geng, assets, assets.rules.clone(), room, player);
         world.coins_collected = coins;
         let mut music = music.unwrap_or_else(|| assets.music.play());
         music.set_volume((world.volume - 0.3).max(0.0));
@@ -385,19 +385,16 @@ impl geng::State for Game {
         }
 
         if let Some(transition) = self.world.room_transition.take() {
-            let player_pos = self
-                .world
-                .actors
-                .get(&self.world.player.id)
-                .unwrap()
+            debug!("Transitioning to room {:?}", transition.to_room);
+            let mut player = self.world.actors.remove(&self.world.player.id).unwrap();
+            player
                 .collider
-                .feet()
-                + transition.offset.map(|x| Coord::new(x as f32));
+                .translate(transition.offset.map(|x| Coord::new(x as f32)));
             return Some(geng::Transition::Switch(Box::new(game::room_change(
                 &self.geng,
                 Some(&self.assets),
                 transition.to_room,
-                Some(player_pos),
+                Some((self.world.player.clone(), player)),
                 self.world.coins_collected,
                 self.accumulated_time + self.world.time,
                 self.deaths + self.world.deaths,
@@ -435,7 +432,7 @@ fn room_change(
     geng: &Geng,
     assets: Option<&Rc<Assets>>,
     room: impl AsRef<std::path::Path>,
-    player_pos: Option<vec2<Coord>>,
+    player: Option<(Player, Actor)>,
     coins: usize,
     time: Time,
     deaths: usize,
@@ -458,7 +455,7 @@ fn room_change(
                 .await
                 .expect("Failed to load room");
             Game::new(
-                &geng, &assets, room_name, room, player_pos, coins, time, deaths, show_time, music,
+                &geng, &assets, room_name, room, player, coins, time, deaths, show_time, music,
             )
         }
     };
