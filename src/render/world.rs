@@ -18,19 +18,33 @@ impl WorldRender {
         world: &World,
         draw_hitboxes: bool,
         framebuffer: &mut ugli::Framebuffer,
-        normal_framebuffer: Option<&mut ugli::Framebuffer>,
+        mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
         self.draw_background(world, framebuffer);
-        self.draw_room(
-            &world.room,
-            &world.cache,
-            draw_hitboxes,
-            &world.camera,
-            framebuffer,
-            normal_framebuffer,
-        );
+
+        macro_rules! draw_layers {
+            ($layers:expr) => {{
+                for layer in $layers {
+                    self.draw_room_layer(
+                        &world.room,
+                        &world.cache,
+                        layer,
+                        1.0,
+                        draw_hitboxes,
+                        &world.camera,
+                        framebuffer,
+                        normal_framebuffer.as_deref_mut(),
+                    );
+                }
+            }};
+        }
+
+        draw_layers!([ActiveLayer::Background, ActiveLayer::Main]);
+
         self.draw_player(world, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
+
+        draw_layers!([ActiveLayer::Foreground]);
     }
 
     pub fn draw_background(&self, world: &World, framebuffer: &mut ugli::Framebuffer) {
@@ -137,38 +151,6 @@ impl WorldRender {
                 ..Default::default()
             },
         );
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn draw_room(
-        &self,
-        room: &Room,
-        cache: &RenderCache,
-        draw_hitboxes: bool,
-        camera: &impl geng::AbstractCamera2d,
-        framebuffer: &mut ugli::Framebuffer,
-        mut normal_framebuffer: Option<&mut ugli::Framebuffer>,
-    ) {
-        for layer in [
-            ActiveLayer::Background,
-            ActiveLayer::Main,
-            ActiveLayer::Foreground,
-        ] {
-            self.draw_room_layer(
-                room,
-                cache,
-                layer,
-                1.0,
-                draw_hitboxes,
-                camera,
-                framebuffer,
-                normal_framebuffer.as_deref_mut(),
-            );
-        }
-
-        if draw_hitboxes {
-            self.draw_transitions(&room.transitions, camera, framebuffer);
-        }
     }
 
     #[allow(clippy::too_many_arguments)]
