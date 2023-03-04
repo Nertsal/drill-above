@@ -30,23 +30,39 @@ impl LevelEditor {
                 &self.camera,
                 &draw_2d::Chain::new(util::aabb_outline(aabb), 0.5, color, 1),
             );
+
+            let room_size_text = format!(
+                "{}x{}",
+                room.editor.world.room.size.x, room.editor.world.room.size.y
+            );
+
+            let max_size = {
+                let mut text = name.clone();
+                if hovered {
+                    text += " ";
+                    text += &room_size_text;
+                }
+                util::fit_text(text, font, aabb)
+            };
+            let text_size = max_size.min(5.0);
+            font.draw(
+                framebuffer,
+                &self.camera,
+                name,
+                aabb.bottom_left(),
+                geng::TextAlign::LEFT,
+                text_size,
+                Rgba::WHITE,
+            );
+
             if hovered {
-                let max_size = aabb.width()
-                    / font
-                        .measure_bounding_box(
-                            name,
-                            vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT),
-                        )
-                        .unwrap()
-                        .width();
-                let size = max_size.min(5.0);
                 font.draw(
                     framebuffer,
                     &self.camera,
-                    name,
-                    aabb.bottom_left(),
-                    geng::TextAlign::LEFT,
-                    size,
+                    &room_size_text,
+                    aabb.bottom_right(),
+                    geng::TextAlign::RIGHT,
+                    text_size,
                     Rgba::WHITE,
                 );
             }
@@ -65,6 +81,19 @@ impl LevelEditor {
                         Rgba::GREEN,
                         1,
                     ),
+                );
+
+                let text = format!("{}x{}", aabb.width(), aabb.height(),);
+                let max_size = util::fit_text(&text, font, aabb.map(|x| x as f32));
+                let text_size = max_size.min(5.0);
+                font.draw(
+                    framebuffer,
+                    &self.camera,
+                    &text,
+                    aabb.bottom_right().map(|x| x as f32),
+                    geng::TextAlign::RIGHT,
+                    text_size,
+                    Rgba::WHITE,
                 );
             }
         }

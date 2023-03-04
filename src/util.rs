@@ -24,3 +24,16 @@ pub fn aabb_outline(aabb: Aabb2<f32>) -> Chain<f32> {
     let [a, b, c, d] = aabb.corners();
     Chain::new(vec![(a + b) / 2.0, a, d, c, b, (a + b) / 2.0])
 }
+
+pub fn fit_text(text: impl AsRef<str>, font: impl AsRef<geng::Font>, target: Aabb2<f32>) -> f32 {
+    // TODO: check height
+    target.width()
+        / font
+            .as_ref()
+            .measure_bounding_box(
+                text.as_ref(),
+                vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT),
+            )
+            .unwrap()
+            .width()
+}
