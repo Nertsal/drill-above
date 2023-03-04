@@ -44,10 +44,7 @@
       "drillable": true
     },
     "stone": {},
-    "crystal_stone": {
-      "acceleration": 3.0,
-      "deceleration": 1.0
-    },
+    "crystal_stone": {},
     "village_grass": {
       "drillable": true,
       "layer": -1
