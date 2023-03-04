@@ -138,8 +138,8 @@ impl World {
     }
 
     pub fn camera_bounds(&self) -> Aabb2<Coord> {
-        let mut room_bounds = self.room.bounds();
-        room_bounds.min.y += self.room.grid.cell_size.y * Coord::new(0.5);
+        let room_bounds = self.room.bounds();
+        // room_bounds.min.y += self.room.grid.cell_size.y * Coord::new(0.5);
         let camera_view =
             (vec2(self.camera.fov * (16.0 / 9.0), self.camera.fov) / 2.0).map(Coord::new); // TODO: remove hardcode
         Aabb2::from_corners(
