@@ -5574,14 +5574,18 @@
   "hazards": [
     {
       "sprite": {
-        "min": [
-          6.0,
-          0.5
-        ],
-        "max": [
-          7.0,
-          1.5
-        ]
+        "pos": {
+          "min": [
+            6.0,
+            0.5
+          ],
+          "max": [
+            7.0,
+            1.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -1.0,
@@ -5601,14 +5605,18 @@
     },
     {
       "sprite": {
-        "min": [
-          6.0,
-          0.5
-        ],
-        "max": [
-          7.0,
-          1.5
-        ]
+        "pos": {
+          "min": [
+            6.0,
+            0.5
+          ],
+          "max": [
+            7.0,
+            1.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -1.0,
@@ -5628,14 +5636,18 @@
     },
     {
       "sprite": {
-        "min": [
-          19.0,
-          8.5
-        ],
-        "max": [
-          20.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            19.0,
+            8.5
+          ],
+          "max": [
+            20.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -0.0,
@@ -5655,14 +5667,18 @@
     },
     {
       "sprite": {
-        "min": [
-          18.0,
-          8.5
-        ],
-        "max": [
-          19.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            18.0,
+            8.5
+          ],
+          "max": [
+            19.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -0.0,
@@ -5682,14 +5698,18 @@
     },
     {
       "sprite": {
-        "min": [
-          17.0,
-          8.5
-        ],
-        "max": [
-          18.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            17.0,
+            8.5
+          ],
+          "max": [
+            18.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -0.0,
@@ -5709,14 +5729,18 @@
     },
     {
       "sprite": {
-        "min": [
-          16.0,
-          8.5
-        ],
-        "max": [
-          17.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            16.0,
+            8.5
+          ],
+          "max": [
+            17.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -0.0,
@@ -5736,14 +5760,18 @@
     },
     {
       "sprite": {
-        "min": [
-          16.0,
-          8.5
-        ],
-        "max": [
-          17.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            16.0,
+            8.5
+          ],
+          "max": [
+            17.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -0.0,
@@ -5763,14 +5791,18 @@
     },
     {
       "sprite": {
-        "min": [
-          15.0,
-          8.5
-        ],
-        "max": [
-          16.0,
-          9.5
-        ]
+        "pos": {
+          "min": [
+            15.0,
+            8.5
+          ],
+          "max": [
+            16.0,
+            9.5
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
       },
       "direction": [
         -0.0,

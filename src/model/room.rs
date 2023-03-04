@@ -121,7 +121,7 @@ pub struct Coin {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hazard {
-    pub sprite: Aabb2<Coord>,
+    pub sprite: Sprite,
     pub direction: Option<vec2<Coord>>,
     pub collider: Collider,
     pub hazard_type: HazardType,
@@ -129,12 +129,19 @@ pub struct Hazard {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Prop {
-    pub sprite: Aabb2<Coord>,
+    pub sprite: Sprite,
     pub prop_type: PropType,
 }
 
 pub type HazardType = String;
 pub type PropType = String;
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Sprite {
+    pub pos: Aabb2<Coord>,
+    pub mirror_x: bool,
+    pub mirror_y: bool,
+}
 
 impl Room {
     pub fn new(size: vec2<usize>) -> Self {
@@ -243,7 +250,7 @@ impl Room {
         let pos = self.grid.grid_to_world(pos);
         let collider = Collider::new(collider.translate(pos));
         self.hazards.push(Hazard {
-            sprite: Aabb2::point(pos).extend_positive(self.grid.cell_size),
+            sprite: Sprite::new(Aabb2::point(pos).extend_positive(self.grid.cell_size)),
             collider,
             direction,
             hazard_type: hazard,
@@ -258,7 +265,7 @@ impl Room {
         layer: ActiveLayer,
     ) {
         let pos = self.grid.grid_to_world(pos);
-        let sprite = Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0));
+        let sprite = Sprite::new(Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0)));
         active_layer_mut!(self, layer).props.push(Prop {
             sprite,
             prop_type: prop,
@@ -285,7 +292,7 @@ impl Room {
                 .props
                 .iter()
                 .enumerate()
-                .filter(|(_, prop)| prop.sprite.intersects(&aabb))
+                .filter(|(_, prop)| prop.sprite.pos.intersects(&aabb))
                 .map(|(i, _)| PlaceableId::Prop(i)),
             (grid_aabb.min.x..=grid_aabb.max.x)
                 .flat_map(move |x| (grid_aabb.min.y..=grid_aabb.max.y).map(move |y| vec2(x, y)))
@@ -435,7 +442,7 @@ impl Room {
 
         for layer in all_layers_mut!(self) {
             for prop in &mut layer.props {
-                prop.teleport(move_fn(prop.sprite.center()));
+                prop.teleport(move_fn(prop.sprite.pos.center()));
             }
         }
     }
@@ -626,7 +633,7 @@ impl Placeable {
         match self {
             Placeable::Tile((_, pos)) => grid.grid_to_world(*pos),
             Placeable::Hazard(hazard) => hazard.collider.feet(),
-            Placeable::Prop(prop) => prop.sprite.center(),
+            Placeable::Prop(prop) => prop.sprite.pos.center(),
             Placeable::Coin(coin) => coin.collider.feet(),
             Placeable::Spotlight(light) => light.position,
         }
@@ -662,7 +669,7 @@ impl Placeable {
                 collider.raw()
             }
             Placeable::Hazard(hazard) => hazard.collider.raw(),
-            Placeable::Prop(prop) => prop.sprite,
+            Placeable::Prop(prop) => prop.sprite.pos,
             Placeable::Coin(coin) => coin.collider.raw(),
             Placeable::Spotlight(light) => {
                 Aabb2::point(light.position).extend_uniform(Coord::new(0.5))
@@ -673,7 +680,7 @@ impl Placeable {
 
 impl Hazard {
     pub fn translate(&mut self, delta: vec2<Coord>) {
-        self.sprite = self.sprite.translate(delta);
+        self.sprite.translate(delta);
         self.collider.translate(delta);
     }
 
@@ -694,11 +701,36 @@ impl Coin {
 
 impl Prop {
     pub fn translate(&mut self, delta: vec2<Coord>) {
-        self.sprite = self.sprite.translate(delta);
+        self.sprite.translate(delta);
     }
 
     pub fn teleport(&mut self, pos: vec2<Coord>) {
-        self.translate(pos - self.sprite.center())
+        self.translate(pos - self.sprite.pos.center())
+    }
+}
+
+impl Sprite {
+    pub fn new(pos: Aabb2<Coord>) -> Self {
+        Self {
+            pos,
+            mirror_x: false,
+            mirror_y: false,
+        }
+    }
+
+    pub fn translate(&mut self, delta: vec2<Coord>) {
+        self.pos = self.pos.translate(delta);
+    }
+
+    pub fn render_aabb(&self) -> Aabb2<f32> {
+        let mut aabb = self.pos;
+        if self.mirror_x {
+            std::mem::swap(&mut aabb.min.x, &mut aabb.max.x);
+        }
+        if self.mirror_y {
+            std::mem::swap(&mut aabb.min.y, &mut aabb.max.y);
+        }
+        aabb.map(Coord::as_f32)
     }
 }
 

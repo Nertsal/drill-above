@@ -328,7 +328,7 @@ impl WorldRender {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::colored(
-                    prop.sprite.map(Coord::as_f32),
+                    prop.sprite.render_aabb(),
                     texture.texture(),
                     Rgba::new(1.0, 1.0, 1.0, alpha),
                 ),
@@ -340,7 +340,7 @@ impl WorldRender {
                     self.geng.draw_2d(
                         framebuffer,
                         camera,
-                        &draw_2d::TexturedQuad::new(prop.sprite.map(Coord::as_f32), texture),
+                        &draw_2d::TexturedQuad::new(prop.sprite.render_aabb(), texture),
                     );
                 }
             }
@@ -357,7 +357,7 @@ impl WorldRender {
     ) {
         for hazard in hazards {
             let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
-            let transform = (mat3::translate(hazard.sprite.center())
+            let transform = (mat3::translate(hazard.sprite.pos.center())
                 * mat3::rotate(
                     hazard
                         .direction
@@ -368,7 +368,7 @@ impl WorldRender {
                 framebuffer,
                 camera,
                 &draw_2d::TexturedQuad::colored(
-                    Aabb2::ZERO.extend_symmetric(hazard.sprite.size().map(Coord::as_f32) / 2.0),
+                    Aabb2::ZERO.extend_symmetric(hazard.sprite.pos.size().map(Coord::as_f32) / 2.0),
                     texture.texture(),
                     Rgba::new(1.0, 1.0, 1.0, alpha),
                 ),

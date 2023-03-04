@@ -138,75 +138,87 @@ impl RoomEditor {
                     let collider = block
                         .sprite(&self.world.room.grid)
                         .translate(self.cursor_world_pos - *initial_pos);
-                    let unit =
-                        [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
-                    let (texture, uv) = match block {
+
+                    let sprite = match block {
                         Placeable::Tile((tile, _)) => {
                             let set = self.assets.sprites.tiles.get_tile_set(tile);
-                            (
-                                set.texture.texture(),
-                                set.get_tile_geometry(
-                                    set.get_tile_connected([Connection::None; 8])
-                                        .first()
-                                        .copied()
-                                        .unwrap_or(0),
+                            let texture = set.texture.texture();
+                            let uv = set.get_tile_geometry(
+                                set.get_tile_connected([Connection::None; 8])
+                                    .first()
+                                    .copied()
+                                    .unwrap_or(0),
+                            );
+
+                            let quad = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+                                .map(|(x, y)| vec2(x, y));
+                            let geometry = ugli::VertexBuffer::new_dynamic(
+                                self.geng.ugli(),
+                                uv.into_iter()
+                                    .zip(quad)
+                                    .map(|(a_uv, a_pos)| Vertex { a_pos, a_uv })
+                                    .collect(),
+                            );
+
+                            let matrix = (mat3::translate(collider.bottom_left())
+                                * mat3::scale(collider.size()))
+                            .map(|x| x.as_f32());
+                            ugli::draw(
+                                framebuffer,
+                                &self.assets.shaders.texture,
+                                ugli::DrawMode::TriangleFan,
+                                &geometry,
+                                (
+                                    ugli::uniforms! {
+                                        u_model_matrix: matrix,
+                                        u_texture: texture,
+                                        u_color: Rgba::WHITE,
+                                    },
+                                    geng::camera2d_uniforms(
+                                        &self.camera,
+                                        framebuffer.size().map(|x| x as f32),
+                                    ),
                                 ),
-                            )
+                                ugli::DrawParameters {
+                                    blend_mode: Some(ugli::BlendMode::straight_alpha()),
+                                    ..Default::default()
+                                },
+                            );
+
+                            None
                         }
-                        Placeable::Hazard(hazard) => (
+                        Placeable::Hazard(hazard) => Some((
+                            hazard.sprite,
                             self.assets
                                 .sprites
                                 .hazards
                                 .get_texture(&hazard.hazard_type)
                                 .texture(),
-                            unit,
-                        ),
-                        Placeable::Coin(_) => (&self.assets.sprites.coin, unit),
-                        Placeable::Prop(prop) => (
+                        )),
+                        Placeable::Coin(coin) => {
+                            Some((Sprite::new(coin.collider.raw()), &self.assets.sprites.coin))
+                        }
+                        Placeable::Prop(prop) => Some((
+                            prop.sprite,
                             self.assets
                                 .sprites
                                 .props
                                 .get_texture(&prop.prop_type)
                                 .texture(),
-                            unit,
-                        ),
-                        Placeable::Spotlight(..) => (&self.assets.sprites.spotlight, unit),
+                        )),
+                        Placeable::Spotlight(..) => Some((
+                            Sprite::new(block.sprite(&self.world.room.grid)),
+                            &self.assets.sprites.spotlight,
+                        )),
                     };
-
-                    let quad =
-                        [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].map(|(x, y)| vec2(x, y));
-                    let geometry = ugli::VertexBuffer::new_dynamic(
-                        self.geng.ugli(),
-                        uv.into_iter()
-                            .zip(quad)
-                            .map(|(a_uv, a_pos)| Vertex { a_pos, a_uv })
-                            .collect(),
-                    );
-
-                    let matrix = (mat3::translate(collider.bottom_left())
-                        * mat3::scale(collider.size()))
-                    .map(|x| x.as_f32());
-                    ugli::draw(
-                        framebuffer,
-                        &self.assets.shaders.texture,
-                        ugli::DrawMode::TriangleFan,
-                        &geometry,
-                        (
-                            ugli::uniforms! {
-                                u_model_matrix: matrix,
-                                u_texture: texture,
-                                u_color: Rgba::WHITE,
-                            },
-                            geng::camera2d_uniforms(
-                                &self.camera,
-                                framebuffer.size().map(|x| x as f32),
-                            ),
-                        ),
-                        ugli::DrawParameters {
-                            blend_mode: Some(ugli::BlendMode::straight_alpha()),
-                            ..Default::default()
-                        },
-                    );
+                    if let Some((mut sprite, texture)) = sprite {
+                        sprite.translate(self.cursor_world_pos - *initial_pos);
+                        self.geng.draw_2d(
+                            framebuffer,
+                            &self.camera,
+                            &draw_2d::TexturedQuad::new(sprite.render_aabb(), texture),
+                        );
+                    }
                 }
             }
         }

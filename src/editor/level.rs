@@ -555,14 +555,10 @@ impl LevelEditor {
                 .transitions
                 .retain(|trans| trans.to_room != room_name);
         }
-        self.rooms
-            .get_mut(&room_name)
-            .expect("No such room found")
-            .editor
-            .world
-            .room
-            .transitions
-            .clear();
+        let Some(room) = self.rooms.get_mut(&room_name) else {
+            return
+        };
+        room.editor.world.room.transitions.clear();
 
         // Calculate new transitions
         let mut new_transitions = HashMap::<String, Vec<RoomTransition>>::new();

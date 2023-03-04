@@ -45,6 +45,16 @@ impl RoomEditor {
             }};
         }
 
+        macro_rules! checkbox {
+            ($name:expr, $value:expr) => {{
+                let checkbox = ui::CheckBox::new(cx, *$value);
+                if let Some(change) = checkbox.get_change() {
+                    *$value = change;
+                }
+                geng::ui::row![text!($name), checkbox,]
+            }};
+        }
+
         // let (cell_pos, cell_offset) = self.world.room.grid.world_to_grid(self.cursor_world_pos);
         // let cell_pos = Text::new(
         //     format!(
@@ -296,6 +306,13 @@ impl RoomEditor {
             }),
         ];
 
+        let sprite_ui = |sprite: &mut Sprite| {
+            geng::ui::column![
+                checkbox!("Mirror X", &mut sprite.mirror_x),
+                checkbox!("Mirror Y", &mut sprite.mirror_y),
+            ]
+        };
+
         let mut duplicate = false;
         let mut remove = false;
         let mut block_info_ui = |name: String, dupe: bool, ui: Box<dyn geng::ui::Widget>| {
@@ -350,8 +367,9 @@ impl RoomEditor {
                     PlaceableMut::Hazard(_) => {
                         block_info_ui("Hazard".to_string(), true, geng::ui::Void.boxed())
                     }
-                    PlaceableMut::Prop(_) => {
-                        block_info_ui("Prop".to_string(), true, geng::ui::Void.boxed())
+                    PlaceableMut::Prop(prop) => {
+                        let sprite = sprite_ui(&mut prop.sprite);
+                        block_info_ui("Prop".to_string(), true, sprite.boxed())
                     }
                     PlaceableMut::Coin(_) => {
                         block_info_ui("Coin".to_string(), true, geng::ui::Void.boxed())

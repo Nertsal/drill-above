@@ -1881,27 +1881,52 @@
     "props": [
       {
         "sprite": {
-          "min": [
-            6.160083,
-            -11.504059
-          ],
-          "max": [
-            7.160083,
-            -9.504059
-          ]
+          "pos": {
+            "min": [
+              6.160083,
+              -11.504059
+            ],
+            "max": [
+              7.160083,
+              -9.504059
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
         },
         "prop_type": "crystal_prop_2"
       },
       {
         "sprite": {
-          "min": [
-            -10.2328,
-            -6.1833873
-          ],
-          "max": [
-            -7.2327995,
-            -3.1833873
-          ]
+          "pos": {
+            "min": [
+              -10.2328,
+              -6.1833873
+            ],
+            "max": [
+              -7.2327995,
+              -3.1833873
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
+        },
+        "prop_type": "crystal_prop_1"
+      },
+      {
+        "sprite": {
+          "pos": {
+            "min": [
+              -5.5,
+              -10.0
+            ],
+            "max": [
+              -2.5,
+              -7.0
+            ]
+          },
+          "mirror_x": true,
+          "mirror_y": false
         },
         "prop_type": "crystal_prop_1"
       }

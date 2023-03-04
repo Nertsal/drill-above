@@ -1881,14 +1881,18 @@
     "props": [
       {
         "sprite": {
-          "min": [
-            0.125,
-            6.9375
-          ],
-          "max": [
-            9.875,
-            10.0625
-          ]
+          "pos": {
+            "min": [
+              0.125,
+              6.9375
+            ],
+            "max": [
+              9.875,
+              10.0625
+            ]
+          },
+          "mirror_x": false,
+          "mirror_y": false
         },
         "prop_type": "tutorial_drill_jump"
       }
