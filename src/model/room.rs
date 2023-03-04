@@ -145,8 +145,8 @@ pub struct Sprite {
 
 impl Room {
     pub fn new(size: vec2<usize>) -> Self {
-        let mut grid = Grid::default();
-        grid.offset = size.map(|x| Coord::new(x as f32 / 2.0)) * grid.cell_size;
+        let grid = Grid::default();
+        // grid.offset = size.map(|x| Coord::new(x as f32 / 2.0)) * grid.cell_size;
         Self {
             spawn_point: grid.grid_to_world(size.map(|x| x as isize / 2)),
             hazards: Vec::new(),
