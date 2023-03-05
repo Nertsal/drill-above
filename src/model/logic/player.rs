@@ -112,7 +112,11 @@ impl Logic<'_> {
             }
 
             let get_bounciness = |id| {
-                if !logic.world.player.state.using_drill() {
+                if logic.world.player.state.is_drilling() {
+                    // Ground drill keeps velocity
+                    return Coord::new(2.0);
+                } else if !logic.world.player.state.is_air_drilling() {
+                    // Other states reset velocity to 0
                     return Coord::ONE;
                 }
 
