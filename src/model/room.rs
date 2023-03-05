@@ -485,10 +485,10 @@ impl Room {
         let path = room_path(name);
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let file = std::fs::File::create(path)?;
+            let file = std::fs::File::create(&path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, self)?;
-            info!("Saved the room");
+            info!("Saved the room {path:?}");
             Ok(())
         }
         #[cfg(target_arch = "wasm32")]
