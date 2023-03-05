@@ -23,6 +23,9 @@ pub struct Game {
 
 impl Drop for Game {
     fn drop(&mut self) {
+        if let Some(mut sfx) = self.world.drill_sound.take() {
+            sfx.stop();
+        }
         if let Some(mut music) = self.music.take() {
             music.stop();
         }
