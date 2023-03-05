@@ -11,20 +11,30 @@
     ]
   },
   "size": [
-    40,
-    23
+    30,
+    31
   ],
   "spawn_point": [
-    22.068756,
-    3.0962353
+    24.499348,
+    29.57991
   ],
   "background_layer": {
     "tiles": {
       "size": [
-        40,
-        23
+        30,
+        31
       ],
       "tiles": [
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
         "air",
         "air",
         "air",
@@ -952,135 +962,43 @@
   "main_layer": {
     "tiles": {
       "size": [
-        40,
-        23
+        30,
+        31
       ],
       "tiles": [
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
-        "dirt",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1089,6 +1007,28 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1110,6 +1050,15 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1134,6 +1083,13 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1158,6 +1114,12 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1182,6 +1144,13 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1206,6 +1175,13 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1229,6 +1205,14 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1240,6 +1224,9 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1248,6 +1235,17 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1255,43 +1253,118 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1312,6 +1385,12 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1336,6 +1415,11 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1361,6 +1445,10 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1386,6 +1474,10 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1410,6 +1502,11 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1426,6 +1523,20 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1442,6 +1553,20 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1458,6 +1583,20 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1484,133 +1623,10 @@
         "air",
         "air",
         "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1641,22 +1657,12 @@
         "crystal_stone",
         "crystal_stone",
         "crystal_stone",
+        "crystal_stone",
         "air",
-        "limestone",
-        "limestone",
-        "limestone",
         "air",
-        "village_grass",
-        "village_grass",
-        "village_grass",
         "air",
-        "village_stone",
-        "village_stone",
-        "village_stone",
         "air",
-        "dirt",
-        "dirt",
-        "dirt",
+        "air",
         "air",
         "air",
         "air",
@@ -1681,22 +1687,12 @@
         "crystal_stone",
         "crystal_stone",
         "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
-        "limestone",
-        "limestone",
-        "limestone",
         "air",
-        "village_grass",
-        "village_grass",
-        "village_grass",
         "air",
-        "village_stone",
-        "village_stone",
-        "village_stone",
         "air",
-        "dirt",
-        "dirt",
-        "dirt",
         "air",
         "air",
         "air",
@@ -1721,22 +1717,13 @@
         "crystal_stone",
         "crystal_stone",
         "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
-        "limestone",
-        "limestone",
-        "limestone",
         "air",
-        "village_grass",
-        "village_grass",
-        "village_grass",
         "air",
-        "village_stone",
-        "village_stone",
-        "village_stone",
         "air",
-        "dirt",
-        "dirt",
-        "dirt",
         "air",
         "air",
         "air",
@@ -1757,6 +1744,16 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1777,6 +1774,26 @@
         "air",
         "air",
         "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
         "air",
         "air",
         "air",
@@ -1787,141 +1804,119 @@
         "air",
         "air",
         "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air",
-        "air"
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "crystal_stone",
+        "crystal_stone",
+        "crystal_stone"
       ]
     },
-    "props": [
-      {
-        "sprite": {
-          "pos": {
-            "min": [
-              9.75,
-              2.625
-            ],
-            "max": [
-              18.25,
-              8.375
-            ]
-          },
-          "mirror_x": false,
-          "mirror_y": false
-        },
-        "prop_type": "village_house_1"
-      },
-      {
-        "sprite": {
-          "pos": {
-            "min": [
-              32.96875,
-              1.625
-            ],
-            "max": [
-              44.03125,
-              11.375
-            ]
-          },
-          "mirror_x": false,
-          "mirror_y": false
-        },
-        "prop_type": "mine_entrance"
-      }
-    ]
+    "props": []
   },
   "foreground_layer": {
     "tiles": {
       "size": [
-        40,
-        23
+        30,
+        31
       ],
       "tiles": [
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
+        "air",
         "air",
         "air",
         "air",
@@ -2846,7 +2841,442 @@
     },
     "props": []
   },
-  "hazards": [],
+  "hazards": [
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            19.0,
+            21.0
+          ],
+          "max": [
+            20.0,
+            22.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          19.1,
+          21.0
+        ],
+        "max": [
+          19.9,
+          21.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_small"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            28.0,
+            13.0
+          ],
+          "max": [
+            29.0,
+            14.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          28.6,
+          13.1
+        ],
+        "max": [
+          29.0,
+          13.9
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            28.0,
+            14.0
+          ],
+          "max": [
+            29.0,
+            15.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          28.6,
+          14.1
+        ],
+        "max": [
+          29.0,
+          14.9
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_tall"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            20.0,
+            21.0
+          ],
+          "max": [
+            21.0,
+            22.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          20.1,
+          21.0
+        ],
+        "max": [
+          20.9,
+          21.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_small"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            19.0,
+            17.0
+          ],
+          "max": [
+            20.0,
+            18.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        -1.0
+      ],
+      "collider": {
+        "min": [
+          19.1,
+          17.6
+        ],
+        "max": [
+          19.9,
+          18.0
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_tall"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            20.0,
+            17.0
+          ],
+          "max": [
+            21.0,
+            18.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        -1.0
+      ],
+      "collider": {
+        "min": [
+          20.1,
+          17.6
+        ],
+        "max": [
+          20.9,
+          18.0
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            19.0,
+            13.0
+          ],
+          "max": [
+            20.0,
+            14.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          19.1,
+          13.0
+        ],
+        "max": [
+          19.9,
+          13.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            20.0,
+            13.0
+          ],
+          "max": [
+            21.0,
+            14.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          20.1,
+          13.0
+        ],
+        "max": [
+          20.9,
+          13.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_small"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            1.0,
+            21.0
+          ],
+          "max": [
+            2.0,
+            22.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          1.0,
+          21.1
+        ],
+        "max": [
+          1.4,
+          21.9
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            1.0,
+            20.0
+          ],
+          "max": [
+            2.0,
+            21.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          1.0,
+          20.1
+        ],
+        "max": [
+          1.4,
+          20.9
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            1.0,
+            22.0
+          ],
+          "max": [
+            2.0,
+            23.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        1.0,
+        -0.0
+      ],
+      "collider": {
+        "min": [
+          1.0,
+          22.1
+        ],
+        "max": [
+          1.4,
+          22.9
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_small"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            13.0,
+            2.0
+          ],
+          "max": [
+            14.0,
+            3.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          13.1,
+          2.0
+        ],
+        "max": [
+          13.9,
+          2.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            12.0,
+            2.0
+          ],
+          "max": [
+            13.0,
+            3.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          12.1,
+          2.0
+        ],
+        "max": [
+          12.9,
+          2.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_small"
+    },
+    {
+      "sprite": {
+        "pos": {
+          "min": [
+            14.0,
+            2.0
+          ],
+          "max": [
+            15.0,
+            3.0
+          ]
+        },
+        "mirror_x": false,
+        "mirror_y": false
+      },
+      "direction": [
+        -0.0,
+        1.0
+      ],
+      "collider": {
+        "min": [
+          14.1,
+          2.0
+        ],
+        "max": [
+          14.9,
+          2.4
+        ]
+      },
+      "hazard_type": "crystal_cave_spikes_medium"
+    }
+  ],
   "coins": [],
   "global_light": {
     "color": "#ffffff",
@@ -2857,35 +3287,69 @@
     {
       "collider": {
         "min": [
-          40.0,
-          0.0
+          -1.0,
+          31.0
         ],
         "max": [
-          41.0,
-          15.0
+          0.0,
+          31.0
         ]
       },
       "to_room": "Cave01.json",
       "offset": [
-        -40,
-        2
+        40,
+        -31
       ]
     },
     {
       "collider": {
         "min": [
-          -1.0,
-          0.0
+          0.0,
+          31.0
         ],
         "max": [
           0.0,
-          23.0
+          32.0
         ]
       },
-      "to_room": "VEUJX.json",
+      "to_room": "Cave01.json",
       "offset": [
-        43,
-        0
+        40,
+        -31
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          0.0,
+          31.0
+        ],
+        "max": [
+          30.0,
+          32.0
+        ]
+      },
+      "to_room": "Cave02.json",
+      "offset": [
+        0,
+        -31
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          0.0,
+          -1.0
+        ],
+        "max": [
+          22.0,
+          0.0
+        ]
+      },
+      "to_room": "Cave04.json",
+      "offset": [
+        23,
+        20
       ]
     }
   ]
