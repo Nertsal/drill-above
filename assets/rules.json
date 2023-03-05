@@ -52,7 +52,8 @@
     "village_stone": {},
     "village_light_stone": {},
     "limestone": {
-      "drillable": true
+      "drillable": true,
+      "layer": -1
     }
   }
 }
