@@ -166,9 +166,9 @@ impl WorldRender {
         normal_framebuffer: Option<&mut ugli::Framebuffer>,
     ) {
         let (room_layer, tile_geometry) = match layer {
-            ActiveLayer::Background => (&room.background_layer, &cache.background_geometry),
-            ActiveLayer::Main => (&room.main_layer, &cache.main_geometry),
-            ActiveLayer::Foreground => (&room.foreground_layer, &cache.foreground_geometry),
+            ActiveLayer::Background => (&room.layers.background, &cache.background_geometry),
+            ActiveLayer::Main => (&room.layers.main, &cache.main_geometry),
+            ActiveLayer::Foreground => (&room.layers.foreground, &cache.foreground_geometry),
         };
         self.draw_props(
             &room_layer.props,

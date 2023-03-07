@@ -1,36 +1,5 @@
 use super::*;
 
-macro_rules! active_layer {
-    ($room:ident, $layer:ident) => {{
-        match $layer {
-            ActiveLayer::Background => &$room.background_layer,
-            ActiveLayer::Main => &$room.main_layer,
-            ActiveLayer::Foreground => &$room.foreground_layer,
-        }
-    }};
-}
-
-macro_rules! active_layer_mut {
-    ($room:ident, $layer:ident) => {{
-        match $layer {
-            ActiveLayer::Background => &mut $room.background_layer,
-            ActiveLayer::Main => &mut $room.main_layer,
-            ActiveLayer::Foreground => &mut $room.foreground_layer,
-        }
-    }};
-}
-
-#[macro_export]
-macro_rules! all_layers_mut {
-    ($room:ident) => {{
-        [
-            &mut $room.background_layer,
-            &mut $room.main_layer,
-            &mut $room.foreground_layer,
-        ]
-    }};
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
 #[asset(json)]
 pub struct Room {
@@ -39,9 +8,7 @@ pub struct Room {
     pub grid: Grid,
     pub size: vec2<usize>,
     pub spawn_point: vec2<Coord>,
-    pub background_layer: RoomLayer,
-    pub main_layer: RoomLayer,
-    pub foreground_layer: RoomLayer,
+    pub layers: RoomLayers,
     #[serde(default)]
     pub hazards: Vec<Hazard>,
     #[serde(default)]
@@ -52,6 +19,13 @@ pub struct Room {
     pub spotlights: Vec<SpotlightSource>,
     #[serde(default)]
     pub transitions: Vec<RoomTransition>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoomLayers {
+    pub background: RoomLayer,
+    pub main: RoomLayer,
+    pub foreground: RoomLayer,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -151,9 +125,7 @@ impl Room {
             spawn_point: grid.grid_to_world(size.map(|x| x as isize / 2)),
             hazards: Vec::new(),
             coins: Vec::new(),
-            background_layer: RoomLayer::new(size),
-            main_layer: RoomLayer::new(size),
-            foreground_layer: RoomLayer::new(size),
+            layers: RoomLayers::new(size),
             transitions: Vec::new(),
             drill_allowed: true,
             global_light: default(),
@@ -178,7 +150,8 @@ impl Room {
     ) -> PlaceableId {
         match block {
             Placeable::Tile((tile, pos)) => {
-                active_layer_mut!(self, layer)
+                self.layers
+                    .get_mut(layer)
                     .tiles
                     .set_tile_isize(pos, tile, assets);
                 PlaceableId::Tile(pos)
@@ -188,7 +161,7 @@ impl Room {
                 PlaceableId::Hazard(self.hazards.len() - 1)
             }
             Placeable::Prop(prop) => {
-                let layer = active_layer_mut!(self, layer);
+                let layer = self.layers.get_mut(layer);
                 layer.props.push(prop);
                 PlaceableId::Prop(layer.props.len() - 1)
             }
@@ -210,7 +183,8 @@ impl Room {
         layer: ActiveLayer,
         assets: &Assets,
     ) {
-        active_layer_mut!(self, layer)
+        self.layers
+            .get_mut(layer)
             .tiles
             .set_tile_isize(pos, tile, assets);
     }
@@ -218,7 +192,8 @@ impl Room {
     pub fn place_hazard(&mut self, pos: vec2<Coord>, hazard: HazardType) {
         let (pos, offset) = self.grid.world_to_grid(pos);
         let connect = |pos| {
-            self.main_layer
+            self.layers
+                .main
                 .tiles
                 .get_tile_isize(pos)
                 .map(|tile| tile != "air")
@@ -266,7 +241,7 @@ impl Room {
     ) {
         let pos = self.grid.grid_to_world(pos);
         let sprite = Sprite::new(Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0)));
-        active_layer_mut!(self, layer).props.push(Prop {
+        self.layers.get_mut(layer).props.push(Prop {
             sprite,
             prop_type: prop,
         });
@@ -285,7 +260,7 @@ impl Room {
     pub fn get_hovered(&self, aabb: Aabb2<Coord>, layer: ActiveLayer) -> Vec<PlaceableId> {
         let grid_aabb = Collider::new(aabb).grid_aabb(&self.grid);
         let main_layer = matches!(layer, ActiveLayer::Main);
-        let layer = active_layer!(self, layer);
+        let layer = self.layers.get(layer);
 
         let mut res: Vec<PlaceableId> = itertools::chain![
             layer
@@ -333,12 +308,16 @@ impl Room {
 
     pub fn get_block(&self, id: PlaceableId, layer: ActiveLayer) -> Option<Placeable> {
         match id {
-            PlaceableId::Tile(pos) => active_layer!(self, layer)
+            PlaceableId::Tile(pos) => self
+                .layers
+                .get(layer)
                 .tiles
                 .get_tile_isize(pos)
                 .map(|tile| Placeable::Tile((tile.to_owned(), pos))),
             PlaceableId::Hazard(id) => self.hazards.get(id).cloned().map(Placeable::Hazard),
-            PlaceableId::Prop(id) => active_layer!(self, layer)
+            PlaceableId::Prop(id) => self
+                .layers
+                .get(layer)
                 .props
                 .get(id)
                 .cloned()
@@ -352,12 +331,16 @@ impl Room {
 
     pub fn get_block_mut(&mut self, id: PlaceableId, layer: ActiveLayer) -> Option<PlaceableMut> {
         match id {
-            PlaceableId::Tile(pos) => active_layer_mut!(self, layer)
+            PlaceableId::Tile(pos) => self
+                .layers
+                .get_mut(layer)
                 .tiles
                 .get_tile_isize(pos)
                 .map(|tile| PlaceableMut::Tile((tile.to_owned(), pos))),
             PlaceableId::Hazard(id) => self.hazards.get_mut(id).map(PlaceableMut::Hazard),
-            PlaceableId::Prop(id) => active_layer_mut!(self, layer)
+            PlaceableId::Prop(id) => self
+                .layers
+                .get_mut(layer)
                 .props
                 .get_mut(id)
                 .map(PlaceableMut::Prop),
@@ -392,7 +375,7 @@ impl Room {
         hazards.sort_unstable();
         coins.sort_unstable();
 
-        let layer = active_layer_mut!(self, layer);
+        let layer = self.layers.get_mut(layer);
 
         let mut removed = Vec::new();
         for id in spotlights.into_iter().rev() {
@@ -422,7 +405,7 @@ impl Room {
     }
 
     pub fn change_size(&mut self, size: vec2<usize>, assets: &Assets) {
-        for layer in all_layers_mut!(self) {
+        for layer in self.layers.iter_mut() {
             layer.tiles.change_size(size, assets);
         }
         self.size = size;
@@ -440,7 +423,7 @@ impl Room {
             light.position = move_fn(light.position);
         }
 
-        for layer in all_layers_mut!(self) {
+        for layer in self.layers.iter_mut() {
             for prop in &mut layer.props {
                 prop.teleport(move_fn(prop.sprite.pos.center()));
             }
@@ -448,7 +431,7 @@ impl Room {
     }
 
     pub fn translate(&mut self, delta: vec2<isize>, assets: &Assets) {
-        for layer in all_layers_mut!(self) {
+        for layer in self.layers.iter_mut() {
             layer.tiles.translate(delta, assets);
         }
 
@@ -457,7 +440,7 @@ impl Room {
     }
 
     pub fn flip_h(&mut self, assets: &Assets) {
-        for layer in all_layers_mut!(self) {
+        for layer in self.layers.iter_mut() {
             layer.tiles.flip_h(assets);
         }
         let bounds = self.bounds();
@@ -465,7 +448,7 @@ impl Room {
     }
 
     pub fn flip_v(&mut self, assets: &Assets) {
-        for layer in all_layers_mut!(self) {
+        for layer in self.layers.iter_mut() {
             layer.tiles.flip_v(assets);
         }
         let bounds = self.bounds();
@@ -494,6 +477,40 @@ impl Room {
         #[cfg(target_arch = "wasm32")]
         {
             anyhow::bail!("unimplemented")
+        }
+    }
+}
+
+impl RoomLayers {
+    pub fn new(size: vec2<usize>) -> Self {
+        Self {
+            background: RoomLayer::new(size),
+            main: RoomLayer::new(size),
+            foreground: RoomLayer::new(size),
+        }
+    }
+
+    // pub fn iter(&self) -> impl Iterator<Item = &RoomLayer> {
+    //     [&self.background, &self.main, &self.foreground].into_iter()
+    // }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut RoomLayer> {
+        [&mut self.background, &mut self.main, &mut self.foreground].into_iter()
+    }
+
+    pub fn get(&self, layer: ActiveLayer) -> &RoomLayer {
+        match layer {
+            ActiveLayer::Background => &self.background,
+            ActiveLayer::Main => &self.main,
+            ActiveLayer::Foreground => &self.foreground,
+        }
+    }
+
+    pub fn get_mut(&mut self, layer: ActiveLayer) -> &mut RoomLayer {
+        match layer {
+            ActiveLayer::Background => &mut self.background,
+            ActiveLayer::Main => &mut self.main,
+            ActiveLayer::Foreground => &mut self.foreground,
         }
     }
 }

@@ -125,7 +125,8 @@ impl Logic<'_> {
                         let tile = logic
                             .world
                             .room
-                            .main_layer
+                            .layers
+                            .main
                             .tiles
                             .get_tile_isize(pos)
                             .unwrap();
@@ -524,7 +525,8 @@ impl Logic<'_> {
                 ColliderId::Tile(pos) => self
                     .world
                     .room
-                    .main_layer
+                    .layers
+                    .main
                     .tiles
                     .get_tile_isize(pos)
                     .unwrap(),
@@ -564,7 +566,8 @@ impl Logic<'_> {
                     ColliderId::Tile(pos) => self
                         .world
                         .room
-                        .main_layer
+                        .layers
+                        .main
                         .tiles
                         .get_tile_isize(pos)
                         .unwrap(),
@@ -599,7 +602,8 @@ impl Logic<'_> {
             .any(|pos| {
                 self.world
                     .room
-                    .main_layer
+                    .layers
+                    .main
                     .tiles
                     .get_tile_isize(pos)
                     .filter(|&tile| {

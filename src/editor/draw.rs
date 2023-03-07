@@ -314,7 +314,8 @@ impl RoomEditor {
             let tile = &self
                 .world
                 .room
-                .main_layer
+                .layers
+                .main
                 .tiles
                 .get_tile_isize(pos.map(|x| x as isize))
                 .unwrap();

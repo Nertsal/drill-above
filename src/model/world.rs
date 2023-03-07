@@ -48,7 +48,7 @@ impl World {
         mut room: Room,
         player: Option<(Player, Actor)>,
     ) -> Self {
-        for layer in all_layers_mut!(room) {
+        for layer in room.layers.iter_mut() {
             layer.tiles.update_geometry(assets);
         }
         let cache = RenderCache::calculate(&room, geng, assets);

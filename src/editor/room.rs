@@ -149,7 +149,7 @@ impl RoomEditor {
 
     pub fn new_room(geng: &Geng, assets: &Rc<Assets>, room_name: String, mut room: Room) -> Self {
         // Update geometry in case it was not specified in the json file.
-        for layer in all_layers_mut!(room) {
+        for layer in room.layers.iter_mut() {
             layer.tiles.update_geometry(assets);
         }
         Self {
