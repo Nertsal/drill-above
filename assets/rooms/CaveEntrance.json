@@ -1883,23 +1883,6 @@
         "sprite": {
           "pos": {
             "min": [
-              9.75,
-              2.625
-            ],
-            "max": [
-              18.25,
-              8.375
-            ]
-          },
-          "mirror_x": false,
-          "mirror_y": false
-        },
-        "prop_type": "village_house_1"
-      },
-      {
-        "sprite": {
-          "pos": {
-            "min": [
               32.96875,
               1.625
             ],
@@ -2882,7 +2865,7 @@
           23.0
         ]
       },
-      "to_room": "VEUJX.json",
+      "to_room": "CaveExit.json",
       "offset": [
         43,
         0
