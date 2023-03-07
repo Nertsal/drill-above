@@ -17,23 +17,28 @@ pub struct RenderCache {
 impl RenderCache {
     pub fn calculate(room: &Room, geng: &Geng, assets: &Assets) -> Self {
         let (normal_geometry, normal_uv) = room
-            .main_layer
+            .layers
+            .main
             .calculate_normal_geometry(&room.grid, geng, assets);
         Self {
             background_geometry: room
-                .background_layer
+                .layers
+                .background
                 .tiles
                 .calculate_geometry(&room.grid, geng, assets),
             main_geometry: room
-                .main_layer
+                .layers
+                .main
                 .tiles
                 .calculate_geometry(&room.grid, geng, assets),
             foreground_geometry: room
-                .foreground_layer
+                .layers
+                .foreground
                 .tiles
                 .calculate_geometry(&room.grid, geng, assets),
             light_geometry: room
-                .main_layer
+                .layers
+                .main
                 .calculate_light_geometry(&room.grid, geng, assets),
             normal_geometry,
             normal_uv,
