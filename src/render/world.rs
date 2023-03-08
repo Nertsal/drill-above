@@ -41,6 +41,7 @@ impl WorldRender {
 
         draw_layers!([ActiveLayer::Background, ActiveLayer::Main]);
 
+        self.draw_npc(&world.room.npcs, &world.camera, framebuffer);
         self.draw_player(world, draw_hitboxes, &world.camera, framebuffer);
         self.draw_particles(&world.particles, &world.camera, framebuffer);
 
@@ -226,6 +227,8 @@ impl WorldRender {
             ),
         );
 
+        self.draw_npc(&room.npcs, camera, framebuffer);
+
         // Spotlights
         for spotlight in &room.spotlights {
             let pos = pixel_perfect_pos(spotlight.position);
@@ -398,6 +401,22 @@ impl WorldRender {
                     ),
                 );
             }
+        }
+    }
+
+    pub fn draw_npc(
+        &self,
+        npcs: &[Npc],
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        for npc in npcs {
+            let texture = self.assets.sprites.npc.get_texture(&npc.npc_type);
+            self.geng.draw_2d(
+                framebuffer,
+                camera,
+                &draw_2d::TexturedQuad::new(npc.sprite.render_aabb(), texture.texture()),
+            );
         }
     }
 

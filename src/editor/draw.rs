@@ -235,6 +235,10 @@ impl RoomEditor {
                                 .get_texture(&prop.prop_type)
                                 .texture(),
                         )),
+                        Placeable::Npc(npc) => Some((
+                            npc.sprite,
+                            self.assets.sprites.npc.get_texture(&npc.npc_type).texture(),
+                        )),
                         Placeable::Spotlight(..) => Some((
                             Sprite::new(block.sprite(&self.world.room.grid)),
                             &self.assets.sprites.spotlight,
@@ -264,6 +268,7 @@ impl RoomEditor {
                 Placeable::Hazard(_) => Rgba::new(1.0, 0.0, 0.0, 0.5),
                 Placeable::Prop(_) => Rgba::new(1.0, 1.0, 1.0, 0.5),
                 Placeable::Coin(_) => Rgba::new(1.0, 1.0, 0.0, 0.5),
+                Placeable::Npc(_) => Rgba::new(0.0, 0.0, 1.0, 0.5),
                 Placeable::Spotlight(light) => {
                     let mut color = light.color;
                     color.a = 0.5;

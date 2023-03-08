@@ -52,6 +52,17 @@ impl RoomEditor {
                     .room
                     .place_prop(grid_pos, size, prop, self.active_layer);
             }
+            PlaceableType::Npc(npc) => {
+                let size = self
+                    .assets
+                    .sprites
+                    .npc
+                    .get_texture(&npc)
+                    .size()
+                    .map(|x| x as f32 / PIXELS_PER_UNIT as f32)
+                    .map(Coord::new);
+                self.world.room.place_npc(position, size, npc);
+            }
             PlaceableType::Spotlight(light) => {
                 self.world
                     .room

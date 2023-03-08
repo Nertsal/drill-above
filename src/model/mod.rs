@@ -1,6 +1,7 @@
 use super::*;
 
 mod collider;
+mod dialogue;
 mod grid;
 mod id;
 mod lights;
@@ -14,6 +15,7 @@ mod tileset;
 mod world;
 
 pub use collider::*;
+pub use dialogue::*;
 pub use grid::*;
 pub use id::*;
 pub use lights::*;

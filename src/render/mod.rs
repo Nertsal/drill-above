@@ -1,11 +1,13 @@
 use super::*;
 
 mod cache;
+mod dialogue;
 mod lights;
 mod util;
 mod world;
 
 pub use cache::*;
+pub use dialogue::*;
 pub use lights::*;
 pub use util::*;
 pub use world::*;
@@ -83,6 +85,10 @@ impl GameRender {
             .align_bounding_box(vec2(0.0, 0.5))
             .translate(pos + vec2(size.x * 1.5, -size.y / 2.0)),
         );
+
+        if let Some(dialogue) = &world.dialogue {
+            self.draw_dialogue(dialogue, framebuffer);
+        }
 
         if let Some(time) = show_time {
             // Speedrun timer

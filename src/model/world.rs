@@ -14,6 +14,7 @@ pub struct World {
     pub drill_sound: Option<geng::SoundEffect>,
     pub time: Time,
     pub deaths: usize,
+    pub dialogue: Option<Dialogue>,
 
     pub player: Player,
     pub actors: Collection<Actor>,
@@ -104,6 +105,7 @@ impl World {
                 }
             },
             room_transition: None,
+            dialogue: None,
             coins_collected: 0,
             time: Time::ZERO,
             drill_sound: None,

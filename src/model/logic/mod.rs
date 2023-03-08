@@ -1,5 +1,6 @@
 use super::*;
 
+mod dialogue;
 mod movement;
 mod particles;
 mod player;
@@ -28,6 +29,7 @@ impl Logic<'_> {
     fn process(&mut self) {
         self.process_player();
         self.movement();
+        self.dialogue();
         self.process_particles();
         self.process_camera();
     }

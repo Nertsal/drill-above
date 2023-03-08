@@ -374,6 +374,10 @@ impl RoomEditor {
                     PlaceableMut::Coin(_) => {
                         block_info_ui("Coin".to_string(), true, geng::ui::Void.boxed())
                     }
+                    PlaceableMut::Npc(npc) => {
+                        let sprite = sprite_ui(&mut npc.sprite);
+                        block_info_ui("Npc".to_string(), true, sprite.boxed())
+                    }
                     PlaceableMut::Spotlight(config) => {
                         // Spotlight
                         let angle = slider!("Direction", 0.0..=f64::PI * 2.0, &mut config.angle);
@@ -424,6 +428,7 @@ impl RoomEditor {
                     PlaceableId::Hazard(_) => "Hazard",
                     PlaceableId::Prop(_) => "Prop",
                     PlaceableId::Coin(_) => "Coin",
+                    PlaceableId::Npc(_) => "Npc",
                     PlaceableId::Spotlight(_) => "Spotlight",
                 };
                 text += ", ";
@@ -491,6 +496,9 @@ impl RoomEditor {
                 PlaceableType::Coin => (&self.assets.sprites.coin, unit),
                 PlaceableType::Prop(prop) => {
                     (self.assets.sprites.props.get_texture(prop).texture(), unit)
+                }
+                PlaceableType::Npc(npc) => {
+                    (self.assets.sprites.npc.get_texture(npc).texture(), unit)
                 }
                 PlaceableType::Spotlight(..) => (&self.assets.sprites.spotlight, unit),
             };

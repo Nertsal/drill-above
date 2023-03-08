@@ -4422,7 +4422,39 @@
   },
   "hazards": [],
   "coins": [],
-  "npcs": [],
+  "npcs": [
+    {
+      "interact_collider": {
+        "min": [
+          63.28499,
+          1.4695687
+        ],
+        "max": [
+          68.28499,
+          6.469569
+        ]
+      },
+      "text": {
+        "char_delay": 0.1,
+        "text": "Hello, my name is Ω! Yes, the Greek letter."
+      },
+      "sprite": {
+        "pos": {
+          "min": [
+            64.78499,
+            2.9695687
+          ],
+          "max": [
+            66.78499,
+            4.969569
+          ]
+        },
+        "mirror_x": true,
+        "mirror_y": false
+      },
+      "npc_type": "chad"
+    }
+  ],
   "global_light": {
     "color": "#ffffff",
     "intensity": 1.0

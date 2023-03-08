@@ -224,6 +224,17 @@ impl RoomEditor {
                         spotlight: default(),
                     },
                 },
+                RoomEditorTab::block(
+                    "Npc",
+                    assets
+                        .sprites
+                        .npc
+                        .0
+                        .keys()
+                        .cloned()
+                        .map(PlaceableType::Npc)
+                        .collect(),
+                ),
             ],
             active_tab: 0,
             undo_stack: default(),

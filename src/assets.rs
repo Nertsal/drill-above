@@ -43,6 +43,7 @@ pub struct Sprites {
     pub hazards: SpriteCollection,
     pub player: PlayerSprites,
     pub props: SpriteCollection,
+    pub npc: SpriteCollection,
     #[asset(postprocess = "pixel")]
     pub partner: ugli::Texture,
     #[asset(postprocess = "pixel")]

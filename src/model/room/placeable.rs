@@ -5,8 +5,9 @@ pub enum PlaceableType {
     Tile(Tile),
     Hazard(HazardType),
     Prop(PropType),
-    Spotlight(SpotlightSource),
     Coin,
+    Npc(NpcType),
+    Spotlight(SpotlightSource),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -15,6 +16,7 @@ pub enum PlaceableId {
     Hazard(usize),
     Prop(usize),
     Coin(usize),
+    Npc(usize),
     Spotlight(usize),
 }
 
@@ -24,6 +26,7 @@ pub enum Placeable {
     Hazard(Hazard),
     Prop(Prop),
     Coin(Coin),
+    Npc(Npc),
     Spotlight(SpotlightSource),
 }
 
@@ -33,6 +36,7 @@ pub enum PlaceableMut<'a> {
     Hazard(&'a mut Hazard),
     Prop(&'a mut Prop),
     Coin(&'a mut Coin),
+    Npc(&'a mut Npc),
     Spotlight(&'a mut SpotlightSource),
 }
 
@@ -74,6 +78,7 @@ impl PlaceableId {
                 | (PlaceableId::Hazard(_), PlaceableType::Hazard(_))
                 | (PlaceableId::Prop(_), PlaceableType::Prop(_))
                 | (PlaceableId::Coin(_), PlaceableType::Coin)
+                | (PlaceableId::Npc(_), PlaceableType::Npc(_))
                 | (PlaceableId::Spotlight(_), PlaceableType::Spotlight(_))
         )
     }
@@ -86,6 +91,7 @@ impl Placeable {
             Placeable::Hazard(hazard) => hazard.collider.feet(),
             Placeable::Prop(prop) => prop.sprite.pos.center(),
             Placeable::Coin(coin) => coin.collider.feet(),
+            Placeable::Npc(npc) => npc.sprite.pos.center(),
             Placeable::Spotlight(light) => light.position,
         }
     }
@@ -99,6 +105,7 @@ impl Placeable {
             Placeable::Hazard(hazard) => hazard.translate(offset),
             Placeable::Prop(prop) => prop.translate(offset),
             Placeable::Coin(coin) => coin.translate(offset),
+            Placeable::Npc(npc) => npc.translate(offset),
             Placeable::Spotlight(light) => light.position += offset,
         }
     }
@@ -109,6 +116,7 @@ impl Placeable {
             Placeable::Hazard(hazard) => PlaceableType::Hazard(hazard.hazard_type.to_owned()),
             Placeable::Prop(prop) => PlaceableType::Prop(prop.prop_type.to_owned()),
             Placeable::Coin(_) => PlaceableType::Coin,
+            Placeable::Npc(npc) => PlaceableType::Npc(npc.npc_type.to_owned()),
             Placeable::Spotlight(spotlight) => PlaceableType::Spotlight(*spotlight),
         }
     }
@@ -122,6 +130,7 @@ impl Placeable {
             Placeable::Hazard(hazard) => hazard.collider.raw(),
             Placeable::Prop(prop) => prop.sprite.pos,
             Placeable::Coin(coin) => coin.collider.raw(),
+            Placeable::Npc(npc) => npc.sprite.pos,
             Placeable::Spotlight(light) => {
                 Aabb2::point(light.position).extend_uniform(Coord::new(0.5))
             }

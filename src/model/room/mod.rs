@@ -1,9 +1,11 @@
 use super::*;
 
 mod layer;
+mod npc;
 mod placeable;
 
 pub use layer::*;
+pub use npc::*;
 pub use placeable::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
@@ -19,6 +21,8 @@ pub struct Room {
     pub hazards: Vec<Hazard>,
     #[serde(default)]
     pub coins: Vec<Coin>,
+    #[serde(default)]
+    pub npcs: Vec<Npc>,
     #[serde(default)]
     pub global_light: GlobalLightSource,
     #[serde(default)]
@@ -58,6 +62,7 @@ impl Room {
             spawn_point: grid.grid_to_world(size.map(|x| x as isize / 2)),
             hazards: Vec::new(),
             coins: Vec::new(),
+            npcs: Vec::new(),
             layers: RoomLayers::new(size),
             transitions: Vec::new(),
             drill_allowed: true,
@@ -101,6 +106,10 @@ impl Room {
             Placeable::Coin(coin) => {
                 self.coins.push(coin);
                 PlaceableId::Coin(self.coins.len() - 1)
+            }
+            Placeable::Npc(npc) => {
+                self.npcs.push(npc);
+                PlaceableId::Npc(self.npcs.len() - 1)
             }
             Placeable::Spotlight(light) => {
                 self.spotlights.push(light);
@@ -190,6 +199,20 @@ impl Room {
         });
     }
 
+    pub fn place_npc(&mut self, pos: vec2<Coord>, size: vec2<Coord>, npc_type: NpcType) {
+        let sprite = Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0));
+        let interact_collider = Collider::new(sprite.extend_uniform(Coord::new(1.5)));
+        self.npcs.push(Npc {
+            interact_collider,
+            text: text_scroller::TextConfig {
+                char_delay: 0.1,
+                text: "Hello, my name is Ω! Yes, the Greek letter.".to_string(),
+            },
+            sprite: Sprite::new(sprite),
+            npc_type,
+        });
+    }
+
     pub fn get_hovered(&self, aabb: Aabb2<Coord>, layer: ActiveLayer) -> Vec<PlaceableId> {
         let grid_aabb = Collider::new(aabb).grid_aabb(&self.grid);
         let main_layer = matches!(layer, ActiveLayer::Main);
@@ -233,6 +256,11 @@ impl Room {
                     .enumerate()
                     .filter(|(_, coin)| coin.collider.raw().intersects(&aabb))
                     .map(|(i, _)| PlaceableId::Coin(i)),
+                self.npcs
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, npc)| npc.sprite.pos.intersects(&aabb))
+                    .map(|(i, _)| PlaceableId::Npc(i)),
             ]);
         }
 
@@ -256,6 +284,7 @@ impl Room {
                 .cloned()
                 .map(Placeable::Prop),
             PlaceableId::Coin(id) => self.coins.get(id).cloned().map(Placeable::Coin),
+            PlaceableId::Npc(id) => self.npcs.get(id).cloned().map(Placeable::Npc),
             PlaceableId::Spotlight(id) => {
                 self.spotlights.get(id).cloned().map(Placeable::Spotlight)
             }
@@ -278,6 +307,7 @@ impl Room {
                 .get_mut(id)
                 .map(PlaceableMut::Prop),
             PlaceableId::Coin(id) => self.coins.get_mut(id).map(PlaceableMut::Coin),
+            PlaceableId::Npc(id) => self.npcs.get_mut(id).map(PlaceableMut::Npc),
             PlaceableId::Spotlight(id) => self.spotlights.get_mut(id).map(PlaceableMut::Spotlight),
         }
     }
@@ -292,6 +322,7 @@ impl Room {
         let mut props = Vec::new();
         let mut hazards = Vec::new();
         let mut coins = Vec::new();
+        let mut npcs = Vec::new();
         let mut tiles = Vec::new();
         for &block in blocks {
             match block {
@@ -299,6 +330,7 @@ impl Room {
                 PlaceableId::Hazard(id) => hazards.push(id),
                 PlaceableId::Prop(id) => props.push(id),
                 PlaceableId::Coin(id) => coins.push(id),
+                PlaceableId::Npc(id) => npcs.push(id),
                 PlaceableId::Spotlight(id) => spotlights.push(id),
             }
         }
@@ -307,6 +339,7 @@ impl Room {
         props.sort_unstable();
         hazards.sort_unstable();
         coins.sort_unstable();
+        npcs.sort_unstable();
 
         let layer = self.layers.get_mut(layer);
 
@@ -326,6 +359,10 @@ impl Room {
         for id in coins.into_iter().rev() {
             let coin = self.coins.swap_remove(id);
             removed.push(Placeable::Coin(coin));
+        }
+        for id in npcs.into_iter().rev() {
+            let npc = self.npcs.swap_remove(id);
+            removed.push(Placeable::Npc(npc));
         }
         for pos in tiles {
             if let Some(tile) = layer.tiles.get_tile_isize(pos) {
