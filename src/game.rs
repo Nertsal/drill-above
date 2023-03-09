@@ -203,7 +203,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("{}", self.world.coins_collected),
                     Rgba::try_from("#e3a912").unwrap(),
                 )
@@ -230,10 +230,14 @@ impl geng::State for Game {
             self.geng.draw_2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(&*self.assets.font, format!("{}", self.deaths), Rgba::BLACK)
-                    .scale_uniform(size.y * 0.3)
-                    .align_bounding_box(vec2(0.0, 0.5))
-                    .translate(pos + vec2(size.x / 2.0, size.y / 2.0)),
+                &draw_2d::Text::unit(
+                    &*self.assets.fonts.pixel,
+                    format!("{}", self.deaths),
+                    Rgba::BLACK,
+                )
+                .scale_uniform(size.y * 0.3)
+                .align_bounding_box(vec2(0.0, 0.5))
+                .translate(pos + vec2(size.x / 2.0, size.y / 2.0)),
             );
 
             // Time
@@ -243,7 +247,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::BLACK,
                 )
@@ -260,7 +264,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("Speed: {:.2}", player.velocity.len()),
                     Rgba::BLACK,
                 )
@@ -272,7 +276,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("x: {:6.2}", player.velocity.x),
                     Rgba::BLACK,
                 )
@@ -284,7 +288,7 @@ impl geng::State for Game {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("y: {:6.2}", player.velocity.y),
                     Rgba::BLACK,
                 )

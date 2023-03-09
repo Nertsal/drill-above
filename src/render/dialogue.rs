@@ -27,7 +27,7 @@ impl GameRender {
         let text_box = dialogue_box.extend_uniform(-10.0);
         for (i, line) in crate::util::split_text_lines(
             &dialogue.text,
-            &self.assets.font,
+            &self.assets.fonts.dialogue,
             text_size,
             text_box.width(),
         )
@@ -35,7 +35,7 @@ impl GameRender {
         .enumerate()
         {
             let pos = text_box.top_left() - vec2::UNIT_Y * text_size * 1.5 * (i as f32 + 0.5);
-            self.assets.font.draw(
+            self.assets.fonts.dialogue.draw(
                 framebuffer,
                 &camera,
                 &line,

@@ -2,14 +2,19 @@ use super::*;
 
 #[derive(geng::Assets)]
 pub struct Assets {
-    #[asset(load_with = "load_font(&geng, &base_path.join(\"pixel.ttf\"))")]
-    pub font: Rc<geng::Font>,
+    pub fonts: Fonts,
     pub shaders: Shaders,
     pub sprites: Sprites,
     pub sounds: Sounds,
     #[asset(postprocess = "loop_sound")]
     pub music: geng::Sound,
     pub rules: Rules,
+}
+
+#[derive(geng::Assets)]
+pub struct Fonts {
+    pub pixel: Rc<geng::Font>,
+    pub dialogue: Rc<geng::Font>,
 }
 
 #[derive(geng::Assets)]

@@ -77,7 +77,7 @@ impl GameRender {
             framebuffer,
             &geng::PixelPerfectCamera,
             &draw_2d::Text::unit(
-                &*self.assets.font,
+                &*self.assets.fonts.pixel,
                 format!("{}", world.coins_collected),
                 Rgba::try_from("#e3a912").unwrap(),
             )
@@ -99,7 +99,7 @@ impl GameRender {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
                 )
@@ -112,7 +112,7 @@ impl GameRender {
                 framebuffer,
                 &geng::PixelPerfectCamera,
                 &draw_2d::Text::unit(
-                    &*self.assets.font,
+                    &*self.assets.fonts.pixel,
                     format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
                 )

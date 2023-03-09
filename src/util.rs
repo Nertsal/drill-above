@@ -46,7 +46,6 @@ pub fn split_text_lines(
 ) -> Vec<String> {
     let font = font.as_ref();
     let mut lines = Vec::new();
-    let mut line = String::new();
 
     let measure = |str: &str| {
         font.measure_bounding_box(str, vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT))
@@ -55,24 +54,28 @@ pub fn split_text_lines(
             * size
     };
 
-    for word in text.as_ref().split_whitespace() {
-        if line.is_empty() {
-            line.push_str(word);
-        } else {
-            let width = measure(&line);
-            if width + measure(" ") + measure(word) < target_width {
-                // Word fits in the line
-                line.push(' ');
+    for raw_line in text.as_ref().lines() {
+        let mut line = String::new();
+        for word in raw_line.split_whitespace() {
+            if line.is_empty() {
                 line.push_str(word);
             } else {
-                // Start new line
-                let mut new_line = String::new();
-                std::mem::swap(&mut new_line, &mut line);
-                lines.push(new_line);
-                line = word.to_owned();
+                let width = measure(&line);
+                if width + measure(" ") + measure(word) < target_width {
+                    // Word fits in the line
+                    line.push(' ');
+                    line.push_str(word);
+                } else {
+                    // Start new line
+                    let mut new_line = String::new();
+                    std::mem::swap(&mut new_line, &mut line);
+                    lines.push(new_line);
+                    line = word.to_owned();
+                }
             }
         }
+        lines.push(line);
     }
-    lines.push(line);
+
     lines
 }

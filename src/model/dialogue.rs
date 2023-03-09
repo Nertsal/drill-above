@@ -21,7 +21,7 @@ impl Dialogue {
     pub fn update(&mut self, delta_time: Time) {
         for event in self.scroller.update(delta_time.as_f32().into()) {
             match event {
-                TextEvent::Push(str) => self.text += &str,
+                ScrollEvent::Push(str) => self.text += &str,
             }
         }
     }
