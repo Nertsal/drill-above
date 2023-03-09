@@ -56,7 +56,12 @@ void main() {
     // Angular falloff
     float angle_t = abs(angle / u_light_angle_range);
     angle_t = pow(angle_t, u_light_angle_gradient);
-    float angular_falloff = smooth_step(1.0, 0.0, angle_t);
+    float angular_falloff;
+    if (u_light_angle_range >= 2.0 * PI) {
+        angular_falloff = 1.0;
+    } else {
+        angular_falloff = smooth_step(1.0, 0.0, angle_t);
+    }
 
     // Normal falloff
     vec2 light_dir = -position / distance;
