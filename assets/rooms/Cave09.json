@@ -2274,8 +2274,8 @@
           "limestone",
           "air",
           "air",
-          "air",
-          "air",
+          "crystal_stone",
+          "crystal_stone",
           "crystal_stone",
           "crystal_stone",
           "crystal_stone",
@@ -3459,23 +3459,6 @@
       "collider": {
         "min": [
           0.0,
-          -1.0
-        ],
-        "max": [
-          35.0,
-          0.0
-        ]
-      },
-      "to_room": "Cave08.json",
-      "offset": [
-        9,
-        28
-      ]
-    },
-    {
-      "collider": {
-        "min": [
-          0.0,
           29.0
         ],
         "max": [
@@ -3487,6 +3470,23 @@
       "offset": [
         0,
         -29
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          0.0,
+          -1.0
+        ],
+        "max": [
+          35.0,
+          0.0
+        ]
+      },
+      "to_room": "Cave08.json",
+      "offset": [
+        9,
+        28
       ]
     }
   ]
