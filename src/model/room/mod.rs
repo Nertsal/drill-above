@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use super::*;
 
 mod layer;
@@ -208,16 +206,7 @@ impl Room {
             interact_collider,
             text: text_scroller::TextConfig {
                 char_delay: 0.1,
-                events: {
-                    use text_scroller::TextEvent;
-                    let mut vec = VecDeque::new();
-                    vec.extend([
-                        TextEvent::Text("Hello, my name is Ω! ".to_string()),
-                        TextEvent::Delay(0.5),
-                        TextEvent::Text("Yes, the Greek letter.".to_string()),
-                    ]);
-                    vec
-                },
+                events: default(),
             },
             sprite: Sprite::new(sprite),
             npc_type,

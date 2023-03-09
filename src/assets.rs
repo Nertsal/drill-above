@@ -260,20 +260,3 @@ impl geng::LoadAsset for SpriteCollection {
 
     const DEFAULT_EXT: Option<&'static str> = None;
 }
-
-fn load_font(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Rc<geng::Font>> {
-    let geng = geng.clone();
-    let path = path.to_owned();
-    async move {
-        let data = <Vec<u8> as geng::LoadAsset>::load(&geng, &path).await?;
-        Ok(Rc::new(geng::Font::new(
-            &geng,
-            &data,
-            geng::ttf::Options {
-                pixel_size: 64.0,
-                max_distance: 0.1,
-            },
-        )?))
-    }
-    .boxed_local()
-}
