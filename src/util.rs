@@ -37,3 +37,42 @@ pub fn fit_text(text: impl AsRef<str>, font: impl AsRef<geng::Font>, target: Aab
             .unwrap()
             .width()
 }
+
+pub fn split_text_lines(
+    text: impl AsRef<str>,
+    font: impl AsRef<geng::Font>,
+    size: f32,
+    target_width: f32,
+) -> Vec<String> {
+    let font = font.as_ref();
+    let mut lines = Vec::new();
+    let mut line = String::new();
+
+    let measure = |str: &str| {
+        font.measure_bounding_box(str, vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT))
+            .unwrap_or(Aabb2::ZERO)
+            .width()
+            * size
+    };
+
+    for word in text.as_ref().split_whitespace() {
+        if line.is_empty() {
+            line.push_str(word);
+        } else {
+            let width = measure(&line);
+            if width + measure(" ") + measure(word) < target_width {
+                // Word fits in the line
+                line.push(' ');
+                line.push_str(word);
+            } else {
+                // Start new line
+                let mut new_line = String::new();
+                std::mem::swap(&mut new_line, &mut line);
+                lines.push(new_line);
+                line = word.to_owned();
+            }
+        }
+    }
+    lines.push(line);
+    lines
+}

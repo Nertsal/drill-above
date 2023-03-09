@@ -15,6 +15,7 @@ impl GameRender {
 
         let view_point = |pos| view.bottom_left() + view.size() * pos;
         let view_box = |a, b| Aabb2::from_corners(view_point(a), view_point(b));
+        let text_size = view.height() * 0.05;
 
         let dialogue_box = view_box(vec2(0.2, 0.6), vec2(0.8, 0.8));
         self.geng.draw_2d(
@@ -23,11 +24,26 @@ impl GameRender {
             &draw_2d::Quad::new(dialogue_box, DIALOGUE_BOX_COLOR),
         );
 
-        self.geng.draw_2d(
-            framebuffer,
-            &camera,
-            &draw_2d::Text::unit(self.assets.font.clone(), &dialogue.text, Rgba::WHITE)
-                .fit_into(dialogue_box),
-        );
+        let text_box = dialogue_box.extend_uniform(-10.0);
+        for (i, line) in crate::util::split_text_lines(
+            &dialogue.text,
+            &self.assets.font,
+            text_size,
+            text_box.width(),
+        )
+        .into_iter()
+        .enumerate()
+        {
+            let pos = text_box.top_left() - vec2::UNIT_Y * text_size * 1.5 * (i as f32 + 0.5);
+            self.assets.font.draw(
+                framebuffer,
+                &camera,
+                &line,
+                pos,
+                geng::TextAlign::LEFT,
+                text_size,
+                Rgba::WHITE,
+            );
+        }
     }
 }
