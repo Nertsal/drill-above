@@ -4435,8 +4435,14 @@
         ]
       },
       "text": {
-        "char_delay": 0.1,
-        "text": "Hello, my name is Ω! Yes, the Greek letter."
+        "char_delay": 0.05,
+        "events": [
+          "Hello, my name is Ω! ",
+          {
+            "Delay": 0.5
+          },
+          "Yes, the Greek letter.\nHow was your day today?"
+        ]
       },
       "sprite": {
         "pos": {
