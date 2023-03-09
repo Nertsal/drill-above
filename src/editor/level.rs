@@ -675,17 +675,25 @@ impl LevelEditor {
 
     /// Handles events from the hot reload watcher.
     #[cfg(not(target_arch = "wasm32"))]
-    fn handle_notify(&mut self, event: notify::Result<notify::Event>) {
-        debug!("Received event from hot reload: {event:?}");
-        let event = match event {
-            Ok(event) => event,
-            Err(err) => {
-                error!("Received error from hot reload channel: {err}");
-                return;
-            }
-        };
+    fn handle_notify(&mut self, events: Vec<notify::Result<notify::Event>>) {
+        let mut reload = false;
 
-        if let notify::EventKind::Modify(_) = event.kind {
+        for event in events {
+            debug!("Received event from hot reload: {event:?}");
+            let event = match event {
+                Ok(event) => event,
+                Err(err) => {
+                    error!("Received error from hot reload channel: {err}");
+                    break;
+                }
+            };
+
+            if let notify::EventKind::Modify(_) = event.kind {
+                reload = true;
+            }
+        }
+
+        if reload {
             self.reload_assets();
         }
     }
@@ -732,13 +740,22 @@ impl geng::State for LevelEditor {
         if let Some(hot) = &self.hot_reload {
             // Check hot reload events
             use std::sync::mpsc::TryRecvError;
-            match hot.receiver.try_recv() {
-                Ok(event) => self.handle_notify(event),
-                Err(TryRecvError::Empty) => {}
-                Err(TryRecvError::Disconnected) => {
-                    error!("Disconnected from the hot reload channel");
+            let mut events = Vec::new();
+            loop {
+                match hot.receiver.try_recv() {
+                    Ok(event) => {
+                        events.push(event);
+                    }
+                    Err(TryRecvError::Empty) => {
+                        break;
+                    }
+                    Err(TryRecvError::Disconnected) => {
+                        error!("Disconnected from the hot reload channel");
+                    }
                 }
             }
+
+            self.handle_notify(events);
         }
 
         if let Some(room) = active_room_mut!(self) {
