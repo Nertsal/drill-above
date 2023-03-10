@@ -190,6 +190,8 @@ impl Sprite {
         if self.mirror_y {
             std::mem::swap(&mut aabb.min.y, &mut aabb.max.y);
         }
-        aabb.map(Coord::as_f32)
+        let pos = util::pixel_perfect_pos(aabb.min);
+        let aabb = aabb.map(Coord::as_f32);
+        aabb.translate(pos - aabb.min)
     }
 }

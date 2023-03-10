@@ -8,12 +8,6 @@ pub fn attach_texture<'a>(texture: &'a mut ugli::Texture, geng: &Geng) -> ugli::
     ugli::Framebuffer::new_color(geng.ugli(), ugli::ColorAttachment::Texture(texture))
 }
 
-pub fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
-    let pos = pos.map(Coord::as_f32);
-    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT as f32).round());
-    pixel / PIXELS_PER_UNIT as f32
-}
-
 pub fn update_texture_size(texture: &mut ugli::Texture, size: vec2<usize>, geng: &Geng) {
     if texture.size() != size {
         *texture = ugli::Texture::new_with(geng.ugli(), size, |_| Rgba::BLACK);

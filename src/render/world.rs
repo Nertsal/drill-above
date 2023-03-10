@@ -84,7 +84,7 @@ impl WorldRender {
             // Horizontal correction
             pos.x -= ((pos.x - world.camera.center.x) / size.x + 1.0).floor() * size.x;
 
-            let pos = pixel_perfect_pos(pos.map(Coord::new));
+            let pos = crate::util::pixel_perfect_pos(pos.map(Coord::new));
 
             // Horizontal tiling
             let geometry = itertools::chain![
@@ -231,7 +231,7 @@ impl WorldRender {
 
         // Spotlights
         for spotlight in &room.spotlights {
-            let pos = pixel_perfect_pos(spotlight.position);
+            let pos = crate::util::pixel_perfect_pos(spotlight.position);
             let size = vec2(1.0, 1.0);
             let aabb = Aabb2::point(pos).extend_symmetric(size / 2.0);
             self.geng.draw_2d(
@@ -466,7 +466,7 @@ impl WorldRender {
             let actor = world.actors.get(&player.id).unwrap();
             let pos = actor.collider.feet();
             let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT as f32;
-            let pos = pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
+            let pos = crate::util::pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
             let transform = mat3::translate(pos) * transform;
             self.geng.draw_2d_transformed(
                 framebuffer,

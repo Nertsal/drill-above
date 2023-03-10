@@ -20,6 +20,12 @@ pub fn report_warn<T, E: Display>(result: Result<T, E>, msg: impl AsRef<str>) ->
     }
 }
 
+pub fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
+    let pos = pos.map(Coord::as_f32);
+    let pixel = pos.map(|x| (x * PIXELS_PER_UNIT as f32).round());
+    pixel / PIXELS_PER_UNIT as f32
+}
+
 pub fn aabb_outline(aabb: Aabb2<f32>) -> Chain<f32> {
     let [a, b, c, d] = aabb.corners();
     Chain::new(vec![(a + b) / 2.0, a, d, c, b, (a + b) / 2.0])
