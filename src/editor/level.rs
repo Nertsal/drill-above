@@ -169,6 +169,7 @@ impl LevelEditor {
                         if let Some(ext) = file.path().extension() {
                             if ext.to_str() == Some("json") {
                                 if let Ok(name) = file.file_name().into_string() {
+                                    let name = name.strip_suffix(".json").unwrap().to_string();
                                     let id = RoomId {
                                         level: level.clone(),
                                         name,
