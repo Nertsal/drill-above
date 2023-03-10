@@ -5599,23 +5599,6 @@
     {
       "collider": {
         "min": [
-          60.0,
-          -11.5
-        ],
-        "max": [
-          61.0,
-          11.5
-        ]
-      },
-      "to_room": "drill_03.json",
-      "offset": [
-        -80,
-        0
-      ]
-    },
-    {
-      "collider": {
-        "min": [
           -21.0,
           -7.5
         ],
@@ -5624,10 +5607,33 @@
           11.5
         ]
       },
-      "to_room": "drill_025.json",
+      "to_room": {
+        "level": "jam",
+        "name": "drill_025.json"
+      },
       "offset": [
         80,
         -4
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          60.0,
+          -11.5
+        ],
+        "max": [
+          61.0,
+          11.5
+        ]
+      },
+      "to_room": {
+        "level": "jam",
+        "name": "drill_03.json"
+      },
+      "offset": [
+        -80,
+        0
       ]
     }
   ]

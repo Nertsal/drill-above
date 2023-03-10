@@ -2847,7 +2847,10 @@
           10.5
         ]
       },
-      "to_room": "intro_02.json",
+      "to_room": {
+        "level": "jam",
+        "name": "intro_02.json"
+      },
       "offset": [
         -40,
         1

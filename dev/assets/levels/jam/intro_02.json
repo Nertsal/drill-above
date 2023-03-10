@@ -2847,7 +2847,10 @@
           11.5
         ]
       },
-      "to_room": "intro_01.json",
+      "to_room": {
+        "level": "jam",
+        "name": "intro_01.json"
+      },
       "offset": [
         40,
         -1
@@ -2864,7 +2867,10 @@
           10.5
         ]
       },
-      "to_room": "spikes_01.json",
+      "to_room": {
+        "level": "jam",
+        "name": "spikes_01.json"
+      },
       "offset": [
         -40,
         1
