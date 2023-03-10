@@ -249,8 +249,12 @@ fn collide_tiles(
                 .get_tile_isize(pos)
                 .filter(|&tile| {
                     let air = *tile == "air";
-                    let drill = drill && rules.tiles[tile].drillable;
-                    !air && !drill
+                    let rules = &rules.tiles[tile];
+                    let drill = drill && rules.drillable;
+                    let align = rules.direction.map_or(true, |dir| {
+                        vec2::dot(velocity, dir.map(|x| Coord::new(x as f32))) < Coord::ZERO
+                    });
+                    !air && !drill && align
                 })
                 .and_then(|_| {
                     let tile = grid.cell_collider(pos);
