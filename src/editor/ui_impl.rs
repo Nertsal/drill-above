@@ -69,7 +69,7 @@ impl RoomEditor {
         let mut input = ui::TextInput::new(
             cx,
             &self.geng,
-            self.room_name.clone(),
+            self.room_id.name.clone(),
             self.geng.default_font().clone(),
             text_size,
             Rgba::WHITE,
@@ -83,9 +83,9 @@ impl RoomEditor {
         if input.is_focused() {
             self.input_events = Some(Vec::new());
         }
-        if self.room_name != *input.get_text() {
+        if self.room_id.name != *input.get_text() {
             // Update room name
-            self.room_name = input.get_text().to_owned();
+            self.room_id.name = input.get_text().to_owned();
         }
 
         let mut room_info = geng::ui::column![

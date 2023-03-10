@@ -37,8 +37,8 @@ pub struct RoomEditor {
     /// Size of the downscaled version of the screen.
     pub screen_resolution: vec2<usize>,
 
-    /// The name of the currently loaded room.
-    pub room_name: String,
+    /// The id of the currently loaded room.
+    pub room_id: RoomId,
     /// The world that contains the room.
     pub world: World,
     /// Currently active layer of the room.
@@ -140,14 +140,14 @@ pub enum RoomDragAction {
 }
 
 impl RoomEditor {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, room_name: String) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, room_id: RoomId) -> Self {
         // Load the room
-        let room =
-            util::report_err(Room::load(&room_name), "Failed to load room").unwrap_or_default();
-        Self::new_room(geng, assets, room_name, room)
+        let room = util::report_err(Room::load(room_id.full_path()), "Failed to load room")
+            .unwrap_or_default();
+        Self::new_room(geng, assets, room_id, room)
     }
 
-    pub fn new_room(geng: &Geng, assets: &Rc<Assets>, room_name: String, mut room: Room) -> Self {
+    pub fn new_room(geng: &Geng, assets: &Rc<Assets>, room_id: RoomId, mut room: Room) -> Self {
         // Update geometry in case it was not specified in the json file.
         for layer in room.layers.iter_mut() {
             layer.tiles.update_geometry(assets);
@@ -244,7 +244,7 @@ impl RoomEditor {
             color_mode: None,
             playtest: false,
             preview: false,
-            room_name,
+            room_id,
             input_events: None,
         }
     }
@@ -592,7 +592,7 @@ impl RoomEditor {
 
     /// Save the room to file.
     pub fn save_room(&self) -> anyhow::Result<()> {
-        self.world.room.save(&self.room_name)
+        self.world.room.save(self.room_id.full_path())
     }
 }
 
@@ -679,7 +679,7 @@ impl RoomEditor {
             let state = game::Game::new(
                 &self.geng,
                 &self.assets,
-                self.room_name.clone(),
+                self.room_id.clone(),
                 self.world.room.clone(),
                 None,
                 0,

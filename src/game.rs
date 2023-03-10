@@ -8,7 +8,7 @@ pub struct Game {
     pixel_texture: ugli::Texture,
     is_paused: bool,
     pause_menu: menu::PauseMenu,
-    room_name: String,
+    room_id: RoomId,
     world: World,
     draw_hitboxes: bool,
     controls: Controls,
@@ -47,7 +47,7 @@ impl Game {
     pub fn new(
         geng: &Geng,
         assets: &Rc<Assets>,
-        room_name: String,
+        room_id: RoomId,
         room: Room,
         player: Option<(Player, Actor)>,
         coins: usize,
@@ -86,7 +86,7 @@ impl Game {
             accumulated_time: time,
             music: Some(music),
             deaths,
-            room_name,
+            room_id,
             show_time,
             world,
         }
@@ -173,7 +173,7 @@ impl geng::State for Game {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
-        let is_credits = self.room_name == "credits.json";
+        let is_credits = self.room_id.name == "credits.json";
         if !is_credits {
             let show_time = self
                 .show_time
@@ -426,19 +426,15 @@ impl geng::State for Game {
     }
 }
 
-pub fn run(
-    geng: &Geng,
-    assets: Option<&Rc<Assets>>,
-    room: impl AsRef<std::path::Path>,
-) -> impl geng::State {
-    room_change(geng, assets, room, None, 0, Time::ZERO, 0, false, None)
+pub fn run(geng: &Geng, assets: Option<&Rc<Assets>>, room_id: RoomId) -> impl geng::State {
+    room_change(geng, assets, room_id, None, 0, Time::ZERO, 0, false, None)
 }
 
 #[allow(clippy::too_many_arguments)]
 fn room_change(
     geng: &Geng,
     assets: Option<&Rc<Assets>>,
-    room: impl AsRef<std::path::Path>,
+    room_id: RoomId,
     player: Option<(Player, Actor)>,
     coins: usize,
     time: Time,
@@ -449,7 +445,6 @@ fn room_change(
     let future = {
         let geng = geng.clone();
         let assets = assets.cloned();
-        let room = room.as_ref().to_owned();
         async move {
             let assets = match assets {
                 Some(assets) => assets,
@@ -457,12 +452,11 @@ fn room_change(
                     .await
                     .expect("Failed to load assets"),
             };
-            let room_name = room.to_string_lossy().to_string();
-            let room: Room = geng::LoadAsset::load(&geng, &room_path(room))
+            let room: Room = geng::LoadAsset::load(&geng, &room_id.full_path())
                 .await
                 .expect("Failed to load room");
             Game::new(
-                &geng, &assets, room_name, room, player, coins, time, deaths, show_time, music,
+                &geng, &assets, room_id, room, player, coins, time, deaths, show_time, music,
             )
         }
     };

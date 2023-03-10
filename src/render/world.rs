@@ -552,7 +552,7 @@ impl WorldRender {
                 camera,
                 &draw_2d::Text::unit(
                     &**self.geng.default_font(),
-                    &transition.to_room,
+                    &transition.to_room.name,
                     Rgba::WHITE,
                 )
                 .fit_into(collider),

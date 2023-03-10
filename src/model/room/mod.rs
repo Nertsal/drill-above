@@ -8,6 +8,14 @@ pub use layer::*;
 pub use npc::*;
 pub use placeable::*;
 
+pub type LevelId = String;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct RoomId {
+    pub level: LevelId,
+    pub name: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
 #[asset(json)]
 pub struct Room {
@@ -49,7 +57,7 @@ pub enum ActiveLayer {
 pub struct RoomTransition {
     pub collider: Collider,
     /// Name of the room to which the transition moves.
-    pub to_room: String,
+    pub to_room: RoomId,
     /// Offset applied to entities to move them into the new room's coordinate system.
     pub offset: vec2<isize>,
 }
@@ -425,8 +433,8 @@ impl Room {
         self.move_entities(|pos| vec2(pos.x, bounds.min.y + bounds.max.y - pos.y));
     }
 
-    pub fn load(name: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
-        let path = room_path(name);
+    pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
+        let path = path.as_ref();
         futures::executor::block_on(async move {
             debug!("Loading room {path:?}");
             let room = file::load_json(&path).await?;
@@ -434,11 +442,11 @@ impl Room {
         })
     }
 
-    pub fn save(&self, name: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
-        let path = room_path(name);
+    pub fn save(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let path = path.as_ref();
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let file = std::fs::File::create(&path)?;
+            let file = std::fs::File::create(path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, self)?;
             info!("Saved the room {path:?}");
@@ -488,6 +496,22 @@ impl RoomLayers {
 impl Default for Room {
     fn default() -> Self {
         Self::new(vec2(40, 23))
+    }
+}
+
+impl RoomId {
+    pub fn full_path(&self) -> std::path::PathBuf {
+        run_dir()
+            .join("assets")
+            .join("levels")
+            .join(self.sub_path())
+    }
+
+    pub fn sub_path(&self) -> std::path::PathBuf {
+        std::path::PathBuf::new()
+            .join(&self.level)
+            .join(&self.name)
+            .with_extension("json")
     }
 }
 

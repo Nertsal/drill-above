@@ -3290,35 +3290,21 @@
     {
       "collider": {
         "min": [
-          -1.0,
-          31.0
+          0.0,
+          -1.0
         ],
         "max": [
-          0.0,
-          31.0
+          22.0,
+          0.0
         ]
       },
-      "to_room": "Cave01.json",
-      "offset": [
-        40,
-        -31
-      ]
-    },
-    {
-      "collider": {
-        "min": [
-          0.0,
-          31.0
-        ],
-        "max": [
-          0.0,
-          32.0
-        ]
+      "to_room": {
+        "level": "demo",
+        "name": "Cave04.json"
       },
-      "to_room": "Cave01.json",
       "offset": [
-        40,
-        -31
+        23,
+        20
       ]
     },
     {
@@ -3332,7 +3318,10 @@
           32.0
         ]
       },
-      "to_room": "Cave02.json",
+      "to_room": {
+        "level": "demo",
+        "name": "Cave02.json"
+      },
       "offset": [
         0,
         -31
@@ -3341,18 +3330,41 @@
     {
       "collider": {
         "min": [
-          0.0,
-          -1.0
+          -1.0,
+          31.0
         ],
         "max": [
-          22.0,
-          0.0
+          0.0,
+          31.0
         ]
       },
-      "to_room": "Cave04.json",
+      "to_room": {
+        "level": "demo",
+        "name": "Cave01.json"
+      },
       "offset": [
-        23,
-        20
+        40,
+        -31
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          0.0,
+          31.0
+        ],
+        "max": [
+          0.0,
+          32.0
+        ]
+      },
+      "to_room": {
+        "level": "demo",
+        "name": "Cave01.json"
+      },
+      "offset": [
+        40,
+        -31
       ]
     }
   ]

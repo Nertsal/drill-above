@@ -15,7 +15,7 @@ impl LevelEditor {
 
     fn draw_level_editor(&mut self, framebuffer: &mut ugli::Framebuffer) {
         let font = self.geng.default_font();
-        for (name, room) in &self.rooms {
+        for (id, room) in &self.rooms {
             let aabb = room.aabb();
             let hovered = aabb.contains(self.cursor_world_pos);
             let aabb = aabb.map(Coord::as_f32);
@@ -37,7 +37,7 @@ impl LevelEditor {
             );
 
             let max_size = {
-                let mut text = name.clone();
+                let mut text = id.name.clone();
                 if hovered {
                     text += " ";
                     text += &room_size_text;
@@ -48,7 +48,7 @@ impl LevelEditor {
             font.draw(
                 framebuffer,
                 &self.camera,
-                name,
+                &id.name,
                 aabb.bottom_left(),
                 geng::TextAlign::LEFT,
                 text_size,

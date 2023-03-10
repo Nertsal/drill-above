@@ -25,6 +25,8 @@ struct Opt {
     #[clap(long)]
     editor: bool,
     #[clap(long)]
+    level: Option<String>,
+    #[clap(long)]
     room: Option<String>,
     /// Hot reload assets on change detection.
     #[clap(long)]
@@ -33,7 +35,7 @@ struct Opt {
     command: Option<Command>,
 }
 
-#[derive(clap::Subcommand)]
+#[derive(clap::Subcommand, Clone)]
 enum Command {
     #[cfg(not(target_arch = "wasm32"))]
     TileSet(TileSetOpt),
@@ -45,18 +47,18 @@ enum Command {
     Format,
 }
 
-#[derive(clap::Args)]
+#[derive(clap::Args, Clone)]
 struct TileSetOpt {
     tileset: String,
     size: String,
 }
 
-#[derive(clap::Args)]
+#[derive(clap::Args, Clone)]
 struct ChangeSizeOpt {
     size: String,
 }
 
-#[derive(clap::Args)]
+#[derive(clap::Args, Clone)]
 struct RenameTileOpt {
     from: String,
     to: String,
@@ -73,7 +75,7 @@ fn main() {
         ..Default::default()
     });
 
-    if let Some(command) = opt.command {
+    if let Some(command) = opt.command.clone() {
         match command {
             #[cfg(not(target_arch = "wasm32"))]
             Command::TileSet(opt) => {
@@ -108,12 +110,10 @@ fn main() {
                     let future = {
                         let geng = geng.clone();
                         async move {
-                            let room_path = opt
-                                .room
-                                .as_ref()
-                                .expect("change size requires a --room argument");
+                            let id = opt.room_id().expect("expected full room id");
+                            let path = id.full_path();
                             let size = parse_size(&config.size).expect("Failed to parse size");
-                            let mut room = Room::load(room_path).expect("Failed to load the room");
+                            let mut room = Room::load(&path).expect("Failed to load the room");
 
                             let assets: Assets =
                                 geng::LoadAsset::load(&geng, &run_dir().join("assets"))
@@ -122,9 +122,8 @@ fn main() {
 
                             room.change_size(size, &assets);
 
-                            let room_path = "new_room.json";
-                            room.save(room_path).expect("Failed to save the room");
-                            info!("Saved the changed room at {}", room_path);
+                            room.save(&path).expect("Failed to save the room");
+                            info!("Saved the changed room at {:?}", path);
 
                             std::process::exit(0);
                             #[allow(unreachable_code)]
@@ -138,11 +137,9 @@ fn main() {
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::RenameTile(config) => {
-                let room_path = opt
-                    .room
-                    .as_ref()
-                    .expect("format requires a --room argument");
-                let mut room = Room::load(room_path).expect("Failed to load the room");
+                let id = opt.room_id().expect("expected full room id");
+                let path = id.full_path();
+                let mut room = Room::load(&path).expect("Failed to load the room");
 
                 for layer in room.layers.iter_mut() {
                     for tile in &mut layer.tiles.tiles {
@@ -152,16 +149,11 @@ fn main() {
                     }
                 }
 
-                room.save(room_path).expect("Failed to save the room");
-                info!("Saved the changed room at {}", room_path);
+                room.save(&path).expect("Failed to save the room");
+                info!("Saved the changed room at {:?}", path);
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::Format => {
-                let room_path = opt
-                    .room
-                    .as_ref()
-                    .expect("format requires a --room argument");
-
                 fn format_room(room_path: impl AsRef<std::path::Path>) {
                     let room_path = room_path.as_ref();
                     info!("Formatting {room_path:?}");
@@ -171,10 +163,10 @@ fn main() {
                     room.save(room_path).expect("Failed to save the room");
                 }
 
-                if room_path == "*" {
+                if opt.room == Some("*".to_string()) {
                     fn format_dir(path: impl AsRef<std::path::Path>) {
-                        let dir =
-                            std::fs::read_dir(path).expect("Failed to open assets/rooms directory");
+                        let dir = std::fs::read_dir(path)
+                            .expect("Failed to open assets/levels directory");
                         for file in dir {
                             let file = file.expect("Failed to access a directory entry");
                             let meta = file.metadata().expect("Failed to access metadata");
@@ -188,7 +180,8 @@ fn main() {
 
                     format_dir(run_dir().join("assets").join("rooms"))
                 } else {
-                    format_room(room_path)
+                    let path = opt.room_id().expect("expected full room id").full_path();
+                    format_room(path)
                 }
             }
         }
@@ -196,9 +189,19 @@ fn main() {
     }
 
     if opt.editor {
-        geng::run(&geng, editor::run(&geng, opt.room, opt.hot_reload))
-    } else if let Some(room) = &opt.room {
-        geng::run(&geng, game::run(&geng, None, room))
+        geng::run(
+            &geng,
+            editor::run(
+                &geng,
+                opt.level
+                    .clone()
+                    .expect("Editor requires the --level argument"),
+                opt.room.clone(),
+                opt.hot_reload,
+            ),
+        )
+    } else if let Some(id) = opt.room_id() {
+        geng::run(&geng, game::run(&geng, None, id))
     } else {
         geng::run(&geng, intro::run(&geng))
     }
@@ -224,6 +227,11 @@ fn time_ms(mut time: Time) -> (u32, u32, Time) {
     )
 }
 
-fn room_path(name: impl AsRef<std::path::Path>) -> std::path::PathBuf {
-    run_dir().join("assets").join("rooms").join(name)
+impl Opt {
+    fn room_id(&self) -> Option<RoomId> {
+        Some(RoomId {
+            level: self.level.as_ref()?.clone(),
+            name: self.room.as_ref()?.clone(),
+        })
+    }
 }

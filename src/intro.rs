@@ -46,7 +46,10 @@ impl geng::State for Intro {
             self.transition = Some(geng::Transition::Switch(Box::new(game::run(
                 &self.geng,
                 Some(&self.assets),
-                "intro_01.json",
+                RoomId {
+                    level: "jam".to_string(),
+                    name: "intro_01.json".to_string(),
+                },
             ))));
             return;
         }

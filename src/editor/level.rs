@@ -24,10 +24,11 @@ pub struct LevelEditor {
     /// Size of the actual screen size of the application.
     pub framebuffer_size: vec2<usize>,
 
+    pub level_name: String,
     /// Currently active room.
-    pub active_room: Option<String>,
+    pub active_room: Option<RoomId>,
     /// All opened rooms.
-    pub rooms: HashMap<String, RoomState>,
+    pub rooms: HashMap<RoomId, RoomState>,
     /// Snap grid.
     pub grid: Grid,
 
@@ -76,7 +77,7 @@ pub enum LevelDragAction {
         initial_pos: vec2<isize>,
     },
     MoveRoom {
-        room: String,
+        room: RoomId,
         initial_pos: vec2<isize>,
     },
     MoveCamera {
@@ -85,17 +86,22 @@ pub enum LevelDragAction {
 }
 
 impl LevelEditor {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, room: Option<String>, hot_reload: bool) -> Self {
+    pub fn new(
+        geng: &Geng,
+        assets: &Rc<Assets>,
+        level: String,
+        room: Option<String>,
+        hot_reload: bool,
+    ) -> Self {
         #[cfg(target_arch = "wasm32")]
         if hot_reload {
             warn!("Hot reloading assets does nothing on the web");
         }
 
-        let rooms = Self::load_rooms(
-            geng,
-            assets,
-            room.unwrap_or_else(|| "new_room.json".to_string()),
-        );
+        let level_name = level.clone();
+        let active_room = room.map(|name| RoomId { level, name });
+
+        let rooms = Self::load_level_rooms(geng, assets, level_name.clone());
 
         Self {
             geng: geng.clone(),
@@ -108,7 +114,8 @@ impl LevelEditor {
             },
             framebuffer_size: vec2(1, 1),
 
-            active_room: None,
+            level_name,
+            active_room,
             rooms,
             grid: Grid::new(vec2(Coord::ONE, Coord::ONE)),
 
@@ -142,23 +149,46 @@ impl LevelEditor {
         }
     }
 
-    fn load_rooms(
+    fn load_level_rooms(
         geng: &Geng,
         assets: &Rc<Assets>,
-        room_name: String,
-    ) -> HashMap<String, RoomState> {
+        level: String,
+    ) -> HashMap<RoomId, RoomState> {
+        let path = run_dir().join("assets").join("levels").join(&level);
         let mut rooms = HashMap::new();
 
         // Load rooms
-        let mut to_load = Vec::new();
-        to_load.push(room_name);
-        while let Some(room_name) = to_load.pop() {
-            if rooms.contains_key(&room_name) {
+        let mut to_load = Vec::<RoomId>::new();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let dir = std::fs::read_dir(path).expect("Failed to open assets/levels directory");
+            for file in dir.flatten() {
+                if let Ok(meta) = file.metadata() {
+                    if meta.is_file() {
+                        if let Some(ext) = file.path().extension() {
+                            if ext.to_str() == Some("json") {
+                                if let Ok(name) = file.file_name().into_string() {
+                                    let id = RoomId {
+                                        level: level.clone(),
+                                        name,
+                                    };
+                                    to_load.push(id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        while let Some(room_id) = to_load.pop() {
+            if rooms.contains_key(&room_id) {
                 continue;
             }
 
             // Load
-            let room = RoomState::new(geng, assets, vec2::ZERO, room_name.clone(), None);
+            let room = RoomState::new(geng, assets, vec2::ZERO, room_id.clone(), None);
 
             // Queue adjacent rooms to load
             to_load.extend(
@@ -171,38 +201,38 @@ impl LevelEditor {
             );
 
             // Insert
-            rooms.insert(room_name, room);
+            rooms.insert(room_id, room);
         }
 
         // Layout
         fn layout_room(
-            room_name: &str,
+            room_id: RoomId,
             pos: Option<vec2<isize>>,
-            rooms: &mut HashMap<String, RoomState>,
-            layout: &mut HashSet<String>,
-            blocked: &mut HashSet<String>,
+            rooms: &mut HashMap<RoomId, RoomState>,
+            layout: &mut HashSet<RoomId>,
+            blocked: &mut HashSet<RoomId>,
         ) {
             if let Some(pos) = pos {
-                rooms.get_mut(room_name).unwrap().pos = pos;
+                rooms.get_mut(&room_id).unwrap().pos = pos;
             }
 
-            blocked.remove(room_name);
-            if !layout.insert(room_name.to_owned()) {
+            blocked.remove(&room_id);
+            if !layout.insert(room_id.clone()) {
                 return;
             }
 
             'pos: {
                 if pos.is_none() {
                     // Check if some connected room is laid out already
-                    let room = rooms.get(room_name).unwrap();
+                    let room = rooms.get(&room_id).unwrap();
                     for transition in room.editor.world.room.transitions.clone() {
                         let connected = transition.to_room;
                         let laid = if layout.contains(&connected) {
                             true
                         } else if !blocked.contains(&connected) {
-                            blocked.insert(room_name.to_owned());
-                            layout_room(&connected, None, rooms, layout, blocked);
-                            blocked.remove(room_name);
+                            blocked.insert(room_id.to_owned());
+                            layout_room(connected.clone(), None, rooms, layout, blocked);
+                            blocked.remove(&room_id);
                             true
                         } else {
                             false
@@ -210,7 +240,7 @@ impl LevelEditor {
                         if laid {
                             let connected = rooms.get(&connected).unwrap();
                             let pos = connected.pos;
-                            let room = rooms.get_mut(room_name).unwrap();
+                            let room = rooms.get_mut(&room_id).unwrap();
                             room.pos = pos + transition.offset;
                             break 'pos;
                         }
@@ -231,43 +261,43 @@ impl LevelEditor {
 
                     // Pick some empty space
                     let pos = occupied.bottom_right() + vec2::UNIT_X * 5;
-                    let room = rooms.get_mut(room_name).unwrap();
+                    let room = rooms.get_mut(&room_id).unwrap();
                     room.pos = pos;
                 }
             }
 
             // Layout connected rooms
-            let room = rooms.get(room_name).unwrap();
+            let room = rooms.get(&room_id).unwrap();
             for transition in room.editor.world.room.transitions.clone() {
                 let connected = transition.to_room;
                 if layout.contains(&connected) {
                     continue;
                 }
 
-                let room = rooms.get(room_name).unwrap();
+                let room = rooms.get(&room_id).unwrap();
                 let pos = room.pos - transition.offset;
-                layout_room(&connected, Some(pos), rooms, layout, blocked);
+                layout_room(connected, Some(pos), rooms, layout, blocked);
             }
         }
         let mut layout = HashSet::new();
-        let mut names = rooms.keys().cloned().collect::<Vec<_>>();
-        if let Some(name) = names.pop() {
+        let mut ids = rooms.keys().cloned().collect::<Vec<_>>();
+        if let Some(id) = ids.pop() {
             layout_room(
-                &name,
+                id,
                 Some(vec2::ZERO),
                 &mut rooms,
                 &mut layout,
                 &mut HashSet::new(),
             );
         }
-        for name in names {
-            layout_room(&name, None, &mut rooms, &mut layout, &mut HashSet::new());
+        for id in ids {
+            layout_room(id, None, &mut rooms, &mut layout, &mut HashSet::new());
         }
 
         rooms
     }
 
-    fn snap_room_pos(&self, room: &str, pos: vec2<Coord>) -> vec2<isize> {
+    fn snap_room_pos(&self, room: &RoomId, pos: vec2<Coord>) -> vec2<isize> {
         let room_size = self
             .rooms
             .get(room)
@@ -324,7 +354,7 @@ impl LevelEditor {
         vec2(resolve(snap.x, pos.x), resolve(snap.y, pos.y))
     }
 
-    fn move_room(&mut self, room: String, pos: vec2<isize>) {
+    fn move_room(&mut self, room: RoomId, pos: vec2<isize>) {
         // Set position
         let room = self.rooms.get_mut(&room).expect("Dragging a deleted room");
         room.pos = pos;
@@ -423,17 +453,20 @@ impl LevelEditor {
                         let aabb = Aabb2::from_corners(initial_pos, pos);
                         let room = Room::new(aabb.size().map(|x| x as usize));
                         let mut rng = thread_rng();
-                        let mut name: String = (0..5).map(|_| rng.gen_range('A'..='Z')).collect();
-                        name += ".json";
+                        let name: String = (0..5).map(|_| rng.gen_range('A'..='Z')).collect();
+                        let id = RoomId {
+                            level: self.level_name.clone(),
+                            name,
+                        };
                         let room = RoomState::new(
                             &self.geng,
                             &self.assets,
                             aabb.bottom_left(),
-                            name.clone(),
+                            id.clone(),
                             Some(room),
                         );
-                        self.rooms.insert(name.clone(), room);
-                        self.update_room_transitions(name);
+                        self.rooms.insert(id.clone(), room);
+                        self.update_room_transitions(id);
                     }
                     LevelDragAction::MoveRoom { room, .. } => {
                         self.update_room_transitions(room);
@@ -507,28 +540,28 @@ impl LevelEditor {
         }
     }
 
-    fn update_room_name(&mut self, old_name: String, new_name: String) {
-        if old_name == new_name {
+    fn update_room_name(&mut self, old_id: RoomId, new_id: RoomId) {
+        if old_id == new_id {
             return;
         }
 
         // Check if renaming is valid, i.e. that
         // no other room has the same `new_name`
         // TODO: check outside the loaded scope, there might be unloaded maps with that name
-        if self.rooms.iter().any(|(name, _)| *name == new_name) {
-            error!("Cannot rename the room to {new_name:?} as there already exists a room with that name");
+        if self.rooms.iter().any(|(name, _)| *name == new_id) {
+            error!("Cannot rename the room to {new_id:?} as there already exists a room with that name");
             return;
         }
 
         // Update room name
-        let room = self.rooms.remove(&old_name).unwrap();
-        self.rooms.insert(new_name.clone(), room);
+        let room = self.rooms.remove(&old_id).unwrap();
+        self.rooms.insert(new_id.clone(), room);
 
         // Update references to the old room
         for room in self.rooms.values_mut() {
             for trans in &mut room.editor.world.room.transitions {
-                if trans.to_room == old_name {
-                    trans.to_room = new_name.clone();
+                if trans.to_room == old_id {
+                    trans.to_room = new_id.clone();
                 }
             }
         }
@@ -538,40 +571,40 @@ impl LevelEditor {
             {
                 // Remove the old room
                 let _ = util::report_err(
-                    std::fs::remove_file(room_path(&old_name)),
+                    std::fs::remove_file(old_id.full_path()),
                     "Failed to remove old room file",
                 );
             }
-            info!("Successfully renamed the room {old_name:?} to {new_name:?}");
+            info!("Successfully renamed the room {old_id:?} to {new_id:?}");
         }
     }
 
-    fn update_room_transitions(&mut self, room_name: String) {
+    fn update_room_transitions(&mut self, room_id: RoomId) {
         // Remove old transitions to/from the room
         for room in self.rooms.values_mut() {
             room.editor
                 .world
                 .room
                 .transitions
-                .retain(|trans| trans.to_room != room_name);
+                .retain(|trans| trans.to_room != room_id);
         }
-        let Some(room) = self.rooms.get_mut(&room_name) else {
+        let Some(room) = self.rooms.get_mut(&room_id) else {
             return
         };
         room.editor.world.room.transitions.clear();
 
         // Calculate new transitions
-        let mut new_transitions = HashMap::<String, Vec<RoomTransition>>::new();
-        let room = self.rooms.get(&room_name).unwrap();
+        let mut new_transitions = HashMap::<RoomId, Vec<RoomTransition>>::new();
+        let room = self.rooms.get(&room_id).unwrap();
         let room_aabb = room.aabb_i();
-        for (other_name, other) in &self.rooms {
-            if *other_name == room_name {
+        for (other_id, other) in &self.rooms {
+            if *other_id == room_id {
                 continue;
             }
 
             let other_aabb = other.aabb_i();
             if room_aabb.intersects(&other_aabb) {
-                error!("The rooms {room_name:?} and {other_name:?} intersect each other");
+                error!("The rooms {room_id:?} and {other_id:?} intersect each other");
                 continue;
             }
 
@@ -597,9 +630,9 @@ impl LevelEditor {
                 let y_max = room_aabb.max.y.min(other_aabb.max.y);
                 if y_max >= y_min {
                     // Rooms actually have a common vertical edge
-                    for (x, room, room_name, other, other_name) in [
-                        (room_x, room, &room_name, other, other_name),
-                        (other_x, other, other_name, room, &room_name),
+                    for (x, room, room_id, other, other_name) in [
+                        (room_x, room, &room_id, other, other_id),
+                        (other_x, other, other_id, room, &room_id),
                     ] {
                         let aabb = Aabb2::point(vec2(x, y_min))
                             .extend_up(y_max - y_min)
@@ -611,7 +644,7 @@ impl LevelEditor {
                             offset: room.pos - other.pos,
                         };
                         new_transitions
-                            .entry(room_name.to_owned())
+                            .entry(room_id.to_owned())
                             .or_default()
                             .push(transition);
                     }
@@ -632,8 +665,8 @@ impl LevelEditor {
                 if x_max >= x_min {
                     // Rooms actually have a common horizontal edge
                     for (y, room, room_name, other, other_name) in [
-                        (room_y, room, &room_name, other, other_name),
-                        (other_y, other, other_name, room, &room_name),
+                        (room_y, room, &room_id, other, other_id),
+                        (other_y, other, other_id, room, &room_id),
                     ] {
                         let aabb = Aabb2::point(vec2(x_min, y))
                             .extend_right(x_max - x_min)
@@ -760,10 +793,10 @@ impl geng::State for LevelEditor {
 
         if let Some(room) = active_room_mut!(self) {
             room.update(delta_time);
-            let old_name = self.active_room.as_ref().unwrap();
-            if room.room_name != *old_name && room.input_events.is_none() {
-                let new_name = room.room_name.clone();
-                self.update_room_name(old_name.to_owned(), new_name.clone());
+            let old_id = self.active_room.as_ref().unwrap();
+            if room.room_id != *old_id && room.input_events.is_none() {
+                let new_name = room.room_id.clone();
+                self.update_room_name(old_id.to_owned(), new_name.clone());
                 self.active_room = Some(new_name);
             }
         } else {
@@ -850,13 +883,13 @@ impl RoomState {
         geng: &Geng,
         assets: &Rc<Assets>,
         pos: vec2<isize>,
-        room_name: String,
+        room_id: RoomId,
         room: Option<Room>,
     ) -> Self {
         let editor = if let Some(room) = room {
-            RoomEditor::new_room(geng, assets, room_name, room)
+            RoomEditor::new_room(geng, assets, room_id, room)
         } else {
-            RoomEditor::new(geng, assets, room_name)
+            RoomEditor::new(geng, assets, room_id)
         };
         Self {
             pos,
