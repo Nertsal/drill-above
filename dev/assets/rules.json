@@ -54,6 +54,9 @@
     "limestone": {
       "drillable": true,
       "layer": -1
+    },
+    "platform": {
+      "direction": [0, 1]
     }
   }
 }
