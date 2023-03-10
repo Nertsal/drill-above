@@ -3468,7 +3468,7 @@
       },
       "to_room": {
         "level": "demo",
-        "name": "Cave08.json"
+        "name": "Cave08"
       },
       "offset": [
         9,
@@ -3488,7 +3488,7 @@
       },
       "to_room": {
         "level": "demo",
-        "name": "Cave10.json"
+        "name": "Cave10"
       },
       "offset": [
         2,

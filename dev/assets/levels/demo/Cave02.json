@@ -2666,26 +2666,6 @@
     {
       "collider": {
         "min": [
-          0.0,
-          -1.0
-        ],
-        "max": [
-          30.0,
-          0.0
-        ]
-      },
-      "to_room": {
-        "level": "demo",
-        "name": "Cave03.json"
-      },
-      "offset": [
-        0,
-        31
-      ]
-    },
-    {
-      "collider": {
-        "min": [
           -1.0,
           0.0
         ],
@@ -2696,11 +2676,31 @@
       },
       "to_room": {
         "level": "demo",
-        "name": "Cave01.json"
+        "name": "Cave01"
       },
       "offset": [
         40,
         0
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          0.0,
+          -1.0
+        ],
+        "max": [
+          30.0,
+          0.0
+        ]
+      },
+      "to_room": {
+        "level": "demo",
+        "name": "Cave03"
+      },
+      "offset": [
+        0,
+        31
       ]
     }
   ]
