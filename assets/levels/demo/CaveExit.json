@@ -3050,26 +3050,6 @@
     {
       "collider": {
         "min": [
-          43.0,
-          0.0
-        ],
-        "max": [
-          44.0,
-          23.0
-        ]
-      },
-      "to_room": {
-        "level": "demo",
-        "name": "CaveEntrance.json"
-      },
-      "offset": [
-        -43,
-        0
-      ]
-    },
-    {
-      "collider": {
-        "min": [
           4.0,
           -1.0
         ],
@@ -3080,11 +3060,31 @@
       },
       "to_room": {
         "level": "demo",
-        "name": "Cave10.json"
+        "name": "Cave10"
       },
       "offset": [
         -4,
         32
+      ]
+    },
+    {
+      "collider": {
+        "min": [
+          43.0,
+          0.0
+        ],
+        "max": [
+          44.0,
+          23.0
+        ]
+      },
+      "to_room": {
+        "level": "demo",
+        "name": "CaveEntrance"
+      },
+      "offset": [
+        -43,
+        0
       ]
     }
   ]
