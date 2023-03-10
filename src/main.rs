@@ -91,10 +91,12 @@ fn main() {
                                 _ => image.to_rgba8(),
                             };
                             let config = TileSetConfig::generate_from(&texture, size);
-                            let file = std::fs::File::create(run_dir().join("tileset_config.json"))
-                                .unwrap();
+                            let path = path.with_extension("json");
+                            let file = std::fs::File::create(&path).unwrap();
                             let writer = std::io::BufWriter::new(file);
                             serde_json::to_writer_pretty(writer, &config).unwrap();
+                            info!("Saved the config at {:?}", path);
+
                             std::process::exit(0);
                             #[allow(unreachable_code)]
                             geng::EmptyLoadingScreen
