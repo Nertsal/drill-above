@@ -156,6 +156,10 @@ impl RoomEditor {
             &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
+        self.render
+            .world
+            .draw_transitions(&self.world.room.transitions, &self.camera, framebuffer);
+
         // Draw moving
         if let Some(dragging) = &self.dragging {
             if let Some(RoomDragAction::MoveBlocks {

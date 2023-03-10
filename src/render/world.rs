@@ -240,8 +240,6 @@ impl WorldRender {
                 &draw_2d::TexturedQuad::new(aabb, &self.assets.sprites.spotlight),
             );
         }
-
-        self.draw_transitions(&room.transitions, camera, framebuffer);
     }
 
     pub fn draw_tiles(
@@ -536,7 +534,7 @@ impl WorldRender {
         }
     }
 
-    fn draw_transitions(
+    pub fn draw_transitions(
         &self,
         transitions: &[RoomTransition],
         camera: &impl geng::AbstractCamera2d,
