@@ -64,6 +64,14 @@ struct RenameTileOpt {
     to: String,
 }
 
+macro_rules! exit_state {
+    () => {{
+        std::process::exit(0);
+        #[allow(unreachable_code)]
+        geng::EmptyState
+    }};
+}
+
 fn main() {
     logger::init().unwrap();
     geng::setup_panic_handler();
@@ -80,62 +88,51 @@ fn main() {
             #[cfg(not(target_arch = "wasm32"))]
             Command::TileSet(opt) => {
                 let size = parse_size(&opt.size).expect("Failed to parse size");
-                let state = {
-                    let future = {
-                        async move {
-                            let path = run_dir().join(opt.tileset);
-                            let image = image::open(&path)
-                                .unwrap_or_else(|_| panic!("Failed to load {path:?}"));
-                            let texture = match image {
-                                image::DynamicImage::ImageRgba8(image) => image,
-                                _ => image.to_rgba8(),
-                            };
-                            let config = TileSetConfig::generate_from(&texture, size);
-                            let path = path.with_extension("json");
-                            let file = std::fs::File::create(&path).unwrap();
-                            let writer = std::io::BufWriter::new(file);
-                            serde_json::to_writer_pretty(writer, &config).unwrap();
-                            info!("Saved the config at {:?}", path);
+                let future = {
+                    async move {
+                        let path = run_dir().join(opt.tileset);
+                        let image = image::open(&path)
+                            .unwrap_or_else(|_| panic!("Failed to load {path:?}"));
+                        let texture = match image {
+                            image::DynamicImage::ImageRgba8(image) => image,
+                            _ => image.to_rgba8(),
+                        };
+                        let config = TileSetConfig::generate_from(&texture, size);
+                        let path = path.with_extension("json");
+                        let file = std::fs::File::create(&path).unwrap();
+                        let writer = std::io::BufWriter::new(file);
+                        serde_json::to_writer_pretty(writer, &config).unwrap();
+                        info!("Saved the config at {:?}", path);
 
-                            std::process::exit(0);
-                            #[allow(unreachable_code)]
-                            geng::EmptyLoadingScreen
-                        }
-                    };
-                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future)
+                        exit_state!()
+                    }
                 };
-                geng::run(&geng, state)
+                geng.run_loading(future)
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::ChangeSize(config) => {
-                let state = {
-                    let future = {
-                        let geng = geng.clone();
-                        async move {
-                            let id = opt.room_id().expect("expected full room id");
-                            let path = id.full_path();
-                            let size = parse_size(&config.size).expect("Failed to parse size");
-                            let mut room = Room::load(&path).expect("Failed to load the room");
+                let future = {
+                    let geng = geng.clone();
+                    async move {
+                        let id = opt.room_id().expect("expected full room id");
+                        let path = id.full_path();
+                        let size = parse_size(&config.size).expect("Failed to parse size");
+                        let mut room = Room::load(&path).expect("Failed to load the room");
 
-                            let assets: Assets =
-                                geng::LoadAsset::load(&geng, &run_dir().join("assets"))
-                                    .await
-                                    .expect("Failed to load assets");
+                        let assets: Assets =
+                            geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+                                .await
+                                .expect("Failed to load assets");
 
-                            room.change_size(size, &assets);
+                        room.change_size(size, &assets);
 
-                            room.save(&path).expect("Failed to save the room");
-                            info!("Saved the changed room at {:?}", path);
+                        room.save(&path).expect("Failed to save the room");
+                        info!("Saved the changed room at {:?}", path);
 
-                            std::process::exit(0);
-                            #[allow(unreachable_code)]
-                            geng::EmptyLoadingScreen
-                        }
-                    };
-                    geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, future)
+                        exit_state!()
+                    }
                 };
-
-                geng::run(&geng, state)
+                geng.run_loading(future)
             }
             #[cfg(not(target_arch = "wasm32"))]
             Command::RenameTile(config) => {
@@ -191,21 +188,21 @@ fn main() {
     }
 
     if opt.editor {
-        geng::run(
+        let future = editor::run(
             &geng,
-            editor::run(
-                &geng,
-                opt.level
-                    .clone()
-                    .expect("Editor requires the --level argument"),
-                opt.room.clone(),
-                opt.hot_reload,
-            ),
-        )
+            opt.level
+                .clone()
+                .expect("Editor requires the --level argument"),
+            opt.room.clone(),
+            opt.hot_reload,
+        );
+        geng.run_loading(future);
     } else if let Some(id) = opt.room_id() {
-        geng::run(&geng, game::run(&geng, None, id))
+        let future = game::run(&geng, None, id);
+        geng.run_loading(future);
     } else {
-        geng::run(&geng, intro::run(&geng))
+        let future = intro::run(&geng);
+        geng.run_loading(future);
     }
 }
 

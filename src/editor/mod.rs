@@ -11,15 +11,17 @@ use level::*;
 use room::*;
 
 /// Run the editor.
-pub fn run(geng: &Geng, level: String, room: Option<String>, hot_reload: bool) -> impl geng::State {
-    let future = {
-        let geng = geng.clone();
-        async move {
-            let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
-                .await
-                .expect("Failed to load assets");
-            LevelEditor::new(&geng, &assets, level, room, hot_reload)
-        }
-    };
-    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)
+pub fn run(
+    geng: &Geng,
+    level: String,
+    room: Option<String>,
+    hot_reload: bool,
+) -> impl Future<Output = impl geng::State> {
+    let geng = geng.clone();
+    async move {
+        let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+            .await
+            .expect("Failed to load assets");
+        LevelEditor::new(&geng, &assets, level, room, hot_reload)
+    }
 }

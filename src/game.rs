@@ -397,7 +397,7 @@ impl geng::State for Game {
             player
                 .collider
                 .translate(transition.offset.map(|x| Coord::new(x as f32)));
-            return Some(geng::Transition::Switch(Box::new(game::room_change(
+            let future = game::room_change(
                 &self.geng,
                 Some(&self.assets),
                 transition.to_room,
@@ -407,7 +407,9 @@ impl geng::State for Game {
                 self.deaths + self.world.deaths,
                 self.show_time,
                 self.music.take(),
-            ))));
+            );
+            let state = util::load_state(&self.geng, future);
+            return Some(geng::Transition::Switch(Box::new(state)));
         }
         None
     }
@@ -426,7 +428,11 @@ impl geng::State for Game {
     }
 }
 
-pub fn run(geng: &Geng, assets: Option<&Rc<Assets>>, room_id: RoomId) -> impl geng::State {
+pub fn run(
+    geng: &Geng,
+    assets: Option<&Rc<Assets>>,
+    room_id: RoomId,
+) -> impl Future<Output = impl geng::State> {
     room_change(geng, assets, room_id, None, 0, Time::ZERO, 0, false, None)
 }
 
@@ -441,24 +447,21 @@ fn room_change(
     deaths: usize,
     show_time: bool,
     music: Option<geng::SoundEffect>,
-) -> impl geng::State {
-    let future = {
-        let geng = geng.clone();
-        let assets = assets.cloned();
-        async move {
-            let assets = match assets {
-                Some(assets) => assets,
-                None => geng::LoadAsset::load(&geng, &run_dir().join("assets"))
-                    .await
-                    .expect("Failed to load assets"),
-            };
-            let room: Room = geng::LoadAsset::load(&geng, &room_id.full_path())
+) -> impl Future<Output = impl geng::State> {
+    let geng = geng.clone();
+    let assets = assets.cloned();
+    async move {
+        let assets = match assets {
+            Some(assets) => assets,
+            None => geng::LoadAsset::load(&geng, &run_dir().join("assets"))
                 .await
-                .expect("Failed to load room");
-            Game::new(
-                &geng, &assets, room_id, room, player, coins, time, deaths, show_time, music,
-            )
-        }
-    };
-    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)
+                .expect("Failed to load assets"),
+        };
+        let room: Room = geng::LoadAsset::load(&geng, &room_id.full_path())
+            .await
+            .expect("Failed to load room");
+        Game::new(
+            &geng, &assets, room_id, room, player, coins, time, deaths, show_time, music,
+        )
+    }
 }

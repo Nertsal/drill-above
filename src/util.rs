@@ -20,6 +20,17 @@ pub fn report_warn<T, E: Display>(result: Result<T, E>, msg: impl AsRef<str>) ->
     }
 }
 
+pub fn load_state(
+    geng: &Geng,
+    future: impl Future<Output = impl geng::State> + 'static,
+) -> impl geng::State {
+    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen::new(geng), future)
+}
+
+pub fn smoothstep<T: Float>(x: T) -> T {
+    T::from_f32(3.0) * x * x - T::from_f32(2.0) * x * x * x
+}
+
 pub fn pixel_perfect_pos(pos: vec2<Coord>) -> vec2<f32> {
     let pos = pos.map(Coord::as_f32);
     let pixel = pos.map(|x| (x * PIXELS_PER_UNIT as f32).round());

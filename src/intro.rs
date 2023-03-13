@@ -43,14 +43,16 @@ impl geng::State for Intro {
 
         ugli::clear(framebuffer, Some(Rgba::BLACK), None, None);
         if self.time > Time::new(1.5) && self.hit_play {
-            self.transition = Some(geng::Transition::Switch(Box::new(game::run(
+            let future = game::run(
                 &self.geng,
                 Some(&self.assets),
                 RoomId {
                     level: "jam".to_string(),
                     name: "intro_01.json".to_string(),
                 },
-            ))));
+            );
+            let state = util::load_state(&self.geng, future);
+            self.transition = Some(geng::Transition::Switch(Box::new(state)));
             return;
         }
 
@@ -61,7 +63,7 @@ impl geng::State for Intro {
 
         self.zoom = self.time.max(Time::ONE);
         let zoom = (self.zoom.as_f32() - 1.0).min(1.0);
-        let zoom = 3.0 * zoom * zoom - 2.0 * zoom * zoom * zoom; // Smoothstep
+        let zoom = util::smoothstep(zoom);
         let screen = Aabb2::from_corners(
             vec2(112.0, 180.0 - 97.0) / vec2(320.0, 180.0) * target_size,
             vec2(207.0, 180.0 - 41.0) / vec2(320.0, 180.0) * target_size,
@@ -162,19 +164,16 @@ impl geng::State for Intro {
     }
 }
 
-pub fn run(geng: &Geng) -> impl geng::State {
-    let future = {
-        let geng = geng.clone();
-        async move {
-            let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+pub fn run(geng: &Geng) -> impl Future<Output = impl geng::State> {
+    let geng = geng.clone();
+    async move {
+        let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+            .await
+            .expect("Failed to load assets");
+        let intro: Animation =
+            geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro.gif"))
                 .await
-                .expect("Failed to load assets");
-            let intro: Animation =
-                geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro.gif"))
-                    .await
-                    .expect("Failed to load intro animation");
-            Intro::new(&geng, &assets, intro)
-        }
-    };
-    geng::LoadingScreen::new(geng, geng::EmptyLoadingScreen, future)
+                .expect("Failed to load intro animation");
+        Intro::new(&geng, &assets, intro)
+    }
 }
