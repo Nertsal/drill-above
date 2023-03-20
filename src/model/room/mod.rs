@@ -190,7 +190,7 @@ impl Room {
         layer: ActiveLayer,
     ) {
         let pos = self.grid.grid_to_world(pos);
-        let sprite = Sprite::new(Aabb2::point(pos).extend_symmetric(size / Coord::new(2.0)));
+        let sprite = Sprite::new(Aabb2::point(pos).extend_positive(size));
         self.layers.get_mut(layer).props.push(Prop {
             sprite,
             prop_type: prop,

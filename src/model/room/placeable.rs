@@ -85,13 +85,13 @@ impl PlaceableId {
 }
 
 impl Placeable {
-    pub fn position(&self, grid: &Grid) -> vec2<Coord> {
+    pub fn bottom_left(&self, grid: &Grid) -> vec2<Coord> {
         match self {
             Placeable::Tile((_, pos)) => grid.grid_to_world(*pos),
-            Placeable::Hazard(hazard) => hazard.collider.feet(),
-            Placeable::Prop(prop) => prop.sprite.pos.center(),
-            Placeable::Coin(coin) => coin.collider.feet(),
-            Placeable::Npc(npc) => npc.sprite.pos.center(),
+            Placeable::Hazard(hazard) => hazard.collider.raw().bottom_left(),
+            Placeable::Prop(prop) => prop.sprite.pos.bottom_left(),
+            Placeable::Coin(coin) => coin.collider.raw().bottom_left(),
+            Placeable::Npc(npc) => npc.sprite.pos.bottom_left(),
             Placeable::Spotlight(light) => light.position,
         }
     }

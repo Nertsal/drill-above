@@ -337,9 +337,26 @@ impl RoomEditor {
         // Snap to grid if needed
         let snap_cursor = self.geng.window().is_key_pressed(geng::Key::LCtrl);
         if snap_cursor {
-            let snap_size = self.world.room.grid.cell_size / Coord::new(2.0);
-            self.cursor_world_pos =
-                (self.cursor_world_pos / snap_size).map(|x| x.round()) * snap_size;
+            let (snap_pos, offset) = self
+                .dragging
+                .as_ref()
+                .and_then(|drag| drag.action.as_ref())
+                .and_then(|action| match action {
+                    RoomDragAction::MoveBlocks {
+                        blocks,
+                        initial_pos,
+                    } => blocks.first().map(|block| {
+                        (
+                            block.bottom_left(&self.world.room.grid) + self.cursor_world_pos
+                                - *initial_pos,
+                            *initial_pos - block.bottom_left(&self.world.room.grid),
+                        )
+                    }),
+                    _ => None,
+                })
+                .unwrap_or((self.cursor_world_pos, vec2::ZERO));
+            let snap_size = self.world.room.grid.cell_size;
+            self.cursor_world_pos = (snap_pos / snap_size).map(|x| x.round()) * snap_size + offset;
         }
 
         // Update hovered blocks
@@ -532,7 +549,7 @@ impl RoomEditor {
             .iter()
             .next()
             .and_then(|id| self.world.room.get_block(*id, self.active_layer))
-            .map(|block| block.position(&self.world.room.grid))
+            .map(|block| block.bottom_left(&self.world.room.grid))
         {
             self.keep_state();
             let blocks: Vec<_> = self
