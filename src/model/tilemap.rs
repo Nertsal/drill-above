@@ -182,7 +182,7 @@ impl TileMap {
 
     pub fn update_geometry(&mut self, assets: &Assets) {
         let mut geometry = vec![0; self.tiles.len()];
-        let mut rng = thread_rng();
+        let mut rng = thread_rng(); // TODO: seed
         for (i, tile) in self.tiles.iter().enumerate() {
             let connections = self.get_tile_connections(i, None, &assets.rules);
             let set = assets.sprites.tiles.get_tile_set(tile);

@@ -152,7 +152,7 @@ impl RoomEditor {
         for layer in room.layers.iter_mut() {
             layer.tiles.update_geometry(assets);
         }
-        Self {
+        let mut editor = Self {
             geng: geng.clone(),
             assets: assets.clone(),
             pixel_texture: {
@@ -177,65 +177,7 @@ impl RoomEditor {
             cursor_world_pos: vec2::ZERO,
             dragging: None,
             selection: default(),
-            tabs: vec![
-                RoomEditorTab {
-                    name: "Room".into(),
-                    hoverable: vec![],
-                    mode: RoomEditorMode::Room,
-                },
-                RoomEditorTab::block(
-                    "Tiles",
-                    assets
-                        .rules
-                        .tiles
-                        .keys()
-                        .cloned()
-                        .filter(|tile| tile != "air")
-                        .map(PlaceableType::Tile)
-                        .collect(),
-                ),
-                RoomEditorTab::block("Collectables", vec![PlaceableType::Coin]),
-                RoomEditorTab::block(
-                    "Hazards",
-                    assets
-                        .sprites
-                        .hazards
-                        .0
-                        .keys()
-                        .cloned()
-                        .map(PlaceableType::Hazard)
-                        .collect(),
-                ),
-                RoomEditorTab::block(
-                    "Props",
-                    assets
-                        .sprites
-                        .props
-                        .0
-                        .keys()
-                        .cloned()
-                        .map(PlaceableType::Prop)
-                        .collect(),
-                ),
-                RoomEditorTab {
-                    name: "Lights".into(),
-                    hoverable: vec![PlaceableType::Spotlight(default())],
-                    mode: RoomEditorMode::Lights {
-                        spotlight: default(),
-                    },
-                },
-                RoomEditorTab::block(
-                    "Npc",
-                    assets
-                        .sprites
-                        .npc
-                        .0
-                        .keys()
-                        .cloned()
-                        .map(PlaceableType::Npc)
-                        .collect(),
-                ),
-            ],
+            tabs: vec![],
             active_tab: 0,
             undo_stack: default(),
             redo_stack: default(),
@@ -246,7 +188,78 @@ impl RoomEditor {
             preview: false,
             room_id,
             input_events: None,
-        }
+        };
+        editor.reload_assets(assets);
+        editor
+    }
+
+    pub fn reload_assets(&mut self, assets: &Rc<Assets>) {
+        self.assets = assets.clone();
+        self.world.assets = assets.clone();
+        self.world.rules = assets.rules.clone();
+        self.render = RoomRender::new(&self.geng, &self.assets);
+        self.preview_render = GameRender::new(&self.geng, &self.assets);
+        self.tabs = vec![
+            RoomEditorTab {
+                name: "Room".into(),
+                hoverable: vec![],
+                mode: RoomEditorMode::Room,
+            },
+            RoomEditorTab::block(
+                "Tiles",
+                assets
+                    .rules
+                    .tiles
+                    .keys()
+                    .cloned()
+                    .filter(|tile| tile != "air")
+                    .map(PlaceableType::Tile)
+                    .collect(),
+            ),
+            RoomEditorTab::block("Collectables", vec![PlaceableType::Coin]),
+            RoomEditorTab::block(
+                "Hazards",
+                assets
+                    .sprites
+                    .hazards
+                    .0
+                    .keys()
+                    .cloned()
+                    .map(PlaceableType::Hazard)
+                    .collect(),
+            ),
+            RoomEditorTab::block(
+                "Props",
+                assets
+                    .sprites
+                    .props
+                    .0
+                    .keys()
+                    .cloned()
+                    .map(PlaceableType::Prop)
+                    .collect(),
+            ),
+            RoomEditorTab {
+                name: "Lights".into(),
+                hoverable: vec![PlaceableType::Spotlight(default())],
+                mode: RoomEditorMode::Lights {
+                    spotlight: default(),
+                },
+            },
+            RoomEditorTab::block(
+                "Npc",
+                assets
+                    .sprites
+                    .npc
+                    .0
+                    .keys()
+                    .cloned()
+                    .map(PlaceableType::Npc)
+                    .collect(),
+            ),
+        ];
+
+        self.update_geometry();
     }
 
     /// Change the currently selected placeable block in the currently active tab.
@@ -539,6 +552,9 @@ impl RoomEditor {
 
     /// Update cached geometry.
     pub fn update_geometry(&mut self) {
+        for layer in self.world.room.layers.iter_mut() {
+            layer.tiles.update_geometry(&self.assets);
+        }
         self.world.cache = RenderCache::calculate(&self.world.room, &self.geng, &self.assets);
     }
 

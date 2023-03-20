@@ -750,10 +750,7 @@ impl LevelEditor {
 
         let assets = Rc::new(assets);
         for room in self.rooms.values_mut() {
-            room.editor.world.assets = assets.clone();
-            room.editor.render = RoomRender::new(&self.geng, &self.assets);
-            room.editor.preview_render = GameRender::new(&self.geng, &self.assets);
-            room.editor.update_geometry();
+            room.editor.reload_assets(&assets);
         }
         self.assets = assets;
 
