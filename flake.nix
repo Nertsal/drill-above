@@ -37,7 +37,11 @@
             gcc
             openssl
             pkg-config
-            rust-bin.stable.latest.default
+            # rust-bin.stable.latest.default
+            (rust-bin.stable.latest.default.override {
+              extensions = [ "rust-src" ];
+              targets = [ "wasm32-unknown-unknown" ];
+            })
           ];
           shellHook = ''
             export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${libPath}"
