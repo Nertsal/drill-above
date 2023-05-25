@@ -38,8 +38,6 @@ pub struct Sounds {
     #[asset(postprocess = "loop_sound")]
     pub drill: geng::Sound,
     pub drill_jump: geng::Sound,
-    #[asset(path = "cutscene.mp3")]
-    pub cutscene: geng::Sound,
 }
 
 #[derive(geng::Assets)]

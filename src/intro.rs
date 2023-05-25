@@ -15,10 +15,10 @@ pub struct Intro {
 }
 
 impl Intro {
-    pub fn new(geng: &Geng, assets: &Rc<Assets>, intro: Animation) -> Self {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>, intro: Animation, intro_sfx: geng::Sound) -> Self {
         geng.window().set_cursor_type(geng::CursorType::None);
         let volume = 1.0;
-        let mut effect = assets.sounds.cutscene.play();
+        let mut effect = intro_sfx.play();
         effect.set_volume(volume);
 
         Self {
@@ -174,6 +174,12 @@ pub fn run(geng: &Geng) -> impl Future<Output = impl geng::State> {
             geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro.gif"))
                 .await
                 .expect("Failed to load intro animation");
-        Intro::new(&geng, &assets, intro)
+        let intro_sfx: geng::Sound = geng::LoadAsset::load(
+            &geng,
+            &run_dir().join("assets").join("sounds").join("cutscene.mp3"),
+        )
+        .await
+        .expect("Failed to load intro sfx");
+        Intro::new(&geng, &assets, intro, intro_sfx)
     }
 }

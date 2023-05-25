@@ -457,6 +457,7 @@ fn room_change(
                 .await
                 .expect("Failed to load assets"),
         };
+        log::info!("Loading room {:?}", room_id);
         let room: Room = geng::LoadAsset::load(&geng, &room_id.full_path())
             .await
             .expect("Failed to load room");
