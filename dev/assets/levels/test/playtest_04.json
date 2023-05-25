@@ -7500,7 +7500,10 @@
           7.5
         ]
       },
-      "to_room": "playtest_03.json",
+      "to_room": {
+        "level": "test",
+        "name": "playtest_03"
+      },
       "offset": [
         62,
         4
@@ -7517,7 +7520,10 @@
           38.5
         ]
       },
-      "to_room": "playtest_05.json",
+      "to_room": {
+        "level": "test",
+        "name": "playtest_05"
+      },
       "offset": [
         40,
         -34

@@ -2833,7 +2833,10 @@
           7.5
         ]
       },
-      "to_room": "playtest_02.json",
+      "to_room": {
+        "level": "test",
+        "name": "playtest_02"
+      },
       "offset": [
         -40,
         4

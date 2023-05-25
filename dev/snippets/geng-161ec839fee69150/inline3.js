@@ -1,6 +1,5 @@
 
-        export function setup_image(image, handler) {
-            image.onload = function() { handler(true); };
-            image.onerror = function() { handler(false); };
-        }
-        
+            export function set_progress(progress, total) {
+                window.gengUpdateProgress(progress, total);
+            }
+            

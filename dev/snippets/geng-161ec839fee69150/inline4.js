@@ -1,9 +1,6 @@
 
-            export function setup(request, handler) {
-                request.onreadystatechange = function () {
-                    if (request.readyState == 4) {
-                        handler(request.status == 200 || request.status == 206); // TODO why is there 206?
-                    }
-                };
+            export function finish_loading() {
+                document.getElementById("geng-progress-screen").style.display = "none";
+                document.getElementById("geng-canvas").style.display = "block";
             }
             
