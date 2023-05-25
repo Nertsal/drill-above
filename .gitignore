@@ -1,3 +1,4 @@
+/.direnv
 /target
 Cargo.lock
 /assets/levels/new_level.json
