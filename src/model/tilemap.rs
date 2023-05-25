@@ -82,11 +82,19 @@ impl TileMap {
         }) else {
             return [Connection::None; 8];
         };
+        let center_rules = rules
+            .tiles
+            .get(center)
+            .unwrap_or_else(|| panic!("Tile {} not found", center));
         self.get_tile_neighbours(index).map(|tile| {
             tile.map(|tile| {
+                let tile_rules = rules
+                    .tiles
+                    .get(center)
+                    .unwrap_or_else(|| panic!("Tile {} not found", center));
                 if tile == "air" {
                     Connection::None
-                } else if tile == center || rules.tiles[tile].layer > rules.tiles[center].layer {
+                } else if tile == center || tile_rules.layer > center_rules.layer {
                     Connection::Same
                 } else {
                     Connection::Other
