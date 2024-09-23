@@ -3,7 +3,7 @@ use super::*;
 pub fn report_err<T, E: Display>(result: Result<T, E>, msg: impl AsRef<str>) -> Result<T, ()> {
     match result {
         Err(err) => {
-            error!("{}: {err}", msg.as_ref());
+            log::error!("{}: {err}", msg.as_ref());
             Err(())
         }
         Ok(value) => Ok(value),
@@ -13,7 +13,7 @@ pub fn report_err<T, E: Display>(result: Result<T, E>, msg: impl AsRef<str>) -> 
 pub fn report_warn<T, E: Display>(result: Result<T, E>, msg: impl AsRef<str>) -> Result<T, ()> {
     match result {
         Err(err) => {
-            warn!("{}: {err}", msg.as_ref());
+            log::warn!("{}: {err}", msg.as_ref());
             Err(())
         }
         Ok(value) => Ok(value),
@@ -47,7 +47,7 @@ pub fn fit_text(text: impl AsRef<str>, font: impl AsRef<geng::Font>, target: Aab
     target.width()
         / font
             .as_ref()
-            .measure_bounding_box(
+            .measure(
                 text.as_ref(),
                 vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT),
             )
@@ -65,7 +65,7 @@ pub fn split_text_lines(
     let mut lines = Vec::new();
 
     let measure = |str: &str| {
-        font.measure_bounding_box(str, vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT))
+        font.measure(str, vec2(geng::TextAlign::LEFT, geng::TextAlign::LEFT))
             .unwrap_or(Aabb2::ZERO)
             .width()
             * size

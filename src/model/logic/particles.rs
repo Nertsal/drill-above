@@ -44,7 +44,7 @@ impl Logic<'_> {
                 .color
                 .zip_map(color_delta, |s, t| (s + t).clamp(0.0, 1.0));
             let angle = rng.gen_range(config.angle_range.clone());
-            let velocity = config.velocity.rotate(angle);
+            let velocity = config.velocity.rotate(Angle::from_radians(angle));
             self.world.particles.push(Particle {
                 initial_lifetime: config.lifetime,
                 lifetime: config.lifetime,

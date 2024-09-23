@@ -19,9 +19,10 @@ pub fn run(
 ) -> impl Future<Output = impl geng::State> {
     let geng = geng.clone();
     async move {
-        let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
-            .await
-            .expect("Failed to load assets");
+        let assets: Rc<Assets> =
+            geng::asset::Load::load(geng.asset_manager(), &run_dir().join("assets"), &())
+                .await
+                .expect("Failed to load assets");
         LevelEditor::new(&geng, &assets, level, room, hot_reload)
     }
 }

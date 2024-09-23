@@ -18,7 +18,7 @@ pub fn update_texture_size(texture: &mut ugli::Texture, size: vec2<usize>, geng:
 pub struct UtilRender {
     geng: Geng,
     assets: Rc<Assets>,
-    quad_geometry: ugli::VertexBuffer<draw_2d::Vertex>,
+    quad_geometry: ugli::VertexBuffer<draw2d::Vertex>,
 }
 
 impl UtilRender {
@@ -29,16 +29,16 @@ impl UtilRender {
             quad_geometry: ugli::VertexBuffer::new_static(
                 geng.ugli(),
                 vec![
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(-1.0, -1.0),
                     },
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(1.0, -1.0),
                     },
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(1.0, 1.0),
                     },
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(-1.0, 1.0),
                     },
                 ],
@@ -53,10 +53,10 @@ impl UtilRender {
         camera: &impl geng::AbstractCamera2d,
         framebuffer: &mut ugli::Framebuffer,
     ) {
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             camera,
-            &draw_2d::Quad::new(collider.raw().map(Coord::as_f32), color),
+            &draw2d::Quad::new(collider.raw().map(Coord::as_f32), color),
         );
     }
 
@@ -80,7 +80,7 @@ impl UtilRender {
                     u_grid_color: Rgba::GRAY,
                     u_grid_width: vec2(0.01, 0.01),
                 },
-                geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
+                camera.uniforms(framebuffer.size().map(|x| x as f32)),
             ),
             ugli::DrawParameters::default(),
         )

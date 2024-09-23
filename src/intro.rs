@@ -6,7 +6,7 @@ pub struct Intro {
     intro: Animation,
     time: Time,
     zoom: R32,
-    transition: Option<geng::Transition>,
+    transition: Option<geng::state::Transition>,
     play_button: Option<Aabb2<f32>>,
     hit_play: bool,
     cursor_pos: vec2<f32>,
@@ -52,7 +52,7 @@ impl geng::State for Intro {
                 },
             );
             let state = util::load_state(&self.geng, future);
-            self.transition = Some(geng::Transition::Switch(Box::new(state)));
+            self.transition = Some(geng::state::Transition::Switch(Box::new(state)));
             return;
         }
 
@@ -102,10 +102,10 @@ impl geng::State for Intro {
         };
 
         if let Some(texture) = texture {
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::TexturedQuad::new(aabb, texture),
+                &draw2d::TexturedQuad::new(aabb, texture),
             );
         }
 
@@ -113,10 +113,10 @@ impl geng::State for Intro {
             let texture = &self.assets.sprites.cursor;
             let size = texture.size().map(|x| x as f32) * aabb.height() / 180.0;
             let pos = self.cursor_pos.clamp_aabb(screen);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::TexturedQuad::new(
+                &draw2d::TexturedQuad::new(
                     Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
                     texture,
                 ),
@@ -126,15 +126,14 @@ impl geng::State for Intro {
 
     fn handle_event(&mut self, event: geng::Event) {
         match event {
-            geng::Event::MouseMove { position, .. } => {
+            geng::Event::CursorMove { position } => {
                 self.cursor_pos = position.map(|x| x as f32);
             }
-            geng::Event::MouseDown {
-                position,
+            geng::Event::MousePress {
                 button: geng::MouseButton::Left,
             } => {
                 if let Some(button) = self.play_button {
-                    if button.contains(position.map(|x| x as f32)) {
+                    if button.contains(self.cursor_pos.map(|x| x as f32)) {
                         self.hit_play = true;
                     }
                 }
@@ -159,7 +158,7 @@ impl geng::State for Intro {
         }
     }
 
-    fn transition(&mut self) -> Option<geng::Transition> {
+    fn transition(&mut self) -> Option<geng::state::Transition> {
         self.transition.take()
     }
 }
@@ -167,16 +166,21 @@ impl geng::State for Intro {
 pub fn run(geng: &Geng) -> impl Future<Output = impl geng::State> {
     let geng = geng.clone();
     async move {
-        let assets: Rc<Assets> = geng::LoadAsset::load(&geng, &run_dir().join("assets"))
-            .await
-            .expect("Failed to load assets");
-        let intro: Animation =
-            geng::LoadAsset::load(&geng, &run_dir().join("assets").join("intro.gif"))
+        let assets: Rc<Assets> =
+            geng::asset::Load::load(geng.asset_manager(), &run_dir().join("assets"), &())
                 .await
-                .expect("Failed to load intro animation");
-        let intro_sfx: geng::Sound = geng::LoadAsset::load(
-            &geng,
+                .expect("Failed to load assets");
+        let intro: Animation = geng::asset::Load::load(
+            geng.asset_manager(),
+            &run_dir().join("assets").join("intro.gif"),
+            &(),
+        )
+        .await
+        .expect("Failed to load intro animation");
+        let intro_sfx: geng::Sound = geng::asset::Load::load(
+            geng.asset_manager(),
             &run_dir().join("assets").join("sounds").join("cutscene.mp3"),
+            &geng::asset::SoundOptions::default(),
         )
         .await
         .expect("Failed to load intro sfx");

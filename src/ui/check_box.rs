@@ -45,27 +45,27 @@ impl<'a> Widget for CheckBox<'a> {
         let pos = Aabb2::point(pos.center()).extend_uniform(pos.width().min(pos.height()) / 2.0);
 
         if self.sense.is_hovered() {
-            cx.geng.draw_2d(
+            cx.draw2d.draw2d(
                 cx.framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Quad::new(pos, Rgba::opaque(0.3, 0.3, 0.3)),
+                &draw2d::Quad::new(pos, Rgba::opaque(0.3, 0.3, 0.3)),
             );
         }
 
         if self.check {
-            cx.geng.draw_2d(
+            cx.draw2d.draw2d(
                 cx.framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Segment::new(
+                &draw2d::Segment::new(
                     Segment(pos.bottom_left(), pos.top_right()),
                     4.0,
                     Rgba::opaque(0.0, 0.3, 0.5),
                 ),
             );
-            cx.geng.draw_2d(
+            cx.draw2d.draw2d(
                 cx.framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Segment::new(
+                &draw2d::Segment::new(
                     Segment(pos.top_left(), pos.bottom_right()),
                     4.0,
                     Rgba::opaque(0.0, 0.3, 0.5),
@@ -73,10 +73,10 @@ impl<'a> Widget for CheckBox<'a> {
             );
         }
 
-        cx.geng.draw_2d(
+        cx.draw2d.draw2d(
             cx.framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Chain::new(util::aabb_outline(pos), 2.0, Rgba::GRAY, 1),
+            &draw2d::Chain::new(util::aabb_outline(pos), 2.0, Rgba::GRAY, 1),
         );
     }
 }

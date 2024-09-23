@@ -100,7 +100,7 @@ impl World {
                         0.0,
                         ((SCREEN_RESOLUTION.y / PIXELS_PER_UNIT) as f32 - fov) / 2.0,
                     ),
-                    rotation: 0.0,
+                    rotation: Angle::ZERO,
                     fov,
                 }
             },

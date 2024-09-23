@@ -1,7 +1,7 @@
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
-#[asset(json)]
+#[derive(Debug, Clone, Serialize, Deserialize, geng::asset::Load)]
+#[load(serde = "json")]
 pub struct Rules {
     pub gravity: vec2<Coord>,
     pub move_speed: Coord,

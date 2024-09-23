@@ -75,10 +75,10 @@ impl Game {
             fade: Time::ONE,
             control: PlayerControl::default(),
             controls: Controls {
-                left: vec![geng::Key::Left],
-                right: vec![geng::Key::Right],
-                down: vec![geng::Key::Down],
-                up: vec![geng::Key::Up],
+                left: vec![geng::Key::ArrowLeft],
+                right: vec![geng::Key::ArrowRight],
+                down: vec![geng::Key::ArrowDown],
+                up: vec![geng::Key::ArrowUp],
                 jump: vec![geng::Key::Z, geng::Key::Space],
                 drill: vec![geng::Key::C],
                 retry: vec![geng::Key::R],
@@ -154,10 +154,10 @@ impl geng::State for Game {
         let target_size = reference_size * ratio;
         let screen = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
             .extend_symmetric(target_size / 2.0);
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(screen, &self.assets.sprites.room),
+            &draw2d::TexturedQuad::new(screen, &self.assets.sprites.room),
         );
 
         // Render the texture onto the screen
@@ -167,10 +167,10 @@ impl geng::State for Game {
         // )
         // .translate(screen.bottom_left());
         let target = screen;
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
+            &draw2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
         let is_credits = self.room_id.name == "credits.json";
@@ -191,18 +191,18 @@ impl geng::State for Game {
             let size = texture
                 .size()
                 .map(|x| x as f32 / texture.size().x as f32 * size);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::TexturedQuad::new(
+                &draw2d::TexturedQuad::new(
                     Aabb2::point(pos).extend_left(size.x).extend_up(size.y),
                     texture,
                 ),
             );
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("{}", self.world.coins_collected),
                     Rgba::try_from("#e3a912").unwrap(),
@@ -219,18 +219,18 @@ impl geng::State for Game {
             let size = texture
                 .size()
                 .map(|x| x as f32 / texture.size().x as f32 * size);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::TexturedQuad::new(
+                &draw2d::TexturedQuad::new(
                     Aabb2::point(pos).extend_left(size.x).extend_up(size.y),
                     texture,
                 ),
             );
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("{}", self.deaths),
                     Rgba::BLACK,
@@ -243,10 +243,10 @@ impl geng::State for Game {
             // Time
             let size = framebuffer_size.y * 0.02;
             let (m, s, ms) = time_ms(self.accumulated_time);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::BLACK,
@@ -260,10 +260,10 @@ impl geng::State for Game {
         if self.show_debug {
             let size = framebuffer_size.y * 0.02;
             let player = &self.world.player;
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("Speed: {:.2}", player.velocity.len()),
                     Rgba::BLACK,
@@ -272,10 +272,10 @@ impl geng::State for Game {
                 .align_bounding_box(vec2(0.0, 0.0))
                 .translate(vec2(framebuffer_size.x - size * 20.0, size * 5.0)),
             );
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("x: {:6.2}", player.velocity.x),
                     Rgba::BLACK,
@@ -284,10 +284,10 @@ impl geng::State for Game {
                 .align_bounding_box(vec2(0.0, 0.0))
                 .translate(vec2(framebuffer_size.x - size * 20.0, size * 3.0)),
             );
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("y: {:6.2}", player.velocity.y),
                     Rgba::BLACK,
@@ -300,10 +300,10 @@ impl geng::State for Game {
 
         // Fade
         if self.fade > Time::ZERO {
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Quad::new(
+                &draw2d::Quad::new(
                     screen,
                     Rgba::new(0.196, 0.196, 0.196, self.fade.as_f32().min(1.0)),
                 ),
@@ -352,7 +352,7 @@ impl geng::State for Game {
 
     fn handle_event(&mut self, event: geng::Event) {
         if !self.is_paused {
-            if let geng::Event::KeyDown { key } = event {
+            if let geng::Event::KeyPress { key } = event {
                 if self.controls.jump.contains(&key) {
                     self.control.jump = true;
                 }
@@ -378,7 +378,7 @@ impl geng::State for Game {
                     _ => (),
                 }
             }
-        } else if let geng::Event::KeyDown {
+        } else if let geng::Event::KeyPress {
             key: geng::Key::Escape,
         } = event
         {
@@ -386,13 +386,13 @@ impl geng::State for Game {
         }
     }
 
-    fn transition(&mut self) -> Option<geng::Transition> {
+    fn transition(&mut self) -> Option<geng::state::Transition> {
         if self.pause_menu.quit() {
-            return Some(geng::Transition::Pop);
+            return Some(geng::state::Transition::Pop);
         }
 
         if let Some(transition) = self.world.room_transition.take() {
-            debug!("Transitioning to room {:?}", transition.to_room);
+            log::debug!("Transitioning to room {:?}", transition.to_room);
             let mut player = self.world.actors.remove(&self.world.player.id).unwrap();
             player
                 .collider
@@ -409,7 +409,7 @@ impl geng::State for Game {
                 self.music.take(),
             );
             let state = util::load_state(&self.geng, future);
-            return Some(geng::Transition::Switch(Box::new(state)));
+            return Some(geng::state::Transition::Switch(Box::new(state)));
         }
         None
     }
@@ -453,12 +453,12 @@ fn room_change(
     async move {
         let assets = match assets {
             Some(assets) => assets,
-            None => geng::LoadAsset::load(&geng, &run_dir().join("assets"))
+            None => geng::asset::Load::load(geng.asset_manager(), &run_dir().join("assets"), &())
                 .await
                 .expect("Failed to load assets"),
         };
         log::info!("Loading room {:?}", room_id);
-        let room: Room = geng::LoadAsset::load(&geng, &room_id.full_path())
+        let room: Room = geng::asset::Load::load(geng.asset_manager(), &room_id.full_path(), &())
             .await
             .expect("Failed to load room");
         Game::new(

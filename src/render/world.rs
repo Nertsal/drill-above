@@ -113,7 +113,7 @@ impl WorldRender {
                         u_texture: texture,
                         u_color: Rgba::WHITE,
                     },
-                    geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
+                    world.camera.uniforms(framebuffer.size().map(|x| x as f32)),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -145,7 +145,7 @@ impl WorldRender {
                     u_texture: texture,
                     u_color: Rgba::WHITE,
                 },
-                geng::camera2d_uniforms(&world.camera, framebuffer.size().map(|x| x as f32)),
+                world.camera.uniforms(framebuffer.size().map(|x| x as f32)),
             ),
             ugli::DrawParameters {
                 blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -216,10 +216,10 @@ impl WorldRender {
         }
 
         // Spawnpoint
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             camera,
-            &draw_2d::Quad::new(
+            &draw2d::Quad::new(
                 Aabb2::point(room.spawn_point.map(Coord::as_f32))
                     .extend_symmetric(vec2(0.5, 0.0))
                     .extend_up(1.0),
@@ -234,10 +234,10 @@ impl WorldRender {
             let pos = crate::util::pixel_perfect_pos(spotlight.position);
             let size = vec2(1.0, 1.0);
             let aabb = Aabb2::point(pos).extend_symmetric(size / 2.0);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(aabb, &self.assets.sprites.spotlight),
+                &draw2d::TexturedQuad::new(aabb, &self.assets.sprites.spotlight),
             );
         }
     }
@@ -265,7 +265,7 @@ impl WorldRender {
                         u_mask: mask,
                         u_color: Rgba::new(1.0, 1.0, 1.0, alpha),
                     },
-                    geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
+                    camera.uniforms(framebuffer.size().map(|x| x as f32)),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -287,7 +287,7 @@ impl WorldRender {
                         u_texture: texture,
                         u_color: Rgba::new(1.0, 1.0, 1.0, alpha),
                     },
-                    geng::camera2d_uniforms(camera, framebuffer.size().map(|x| x as f32)),
+                    camera.uniforms(framebuffer.size().map(|x| x as f32)),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -307,10 +307,10 @@ impl WorldRender {
     ) {
         for prop in props {
             let texture = self.assets.sprites.props.get_texture(&prop.prop_type);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::colored(
+                &draw2d::TexturedQuad::colored(
                     prop.sprite.render_aabb(),
                     texture.texture(),
                     Rgba::new(1.0, 1.0, 1.0, alpha),
@@ -320,10 +320,10 @@ impl WorldRender {
             if let Some(framebuffer) = &mut normal_framebuffer {
                 if let Some(texture) = texture.normal() {
                     // TODO: manage transparency
-                    self.geng.draw_2d(
+                    self.geng.draw2d().draw2d(
                         framebuffer,
                         camera,
-                        &draw_2d::TexturedQuad::new(prop.sprite.render_aabb(), texture),
+                        &draw2d::TexturedQuad::new(prop.sprite.render_aabb(), texture),
                     );
                 }
             }
@@ -341,16 +341,14 @@ impl WorldRender {
         for hazard in hazards {
             let texture = self.assets.sprites.hazards.get_texture(&hazard.hazard_type);
             let transform = (mat3::translate(hazard.sprite.pos.center())
-                * mat3::rotate(
-                    hazard
-                        .direction
-                        .map_or(Coord::ZERO, |dir| dir.arg() - Coord::PI / Coord::new(2.0)),
-                ))
+                * mat3::rotate(hazard.direction.map_or(Angle::ZERO, |dir| {
+                    dir.arg() - Angle::from_degrees(r32(90.0))
+                })))
             .map(Coord::as_f32);
-            self.geng.draw_2d_transformed(
+            self.geng.draw2d().draw2d_transformed(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::colored(
+                &draw2d::TexturedQuad::colored(
                     Aabb2::ZERO.extend_symmetric(hazard.sprite.pos.size().map(Coord::as_f32) / 2.0),
                     texture.texture(),
                     Rgba::new(1.0, 1.0, 1.0, alpha),
@@ -358,10 +356,10 @@ impl WorldRender {
                 transform,
             );
             if draw_hitboxes {
-                self.geng.draw_2d(
+                self.geng.draw2d().draw2d(
                     framebuffer,
                     camera,
-                    &draw_2d::Quad::new(
+                    &draw2d::Quad::new(
                         hazard.collider.raw().map(Coord::as_f32),
                         Rgba::new(1.0, 0.0, 0.0, 0.5 * alpha),
                     ),
@@ -380,20 +378,20 @@ impl WorldRender {
     ) {
         for coin in coins {
             let texture = &self.assets.sprites.coin;
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::colored(
+                &draw2d::TexturedQuad::colored(
                     coin.collider.raw().map(Coord::as_f32),
                     texture,
                     Rgba::new(1.0, 1.0, 1.0, alpha),
                 ),
             );
             if draw_hitboxes {
-                self.geng.draw_2d(
+                self.geng.draw2d().draw2d(
                     framebuffer,
                     camera,
-                    &draw_2d::Quad::new(
+                    &draw2d::Quad::new(
                         coin.collider.raw().map(Coord::as_f32),
                         Rgba::new(1.0, 1.0, 0.0, 0.5 * alpha),
                     ),
@@ -410,10 +408,10 @@ impl WorldRender {
     ) {
         for npc in npcs {
             let texture = self.assets.sprites.npc.get_texture(&npc.npc_type);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(npc.sprite.render_aabb(), texture.texture()),
+                &draw2d::TexturedQuad::new(npc.sprite.render_aabb(), texture.texture()),
             );
         }
     }
@@ -443,7 +441,7 @@ impl WorldRender {
                         velocity.y = 1.0;
                     }
                     flip = false;
-                    let mut angle = (velocity.arg() / f32::PI * 4.0 + 2.0).round();
+                    let mut angle = (velocity.arg().as_radians() / f32::PI * 4.0 + 2.0).round();
                     let drill = if angle as i32 % 2 == 0 {
                         // Vertical/horizontal
                         &sprites.drill.drill_v0
@@ -452,7 +450,10 @@ impl WorldRender {
                         angle -= 1.0;
                         &sprites.drill.drill_d0
                     };
-                    (drill, mat3::rotate(angle * f32::PI / 4.0))
+                    (
+                        drill,
+                        mat3::rotate(Angle::from_radians(angle * f32::PI / 4.0)),
+                    )
                 }
                 PlayerState::WallSliding { wall_normal, .. } if player.velocity.y < Coord::ZERO => {
                     flip = wall_normal.x < Coord::ZERO;
@@ -466,10 +467,10 @@ impl WorldRender {
             let size = texture.size().map(|x| x as f32) / PIXELS_PER_UNIT as f32;
             let pos = crate::util::pixel_perfect_pos(pos) + vec2(0.0, size.y / 2.0);
             let transform = mat3::translate(pos) * transform;
-            self.geng.draw_2d_transformed(
+            self.geng.draw2d().draw2d_transformed(
                 framebuffer,
                 camera,
-                &draw_2d::TexturedQuad::new(
+                &draw2d::TexturedQuad::new(
                     Aabb2::ZERO
                         .extend_symmetric(size / 2.0 * vec2(if flip { -1.0 } else { 1.0 }, 1.0)),
                     texture,
@@ -477,18 +478,18 @@ impl WorldRender {
                 transform,
             );
             if draw_hitboxes {
-                self.geng.draw_2d(
+                self.geng.draw2d().draw2d(
                     framebuffer,
                     camera,
-                    &draw_2d::Quad::new(
+                    &draw2d::Quad::new(
                         actor.collider.raw().map(Coord::as_f32),
                         Rgba::new(0.0, 1.0, 0.0, 0.7),
                     ),
                 );
-                self.geng.draw_2d(
+                self.geng.draw2d().draw2d(
                     framebuffer,
                     camera,
-                    &draw_2d::Quad::new(
+                    &draw2d::Quad::new(
                         actor.feet_collider().raw().map(Coord::as_f32),
                         Rgba::new(1.0, 0.0, 0.0, 0.7),
                     ),
@@ -510,10 +511,10 @@ impl WorldRender {
                     let t =
                         particle.lifetime.min(Time::ONE) / particle.initial_lifetime.min(Time::ONE);
                     let radius = (radius * t).as_f32();
-                    self.geng.draw_2d(
+                    self.geng.draw2d().draw2d(
                         framebuffer,
                         camera,
-                        &draw_2d::Ellipse::circle(
+                        &draw2d::Ellipse::circle(
                             particle.position.map(Coord::as_f32),
                             radius,
                             color,
@@ -523,10 +524,10 @@ impl WorldRender {
                 }
             };
             // let size = texture.size().map(|x| x as f32 / PIXELS_PER_UNIT as f32);
-            // self.geng.draw_2d(
+            // self.geng.draw2d().draw2d(
             //     framebuffer,
             //     camera,
-            //     &draw_2d::TexturedQuad::new(
+            //     &draw2d::TexturedQuad::new(
             //         Aabb2::point(particle.position.map(Coord::as_f32)).extend_symmetric(size / 2.0),
             //         texture,
             //     ),
@@ -542,15 +543,15 @@ impl WorldRender {
     ) {
         for transition in transitions {
             let collider = transition.collider.raw().map(Coord::as_f32);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 camera,
-                &draw_2d::Quad::new(collider, Rgba::new(0.0, 0.0, 1.0, 0.5)),
+                &draw2d::Quad::new(collider, Rgba::new(0.0, 0.0, 1.0, 0.5)),
             );
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 camera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &**self.geng.default_font(),
                     &transition.to_room.name,
                     Rgba::WHITE,

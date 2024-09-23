@@ -64,13 +64,13 @@ impl<'a> TextInput<'a> {
 
     pub fn handle_input(&mut self, event: &geng::Event) {
         let action = match event {
-            geng::Event::KeyDown { key } => {
+            geng::Event::KeyPress { key } => {
                 if let geng::Key::Escape | geng::Key::Enter = key {
                     *self.is_focused = false;
                 }
                 key_to_text_action(&self.geng, key)
             }
-            geng::Event::MouseDown { .. } => {
+            geng::Event::MousePress { .. } => {
                 *self.is_focused = true;
                 None
             }
@@ -98,24 +98,24 @@ impl<'a> Widget for TextInput<'a> {
         self.handle_input(event)
     }
 
-    fn walk_children_mut(&mut self, mut f: Box<dyn FnMut(&mut dyn Widget) + '_>) {
+    fn walk_children_mut(&mut self, f: &mut dyn FnMut(&mut dyn Widget)) {
         f(&mut self.inner);
     }
 }
 
 fn key_to_text_action(geng: &Geng, key: &geng::Key) -> Option<TextAction> {
-    let shift = geng.window().is_key_pressed(geng::Key::LShift);
+    let shift = geng.window().is_key_pressed(geng::Key::ShiftLeft);
     match key {
-        geng::Key::Num0 => Some(TextAction::Append('0')),
-        geng::Key::Num1 => Some(TextAction::Append('1')),
-        geng::Key::Num2 => Some(TextAction::Append('2')),
-        geng::Key::Num3 => Some(TextAction::Append('3')),
-        geng::Key::Num4 => Some(TextAction::Append('4')),
-        geng::Key::Num5 => Some(TextAction::Append('5')),
-        geng::Key::Num6 => Some(TextAction::Append('6')),
-        geng::Key::Num7 => Some(TextAction::Append('7')),
-        geng::Key::Num8 => Some(TextAction::Append('8')),
-        geng::Key::Num9 => Some(TextAction::Append('9')),
+        geng::Key::Digit0 => Some(TextAction::Append('0')),
+        geng::Key::Digit1 => Some(TextAction::Append('1')),
+        geng::Key::Digit2 => Some(TextAction::Append('2')),
+        geng::Key::Digit3 => Some(TextAction::Append('3')),
+        geng::Key::Digit4 => Some(TextAction::Append('4')),
+        geng::Key::Digit5 => Some(TextAction::Append('5')),
+        geng::Key::Digit6 => Some(TextAction::Append('6')),
+        geng::Key::Digit7 => Some(TextAction::Append('7')),
+        geng::Key::Digit8 => Some(TextAction::Append('8')),
+        geng::Key::Digit9 => Some(TextAction::Append('9')),
         geng::Key::A => Some(TextAction::Append(if shift { 'A' } else { 'a' })),
         geng::Key::B => Some(TextAction::Append(if shift { 'B' } else { 'b' })),
         geng::Key::C => Some(TextAction::Append(if shift { 'C' } else { 'c' })),
@@ -143,10 +143,12 @@ fn key_to_text_action(geng: &Geng, key: &geng::Key) -> Option<TextAction> {
         geng::Key::Y => Some(TextAction::Append(if shift { 'Y' } else { 'y' })),
         geng::Key::Z => Some(TextAction::Append(if shift { 'Z' } else { 'z' })),
         geng::Key::Minus => Some(TextAction::Append(if shift { '_' } else { '-' })),
-        geng::Key::Equals => Some(TextAction::Append(if shift { '+' } else { '=' })),
-        geng::Key::Apostrophe => Some(TextAction::Append(if shift { '\"' } else { '\'' })),
+        geng::Key::Equal => Some(TextAction::Append(if shift { '+' } else { '=' })),
+        // TODO: geng::Key::Apostrophe
+        // geng::Key::Apostrophe => Some(TextAction::Append(if shift { '\"' } else { '\'' })),
         geng::Key::Semicolon => Some(TextAction::Append(if shift { ':' } else { ';' })),
-        geng::Key::Grave => Some(TextAction::Append(if shift { '~' } else { '`' })),
+        // TODO: geng::Key::Grave
+        // geng::Key::Grave => Some(TextAction::Append(if shift { '~' } else { '`' })),
         geng::Key::Comma => Some(TextAction::Append(',')),
         geng::Key::Period => Some(TextAction::Append('.')),
         geng::Key::Space => Some(TextAction::Append(' ')),

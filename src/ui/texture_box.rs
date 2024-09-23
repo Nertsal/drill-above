@@ -49,10 +49,7 @@ impl<T: std::borrow::Borrow<ugli::Texture>> Widget for TextureBox<T> {
                     u_texture: self.texture.borrow(),
                     u_color: Rgba::WHITE,
                 },
-                geng::camera2d_uniforms(
-                    &geng::PixelPerfectCamera,
-                    cx.framebuffer.size().map(|x| x as f32),
-                ),
+                geng::PixelPerfectCamera.uniforms(cx.framebuffer.size().map(|x| x as f32)),
             ),
             ugli::DrawParameters::default(),
         );

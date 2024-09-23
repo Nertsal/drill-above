@@ -7,26 +7,32 @@
     flake-utils.url  = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
+  outputs = { nixpkgs, rust-overlay, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
-        libDeps = with pkgs; [
+        waylandDeps = with pkgs; [
+          libxkbcommon
+          wayland
+        ];
+        xorgDeps = with pkgs; [
+          xorg.libX11
+          xorg.libXcursor
+          xorg.libXi
+          xorg.libXrandr
+        ];
+        libDeps = with pkgs; waylandDeps ++ xorgDeps ++ [
             alsa-lib
-            cmake
-            fontconfig
             udev
             libGL
             xorg.libxcb
-            xorg.libX11
-            xorg.libXcursor
-            xorg.libXi
-            xorg.libXrandr
-            libxkbcommon
-            wayland
+            cmake
+            fontconfig
+            mesa
+            freeglut
         ];
         libPath = pkgs.lib.makeLibraryPath libDeps;
       in
@@ -34,6 +40,8 @@
       {
         devShells.default = mkShell {
           buildInputs = libDeps ++ [
+            sqlite
+            rlwrap
             gcc
             openssl
             pkg-config
@@ -45,6 +53,7 @@
           ];
           shellHook = ''
             export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${libPath}"
+            export WINIT_UNIX_BACKEND=x11
           '';
         };
       }

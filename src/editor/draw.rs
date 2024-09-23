@@ -19,16 +19,16 @@ impl LevelEditor {
             let aabb = room.aabb();
             let hovered = aabb.contains(self.cursor_world_pos);
             let aabb = aabb.map(Coord::as_f32);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &self.camera,
-                &draw_2d::TexturedQuad::new(aabb, &room.preview_texture),
+                &draw2d::TexturedQuad::new(aabb, &room.preview_texture),
             );
             let color = if hovered { Rgba::RED } else { Rgba::GRAY };
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &self.camera,
-                &draw_2d::Chain::new(util::aabb_outline(aabb), 0.5, color, 1),
+                &draw2d::Chain::new(util::aabb_outline(aabb), 0.5, color, 1),
             );
 
             let room_size_text = format!(
@@ -49,9 +49,8 @@ impl LevelEditor {
                 framebuffer,
                 &self.camera,
                 &id.name,
-                aabb.bottom_left(),
-                geng::TextAlign::LEFT,
-                text_size,
+                vec2(geng::TextAlign::LEFT, geng::TextAlign::CENTER),
+                mat3::translate(aabb.bottom_left()) * mat3::scale_uniform(text_size),
                 Rgba::WHITE,
             );
 
@@ -60,9 +59,8 @@ impl LevelEditor {
                     framebuffer,
                     &self.camera,
                     &room_size_text,
-                    aabb.bottom_right(),
-                    geng::TextAlign::RIGHT,
-                    text_size,
+                    vec2(geng::TextAlign::RIGHT, geng::TextAlign::CENTER),
+                    mat3::translate(aabb.bottom_right()) * mat3::scale_uniform(text_size),
                     Rgba::WHITE,
                 );
             }
@@ -72,10 +70,10 @@ impl LevelEditor {
             if let Some(LevelDragAction::CreateRoom { initial_pos }) = &dragging.action {
                 let pos = self.grid.world_to_grid(self.cursor_world_pos).0;
                 let aabb = Aabb2::from_corners(*initial_pos, pos);
-                self.geng.draw_2d(
+                self.geng.draw2d().draw2d(
                     framebuffer,
                     &self.camera,
-                    &draw_2d::Chain::new(
+                    &draw2d::Chain::new(
                         util::aabb_outline(aabb.map(|x| x as f32)),
                         0.5,
                         Rgba::GREEN,
@@ -90,9 +88,9 @@ impl LevelEditor {
                     framebuffer,
                     &self.camera,
                     &text,
-                    aabb.bottom_right().map(|x| x as f32),
-                    geng::TextAlign::RIGHT,
-                    text_size,
+                    vec2(geng::TextAlign::RIGHT, geng::TextAlign::CENTER),
+                    mat3::translate(aabb.bottom_right().map(|x| x as f32))
+                        * mat3::scale_uniform(text_size),
                     Rgba::WHITE,
                 );
             }
@@ -150,10 +148,10 @@ impl RoomEditor {
         let target_size = reference_size * ratio;
         let target = Aabb2::point(framebuffer.size().map(|x| x as f32) / 2.0)
             .extend_symmetric(target_size / 2.0);
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(target, &self.pixel_texture),
+            &draw2d::TexturedQuad::new(target, &self.pixel_texture),
         );
 
         self.render
@@ -207,10 +205,7 @@ impl RoomEditor {
                                         u_texture: texture,
                                         u_color: Rgba::WHITE,
                                     },
-                                    geng::camera2d_uniforms(
-                                        &self.camera,
-                                        framebuffer.size().map(|x| x as f32),
-                                    ),
+                                    self.camera.uniforms(framebuffer.size().map(|x| x as f32)),
                                 ),
                                 ugli::DrawParameters {
                                     blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -250,10 +245,10 @@ impl RoomEditor {
                     };
                     if let Some((mut sprite, texture)) = sprite {
                         sprite.translate(self.cursor_world_pos - *initial_pos);
-                        self.geng.draw_2d(
+                        self.geng.draw2d().draw2d(
                             framebuffer,
                             &self.camera,
-                            &draw_2d::TexturedQuad::new(sprite.render_aabb(), texture),
+                            &draw2d::TexturedQuad::new(sprite.render_aabb(), texture),
                         );
                     }
                 }
@@ -264,7 +259,7 @@ impl RoomEditor {
         let mut colliders = Vec::new();
         for &block in itertools::chain![&self.hovered, &self.selection] {
             let Some(block) = self.world.room.get_block(block, self.active_layer) else {
-                continue
+                continue;
             };
             let collider = block.sprite(&self.world.room.grid);
             let color = match block {
@@ -300,10 +295,10 @@ impl RoomEditor {
             if let Some(dragging) = &self.dragging {
                 if let Some(RoomDragAction::RectSelection) = &dragging.action {
                     // Draw the rectangular selection
-                    self.geng.draw_2d(
+                    self.geng.draw2d().draw2d(
                         framebuffer,
                         &self.camera,
-                        &draw_2d::Quad::new(
+                        &draw2d::Quad::new(
                             Aabb2::from_corners(dragging.initial_world_pos, self.cursor_world_pos)
                                 .map(Coord::as_f32),
                             Rgba::new(0.5, 0.5, 0.5, 0.5),

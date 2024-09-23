@@ -16,8 +16,8 @@ pub struct RoomId {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
-#[asset(json)]
+#[derive(Debug, Clone, Serialize, Deserialize, geng::asset::Load)]
+#[load(serde = "json")]
 pub struct Room {
     pub drill_allowed: bool,
     #[serde(default)]
@@ -436,7 +436,7 @@ impl Room {
     pub fn load(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
         let path = path.as_ref();
         futures::executor::block_on(async move {
-            debug!("Loading room {path:?}");
+            log::debug!("Loading room {path:?}");
             let room = file::load_json(&path).await?;
             Ok(room)
         })
@@ -449,7 +449,7 @@ impl Room {
             let file = std::fs::File::create(path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, self)?;
-            info!("Saved the room {path:?}");
+            log::info!("Saved the room {path:?}");
             Ok(())
         }
         #[cfg(target_arch = "wasm32")]

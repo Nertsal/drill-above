@@ -467,7 +467,8 @@ impl Logic<'_> {
             }
             Coyote::Wall { wall_normal } => {
                 let angle = rules.jump.wall_angle * wall_normal.x.signum();
-                let mut jump_vel = wall_normal.rotate(angle) * rules.jump.wall_strength;
+                let mut jump_vel =
+                    wall_normal.rotate(Angle::from_radians(angle)) * rules.jump.wall_strength;
                 let player = &mut self.world.player;
                 jump_vel.y = jump_vel.y.max(player.velocity.y);
                 player.velocity = jump_vel;

@@ -3,16 +3,23 @@ name = "anlaut-3"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [workspace]
 members = ["crates/*"]
 
-[dependencies]
+[workspace.dependencies]
 text_scroller = { path = "crates/text_scroller" }
-geng = { git = "https://github.com/nertsal/geng", branch = "event" }
-image = "0.24.5"
-serde = { version = "1.0.152", features = ["derive"] }
+geng = "0.17"
+geng-utils = "0.3"
+image = "0.25"
+serde = { version = "1", features = ["derive"] }
+unicode-segmentation = "1.10"
+
+[dependencies]
+text_scroller.workspace = true
+geng.workspace = true
+geng-utils.workspace = true
+image.workspace = true
+serde.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 notify = "5.1.0"

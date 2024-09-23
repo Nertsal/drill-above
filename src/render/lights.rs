@@ -11,7 +11,7 @@ struct Buffers {
     /// Current size of all the buffers.
     framebuffer_size: vec2<usize>,
     /// Constant unit quad geometry.
-    quad_geometry: ugli::VertexBuffer<draw_2d::Vertex>,
+    quad_geometry: ugli::VertexBuffer<draw2d::Vertex>,
     /// Texture for the render of the world ignoring lighting.
     world_texture: ugli::Texture,
     /// Texture of normal vectors.
@@ -65,10 +65,10 @@ impl LightsRender {
         self.render_lights(room, camera, &cache.light_geometry);
 
         // Draw the texture to the screen
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(
+            &draw2d::TexturedQuad::new(
                 Aabb2::ZERO.extend_positive(framebuffer.size().map(|x| x as f32)),
                 &self.buffers.postprocess_texture,
             ),
@@ -144,7 +144,7 @@ impl LightsRender {
                         u_model_matrix: mat3::identity(),
                         u_light_pos: spotlight.position.map(Coord::as_f32),
                     },
-                    geng::camera2d_uniforms(camera, framebuffer_size),
+                    camera.uniforms(framebuffer_size),
                 ),
                 ugli::DrawParameters {
                     // Just in case the shader writes something in the texture,
@@ -195,7 +195,7 @@ impl LightsRender {
                         u_source_texture: &self.buffers.world_texture,
                         u_framebuffer_size: self.buffers.normal_texture.size(),
                     },
-                    geng::camera2d_uniforms(camera, framebuffer_size),
+                    camera.uniforms(framebuffer_size),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::combined(ugli::ChannelBlendMode {
@@ -237,7 +237,7 @@ impl LightsRender {
                     u_model_matrix: mat3::identity(),
                     u_normal_influence: 1.0,
                 },
-                geng::camera2d_uniforms(camera, framebuffer_size),
+                camera.uniforms(framebuffer_size),
             ),
             ugli::DrawParameters {
                 blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -246,8 +246,15 @@ impl LightsRender {
         );
 
         for (tile, geometry) in uv {
-            let Some(texture) = self.assets.sprites.tiles.get_tile_set(tile).texture.normal() else {
-                error!("Invalid normal uv geometry: received uv for tile {tile:?}, but it has no normal texture");
+            let Some(texture) = self
+                .assets
+                .sprites
+                .tiles
+                .get_tile_set(tile)
+                .texture
+                .normal()
+            else {
+                log::error!("Invalid normal uv geometry: received uv for tile {tile:?}, but it has no normal texture");
                 continue;
             };
 
@@ -262,7 +269,7 @@ impl LightsRender {
                         u_normal_influence: 1.0,
                         u_normal_texture: texture,
                     },
-                    geng::camera2d_uniforms(camera, framebuffer_size),
+                    camera.uniforms(framebuffer_size),
                 ),
                 ugli::DrawParameters {
                     blend_mode: Some(ugli::BlendMode::straight_alpha()),
@@ -284,16 +291,16 @@ impl Buffers {
             quad_geometry: ugli::VertexBuffer::new_static(
                 geng.ugli(),
                 vec![
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(-1.0, -1.0),
                     },
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(1.0, -1.0),
                     },
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(1.0, 1.0),
                     },
-                    draw_2d::Vertex {
+                    draw2d::Vertex {
                         a_pos: vec2(-1.0, 1.0),
                     },
                 ],

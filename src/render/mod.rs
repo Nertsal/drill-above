@@ -7,7 +7,6 @@ mod util;
 mod world;
 
 pub use cache::*;
-pub use dialogue::*;
 pub use lights::*;
 pub use util::*;
 pub use world::*;
@@ -65,18 +64,18 @@ impl GameRender {
             .size()
             .map(|x| x as f32 / texture.size().x as f32 * size);
         let pos = vec2(0.05, 0.95) * framebuffer_size;
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::TexturedQuad::new(
+            &draw2d::TexturedQuad::new(
                 Aabb2::point(pos).extend_right(size.x).extend_down(size.y),
                 texture,
             ),
         );
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Text::unit(
+            &draw2d::Text::unit(
                 &*self.assets.fonts.pixel,
                 format!("{}", world.coins_collected),
                 Rgba::try_from("#e3a912").unwrap(),
@@ -95,10 +94,10 @@ impl GameRender {
             let pos = framebuffer_size * vec2(0.77, 0.95);
             let size = framebuffer_size.x * 0.01;
             let (m, s, ms) = time_ms(time);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,
@@ -108,10 +107,10 @@ impl GameRender {
                 .translate(pos),
             );
             let (m, s, ms) = time_ms(world.time);
-            self.geng.draw_2d(
+            self.geng.draw2d().draw2d(
                 framebuffer,
                 &geng::PixelPerfectCamera,
-                &draw_2d::Text::unit(
+                &draw2d::Text::unit(
                     &*self.assets.fonts.pixel,
                     format!("{:02}:{:02}.{:03}", m, s, ms.floor()),
                     Rgba::WHITE,

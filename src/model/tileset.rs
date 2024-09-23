@@ -5,8 +5,8 @@ pub struct TileSet {
     pub config: TileSetConfig,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, geng::Assets)]
-#[asset(json)]
+#[derive(Debug, Clone, Serialize, Deserialize, geng::asset::Load)]
+#[load(serde = "json")]
 pub struct TileSetConfig {
     pub size: vec2<usize>,
     pub tiles: Vec<([ConnectionFilter; 8], UvRect)>,
@@ -141,20 +141,26 @@ impl ConnectionFilter {
     }
 }
 
-impl geng::LoadAsset for TileSet {
-    fn load(geng: &Geng, path: &std::path::Path) -> geng::AssetFuture<Self> {
-        let geng = geng.clone();
+impl geng::asset::Load for TileSet {
+    fn load(
+        manager: &geng::asset::Manager,
+        path: &std::path::Path,
+        (): &(),
+    ) -> geng::asset::Future<Self> {
+        let manager = manager.clone();
         let path = path.to_owned();
         async move {
-            let texture = Texture::load(&geng, &path).await?;
+            let texture = Texture::load(&manager, &path, &()).await?;
 
             let name = path.file_stem().unwrap().to_str().unwrap();
             let config = path.with_file_name(format!("{name}_config.json"));
-            let config = TileSetConfig::load(&geng, &config).await?;
+            let config = TileSetConfig::load(&manager, &config, &()).await?;
             Ok(Self { texture, config })
         }
         .boxed_local()
     }
 
     const DEFAULT_EXT: Option<&'static str> = ugli::Texture::DEFAULT_EXT;
+
+    type Options = ();
 }

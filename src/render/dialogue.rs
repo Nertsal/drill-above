@@ -18,10 +18,10 @@ impl GameRender {
         let text_size = view.height() * 0.05;
 
         let dialogue_box = view_box(vec2(0.2, 0.6), vec2(0.8, 0.8));
-        self.geng.draw_2d(
+        self.geng.draw2d().draw2d(
             framebuffer,
             &camera,
-            &draw_2d::Quad::new(dialogue_box, DIALOGUE_BOX_COLOR),
+            &draw2d::Quad::new(dialogue_box, DIALOGUE_BOX_COLOR),
         );
 
         let text_box = dialogue_box.extend_uniform(-10.0);
@@ -39,9 +39,8 @@ impl GameRender {
                 framebuffer,
                 &camera,
                 &line,
-                pos,
-                geng::TextAlign::LEFT,
-                text_size,
+                vec2(geng::TextAlign::LEFT, geng::TextAlign::CENTER),
+                mat3::translate(pos) * mat3::scale_uniform(text_size),
                 Rgba::WHITE,
             );
         }

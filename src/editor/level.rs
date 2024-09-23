@@ -109,7 +109,7 @@ impl LevelEditor {
 
             camera: Camera2d {
                 center: vec2::ZERO,
-                rotation: 0.0,
+                rotation: Angle::ZERO,
                 fov: 100.0,
             },
             framebuffer_size: vec2(1, 1),
@@ -139,7 +139,7 @@ impl LevelEditor {
                     .watch(&run_dir().join("assets"), notify::RecursiveMode::Recursive)
                     .expect("Failed to start watching assets directory");
 
-                info!("Initialized the watcher for assets");
+                log::info!("Initialized the watcher for assets");
 
                 HotReload {
                     receiver: rx,
@@ -550,7 +550,7 @@ impl LevelEditor {
         // no other room has the same `new_name`
         // TODO: check outside the loaded scope, there might be unloaded maps with that name
         if self.rooms.iter().any(|(name, _)| *name == new_id) {
-            error!("Cannot rename the room to {new_id:?} as there already exists a room with that name");
+            log::error!("Cannot rename the room to {new_id:?} as there already exists a room with that name");
             return;
         }
 
@@ -576,7 +576,7 @@ impl LevelEditor {
                     "Failed to remove old room file",
                 );
             }
-            info!("Successfully renamed the room {old_id:?} to {new_id:?}");
+            log::info!("Successfully renamed the room {old_id:?} to {new_id:?}");
         }
     }
 
@@ -590,7 +590,7 @@ impl LevelEditor {
                 .retain(|trans| trans.to_room != room_id);
         }
         let Some(room) = self.rooms.get_mut(&room_id) else {
-            return
+            return;
         };
         room.editor.world.room.transitions.clear();
 
@@ -605,7 +605,7 @@ impl LevelEditor {
 
             let other_aabb = other.aabb_i();
             if room_aabb.intersects(&other_aabb) {
-                error!("The rooms {room_id:?} and {other_id:?} intersect each other");
+                log::error!("The rooms {room_id:?} and {other_id:?} intersect each other");
                 continue;
             }
 
@@ -713,11 +713,11 @@ impl LevelEditor {
         let mut reload = false;
 
         for event in events {
-            debug!("Received event from hot reload: {event:?}");
+            log::debug!("Received event from hot reload: {event:?}");
             let event = match event {
                 Ok(event) => event,
                 Err(err) => {
-                    error!("Received error from hot reload channel: {err}");
+                    log::error!("Received error from hot reload channel: {err}");
                     break;
                 }
             };
@@ -737,13 +737,20 @@ impl LevelEditor {
     fn reload_assets(&mut self) {
         let assets = futures::executor::block_on({
             let geng = self.geng.clone();
-            async move { <Assets as geng::LoadAsset>::load(&geng, &run_dir().join("assets")).await }
+            async move {
+                <Assets as geng::asset::Load>::load(
+                    geng.asset_manager(),
+                    &run_dir().join("assets"),
+                    &(),
+                )
+                .await
+            }
         });
 
         let assets = match assets {
             Ok(assets) => assets,
             Err(err) => {
-                error!("Failed to reload assets: {err}");
+                log::error!("Failed to reload assets: {err}");
                 return;
             }
         };
@@ -754,7 +761,7 @@ impl LevelEditor {
         }
         self.assets = assets;
 
-        info!("Successfully reloaded assets");
+        log::info!("Successfully reloaded assets");
     }
 }
 
@@ -781,7 +788,7 @@ impl geng::State for LevelEditor {
                         break;
                     }
                     Err(TryRecvError::Disconnected) => {
-                        error!("Disconnected from the hot reload channel");
+                        log::error!("Disconnected from the hot reload channel");
                     }
                 }
             }
@@ -801,7 +808,7 @@ impl geng::State for LevelEditor {
             let delta_time = delta_time as f32;
             let window = self.geng.window();
 
-            let ctrl = window.is_key_pressed(geng::Key::LCtrl);
+            let ctrl = window.is_key_pressed(geng::Key::ControlLeft);
             if !ctrl {
                 // Move camera
                 let mut dir = vec2::ZERO;
@@ -823,11 +830,11 @@ impl geng::State for LevelEditor {
     }
 
     fn handle_event(&mut self, event: geng::Event) {
-        let ctrl = self.geng.window().is_key_pressed(geng::Key::LCtrl);
-        let shift = self.geng.window().is_key_pressed(geng::Key::LShift);
+        let ctrl = self.geng.window().is_key_pressed(geng::Key::ControlLeft);
+        let shift = self.geng.window().is_key_pressed(geng::Key::ShiftLeft);
         if let Some(room) = active_room_mut!(self) {
             match event {
-                geng::Event::KeyDown {
+                geng::Event::KeyPress {
                     key: geng::Key::Escape,
                 } if shift => {
                     self.rooms
@@ -842,20 +849,20 @@ impl geng::State for LevelEditor {
             room.handle_event(event);
         } else {
             match event {
-                geng::Event::MouseDown { position, button } => {
-                    self.click(position, button);
+                geng::Event::MousePress { button } => {
+                    self.click(self.cursor_pos, button);
                 }
-                geng::Event::MouseMove { position, .. } => {
+                geng::Event::CursorMove { position } => {
                     self.update_cursor(position);
                 }
-                geng::Event::MouseUp { button, .. } => {
+                geng::Event::MouseRelease { button } => {
                     // self.update_cursor(position);
                     self.release(button);
                 }
                 geng::Event::Wheel { delta } => {
                     self.zoom(-delta.signum() as isize);
                 }
-                geng::Event::KeyDown { key } => match key {
+                geng::Event::KeyPress { key } => match key {
                     geng::Key::Escape => self.cancel(),
                     geng::Key::S if ctrl => {
                         let _ = util::report_err(self.save_level(), "Failed to save the level");
@@ -867,7 +874,7 @@ impl geng::State for LevelEditor {
         }
     }
 
-    fn transition(&mut self) -> Option<geng::Transition> {
+    fn transition(&mut self) -> Option<geng::state::Transition> {
         active_room_mut!(self).and_then(|room| room.transition())
     }
 

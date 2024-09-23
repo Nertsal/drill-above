@@ -166,7 +166,7 @@ impl RoomEditor {
             screen_resolution: SCREEN_RESOLUTION,
             camera: Camera2d {
                 center: vec2(0.0, 0.25),
-                rotation: 0.0,
+                rotation: Angle::ZERO,
                 fov: (SCREEN_RESOLUTION.x / PIXELS_PER_UNIT) as f32 * 9.0 / 16.0,
             },
             framebuffer_size: vec2(1, 1),
@@ -348,7 +348,7 @@ impl RoomEditor {
             .map(Coord::new);
 
         // Snap to grid if needed
-        let snap_cursor = self.geng.window().is_key_pressed(geng::Key::LCtrl);
+        let snap_cursor = self.geng.window().is_key_pressed(geng::Key::ControlLeft);
         if snap_cursor {
             let (snap_pos, offset) = self
                 .dragging
@@ -409,7 +409,7 @@ impl RoomEditor {
 
         // Check what action should be performed
         let action = match button {
-            geng::MouseButton::Left => (!self.geng.window().is_key_pressed(geng::Key::LShift))
+            geng::MouseButton::Left => (!self.geng.window().is_key_pressed(geng::Key::ShiftLeft))
                 .then(|| {
                     if matches!(self.selected_block(), Some(PlaceableType::Tile(_)))
                         && (self.selection.is_empty() || self.hovered.is_empty())
@@ -499,7 +499,7 @@ impl RoomEditor {
                     }
                     RoomDragAction::RectSelection => {
                         // Select blocks in a rectangle
-                        if !self.geng.window().is_key_pressed(geng::Key::LShift) {
+                        if !self.geng.window().is_key_pressed(geng::Key::ShiftLeft) {
                             self.clear_selection();
                         }
                         let aabb =
@@ -517,7 +517,7 @@ impl RoomEditor {
                     geng::MouseButton::Left => {
                         if let Some(&id) = self.hovered.first() {
                             // Change selection
-                            if !self.geng.window().is_key_pressed(geng::Key::LShift) {
+                            if !self.geng.window().is_key_pressed(geng::Key::ShiftLeft) {
                                 self.clear_selection();
                             }
                             if !self.selection.insert(id) {
@@ -586,9 +586,11 @@ impl RoomEditor {
 
     /// Swithes the tab and selects the hovered block.
     fn goto_hovered(&mut self) {
-        let Some(&hovered_id) = self.hovered.first() else { return };
+        let Some(&hovered_id) = self.hovered.first() else {
+            return;
+        };
         let Some(hovered) = self.world.room.get_block(hovered_id, self.active_layer) else {
-            return
+            return;
         };
         let hovered = hovered.get_type();
 
@@ -634,7 +636,7 @@ impl RoomEditor {
         let delta_time = delta_time as f32;
         let window = self.geng.window();
 
-        let ctrl = window.is_key_pressed(geng::Key::LCtrl);
+        let ctrl = window.is_key_pressed(geng::Key::ControlLeft);
         if self.input_events.is_none() && !ctrl {
             // Move camera
             let mut dir = vec2::ZERO;
@@ -662,23 +664,23 @@ impl RoomEditor {
             return;
         }
 
-        let ctrl = self.geng.window().is_key_pressed(geng::Key::LCtrl);
-        let shift = self.geng.window().is_key_pressed(geng::Key::LShift);
+        let ctrl = self.geng.window().is_key_pressed(geng::Key::ControlLeft);
+        let shift = self.geng.window().is_key_pressed(geng::Key::ShiftLeft);
         match event {
-            geng::Event::MouseDown { position, button } => {
-                self.click(position, button);
+            geng::Event::MousePress { button } => {
+                self.click(self.cursor_pos, button);
             }
-            geng::Event::MouseMove { position, .. } => {
+            geng::Event::CursorMove { position } => {
                 self.update_cursor(position);
             }
-            geng::Event::MouseUp { button, .. } => {
+            geng::Event::MouseRelease { button } => {
                 // self.update_cursor(position);
                 self.release(button);
             }
             geng::Event::Wheel { delta } => {
                 self.zoom(-delta.signum() as isize);
             }
-            geng::Event::KeyDown { key } => match key {
+            geng::Event::KeyPress { key } => match key {
                 geng::Key::Escape => self.cancel(),
                 geng::Key::S if ctrl => {
                     let _ = util::report_err(self.save_room(), "Failed to save the room");
@@ -694,10 +696,10 @@ impl RoomEditor {
                 geng::Key::R => {
                     self.world.room.spawn_point = self.cursor_world_pos;
                 }
-                geng::Key::Left => {
+                geng::Key::ArrowLeft => {
                     self.scroll_selected(-1);
                 }
-                geng::Key::Right => {
+                geng::Key::ArrowRight => {
                     self.scroll_selected(1);
                 }
                 _ => {}
@@ -706,7 +708,7 @@ impl RoomEditor {
         }
     }
 
-    pub fn transition(&mut self) -> Option<geng::Transition> {
+    pub fn transition(&mut self) -> Option<geng::state::Transition> {
         std::mem::take(&mut self.playtest).then(|| {
             // Start the playtest state
             let state = game::Game::new(
@@ -724,7 +726,7 @@ impl RoomEditor {
 
             // The state is pushed on top of the editor state,
             // so that when we exit the playtest, we return to the editor.
-            geng::Transition::Push(Box::new(state))
+            geng::state::Transition::Push(Box::new(state))
         })
     }
 }

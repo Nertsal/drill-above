@@ -31,6 +31,7 @@ pub fn slider<'a, T: Float + 'a>(
 pub struct Slider<'a> {
     cx: &'a Controller,
     sense: &'a mut Sense,
+    cursor_position: &'a mut Option<vec2<f64>>,
     pos: &'a mut Option<Aabb2<f64>>,
     tick_radius: &'a mut f32,
     value: f64,
@@ -45,6 +46,7 @@ impl<'a> Slider<'a> {
         Slider {
             cx,
             sense: cx.get_state(),
+            cursor_position: cx.get_state(),
             tick_radius: cx.get_state(),
             pos: cx.get_state(),
             value,
@@ -73,7 +75,7 @@ impl<'a> Widget for Slider<'a> {
     }
     fn draw(&mut self, cx: &mut DrawContext) {
         *self.pos = Some(cx.position);
-        let geng = cx.geng;
+        let draw2d = cx.draw2d;
         let position = cx.position.map(|x| x as f32);
         let line_width = position.height() / 3.0;
         let value_position = if self.range.end() == self.range.start() {
@@ -84,10 +86,10 @@ impl<'a> Widget for Slider<'a> {
                     as f32
                     * (position.width() - line_width)
         };
-        geng.draw_2d(
+        draw2d.draw2d(
             cx.framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Quad::new(
+            &draw2d::Quad::new(
                 Aabb2::from_corners(
                     position.bottom_left()
                         + vec2(value_position, (position.height() - line_width) / 2.0),
@@ -97,19 +99,19 @@ impl<'a> Widget for Slider<'a> {
                 cx.theme.usable_color,
             ),
         );
-        geng.draw_2d(
+        draw2d.draw2d(
             cx.framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Ellipse::circle(
+            &draw2d::Ellipse::circle(
                 position.top_right() - vec2(line_width / 2.0, position.height() / 2.0),
                 line_width / 2.0,
                 cx.theme.usable_color,
             ),
         );
-        geng.draw_2d(
+        draw2d.draw2d(
             cx.framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Quad::new(
+            &draw2d::Quad::new(
                 Aabb2::from_corners(
                     position.bottom_left()
                         + vec2(line_width / 2.0, (position.height() - line_width) / 2.0),
@@ -119,19 +121,19 @@ impl<'a> Widget for Slider<'a> {
                 cx.theme.hover_color,
             ),
         );
-        geng.draw_2d(
+        draw2d.draw2d(
             cx.framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Ellipse::circle(
+            &draw2d::Ellipse::circle(
                 position.bottom_left() + vec2(line_width / 2.0, position.height() / 2.0),
                 line_width / 2.0,
                 cx.theme.hover_color,
             ),
         );
-        geng.draw_2d(
+        draw2d.draw2d(
             cx.framebuffer,
             &geng::PixelPerfectCamera,
-            &draw_2d::Ellipse::circle(
+            &draw2d::Ellipse::circle(
                 position.bottom_left() + vec2(value_position, position.height() / 2.0),
                 *self.tick_radius * position.height(),
                 cx.theme.hover_color,
@@ -144,15 +146,22 @@ impl<'a> Widget for Slider<'a> {
             None => return,
         };
         if self.sense.is_captured() {
-            if let geng::Event::MouseDown { position, .. }
-            | geng::Event::MouseMove { position, .. } = &event
-            {
-                let position = position.x - aabb.min.x;
-                let new_value = *self.range.start()
-                    + ((position - aabb.height() / 6.0) / (aabb.width() - aabb.height() / 3.0))
-                        .clamp(0.0, 1.0)
-                        * (*self.range.end() - *self.range.start());
-                **self.change.borrow_mut() = Some(new_value);
+            match &event {
+                geng::Event::CursorMove { position } => {
+                    *self.cursor_position = Some(*position);
+                }
+                geng::Event::MousePress { .. } | geng::Event::MouseRelease { .. } => {
+                    if let Some(position) = *self.cursor_position {
+                        let position = position.x - aabb.min.x;
+                        let new_value = *self.range.start()
+                            + ((position - aabb.height() / 6.0)
+                                / (aabb.width() - aabb.height() / 3.0))
+                                .clamp(0.0, 1.0)
+                                * (*self.range.end() - *self.range.start());
+                        **self.change.borrow_mut() = Some(new_value);
+                    }
+                }
+                _ => (),
             }
         }
     }
