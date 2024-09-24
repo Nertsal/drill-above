@@ -443,9 +443,9 @@ impl Room {
     }
 
     pub fn save(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
-        let path = path.as_ref();
         #[cfg(not(target_arch = "wasm32"))]
         {
+            let path = path.as_ref();
             let file = std::fs::File::create(path)?;
             let writer = std::io::BufWriter::new(file);
             serde_json::to_writer_pretty(writer, self)?;
@@ -454,6 +454,7 @@ impl Room {
         }
         #[cfg(target_arch = "wasm32")]
         {
+            let _ = path;
             anyhow::bail!("unimplemented")
         }
     }

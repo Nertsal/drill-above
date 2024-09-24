@@ -95,7 +95,7 @@ impl LevelEditor {
     ) -> Self {
         #[cfg(target_arch = "wasm32")]
         if hot_reload {
-            warn!("Hot reloading assets does nothing on the web");
+            log::warn!("Hot reloading assets does nothing on the web");
         }
 
         let level_name = level.clone();
@@ -154,7 +154,6 @@ impl LevelEditor {
         assets: &Rc<Assets>,
         level: String,
     ) -> HashMap<RoomId, RoomState> {
-        let path = run_dir().join("assets").join("levels").join(&level);
         let mut rooms = HashMap::new();
 
         // Load rooms
@@ -162,6 +161,7 @@ impl LevelEditor {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
+            let path = run_dir().join("assets").join("levels").join(&level);
             let dir = std::fs::read_dir(path).expect("Failed to open assets/levels directory");
             for file in dir.flatten() {
                 if let Ok(meta) = file.metadata() {
@@ -181,6 +181,10 @@ impl LevelEditor {
                     }
                 }
             }
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let _ = level;
         }
 
         while let Some(room_id) = to_load.pop() {

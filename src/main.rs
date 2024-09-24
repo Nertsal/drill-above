@@ -33,19 +33,17 @@ struct Opt {
     /// Hot reload assets on change detection.
     #[clap(long)]
     hot_reload: bool,
+    #[cfg(not(target_arch = "wasm32"))]
     #[command(subcommand)]
     command: Option<Command>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[derive(clap::Subcommand, Clone)]
 enum Command {
-    #[cfg(not(target_arch = "wasm32"))]
     TileSet(TileSetOpt),
-    #[cfg(not(target_arch = "wasm32"))]
     ChangeSize(ChangeSizeOpt),
-    #[cfg(not(target_arch = "wasm32"))]
     RenameTile(RenameTileOpt),
-    #[cfg(not(target_arch = "wasm32"))]
     Format,
 }
 
@@ -66,6 +64,7 @@ struct RenameTileOpt {
     to: String,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 macro_rules! exit_state {
     () => {{
         std::process::exit(0);
@@ -87,9 +86,9 @@ fn main() {
     options.with_cli(&opt.geng);
 
     Geng::run_with(&options, move |geng| async move {
+        #[cfg(not(target_arch = "wasm32"))]
         if let Some(command) = opt.command.clone() {
             match command {
-                #[cfg(not(target_arch = "wasm32"))]
                 Command::TileSet(opt) => {
                     let size = parse_size(&opt.size).expect("Failed to parse size");
                     let future = {
@@ -113,7 +112,6 @@ fn main() {
                     };
                     run_loading(&geng, future).await
                 }
-                #[cfg(not(target_arch = "wasm32"))]
                 Command::ChangeSize(config) => {
                     let future = {
                         let geng = geng.clone();
@@ -141,7 +139,6 @@ fn main() {
                     };
                     run_loading(&geng, future).await
                 }
-                #[cfg(not(target_arch = "wasm32"))]
                 Command::RenameTile(config) => {
                     let id = opt.room_id().expect("expected full room id");
                     let path = id.full_path();
@@ -158,7 +155,6 @@ fn main() {
                     room.save(&path).expect("Failed to save the room");
                     log::info!("Saved the changed room at {:?}", path);
                 }
-                #[cfg(not(target_arch = "wasm32"))]
                 Command::Format => {
                     fn format_room(room_path: impl AsRef<std::path::Path>) {
                         let room_path = room_path.as_ref();

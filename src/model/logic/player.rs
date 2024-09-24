@@ -285,7 +285,7 @@ impl Logic<'_> {
         }
 
         // Turn back from drill
-        let mut player = &mut self.world.player;
+        let player = &mut self.world.player;
         player.state = PlayerState::Airborn;
 
         if player.drill_release.take().is_some() {
