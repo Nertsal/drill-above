@@ -5,14 +5,13 @@ jobs:
   build-web:
     name: Build (Web)
     runs-on: ubuntu-latest
-    container: kuviman/geng
+    container: ghcr.io/geng-engine/cargo-geng
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - run: cargo geng build --release --target wasm32-unknown-unknown
-      - run: cp -r assets target/geng/ # because of old cargo-geng
+      - run: cargo geng build --release --platform web
       - name: Upload artifacts (web)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: web
           path: target/geng
@@ -25,10 +24,10 @@ jobs:
       - build-web
     environment:
       name: main
-      url: https://nertsal.github.io/anlaut-3
+      url: https://nertsal.github.io/drill-above
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Deploy GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -43,10 +42,10 @@ jobs:
       - build-web
     environment:
       name: dev
-      url: https://nertsal.github.io/anlaut-3/dev
+      url: https://nertsal.github.io/drill-above/dev
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Deploy GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
